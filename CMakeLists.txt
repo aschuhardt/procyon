@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17.2)
 
-project(surulia-engine VERSION 0.1.0 LANGUAGES C)
+project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -34,17 +34,17 @@ set(SU_SOURCE
   src/script/input.c
   src/script/environment.c)
 
-add_executable(surulia ${SU_SOURCE})
-target_include_directories(surulia 
+add_executable(procyon ${SU_SOURCE})
+target_include_directories(procyon 
   PRIVATE include ${LUA_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${STB_INCLUDE_DIR})
-target_link_libraries(surulia 
+target_link_libraries(procyon 
   PRIVATE ${LUA_LIBRARIES} argparse log glad glfw)
-set_property(TARGET surulia PROPERTY C_STANDARD 11)
-target_compile_definitions(surulia PRIVATE __STDC_WANT_LIB_EXT1__=1)
+set_property(TARGET procyon PROPERTY C_STANDARD 11)
+target_compile_definitions(procyon PRIVATE __STDC_WANT_LIB_EXT1__=1)
 
 add_custom_target(script_test
-  COMMAND surulia --debug -f -e "${PROJECT_SOURCE_DIR}/sample/test.lua"
-  DEPENDS surulia
+  COMMAND procyon --debug -f -e "${PROJECT_SOURCE_DIR}/sample/test.lua"
+  DEPENDS procyon
   USES_TERMINAL)
 
 # Compile a small program that will convert files into
@@ -80,5 +80,5 @@ foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARG
     COMMAND genhexer ${filename} ${header} ${target})
   set_source_files_properties(${header} PROPERTIES GENERATED 1)
   add_custom_target(${target} DEPENDS ${header})
-  add_dependencies(surulia ${target})
+  add_dependencies(procyon ${target})
 endforeach()

@@ -7,8 +7,8 @@
 #include "argparse.h"
 
 static const char* const usage[] = {
-    "File-mode:    surulia -f|--file -e|--entry LUA_SCRIPT_PATH",
-    "Package-mode: surulia -p|--package -e|--entry "
+    "File-mode:    procyon -f|--file -e|--entry LUA_SCRIPT_PATH",
+    "Package-mode: procyon -p|--package -e|--entry "
     "SCRIPT_PACKAGE_PATH",
     NULL};
 
