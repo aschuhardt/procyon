@@ -58,17 +58,20 @@ add_executable(genhexer util/genhexer.c)
 #       project root
 list(APPEND EMBED_FILES
   glyph.vert
-  glyph.frag)
+  glyph.frag
+  LessPerfectDOSVGA.ttf)
 
 # ... and their corresponding header file names ...
 list(APPEND EMBED_HEADERS
   glyph_vert.h
-  glyph_frag.h)
+  glyph_frag.h
+  vga_ttf.h)
 
 # ... and specify target names for each embedded object
 list(APPEND EMBED_TARGETS
   embed_glyph_vert
-  embed_glyph_frag)
+  embed_glyph_frag
+  embed_vga_ttf)
 
 # Convert each embedded resource into a C header file
 foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARGETS)

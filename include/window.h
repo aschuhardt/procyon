@@ -27,12 +27,17 @@ typedef struct window_bounds_t {
   int width, height;
 } window_bounds_t;
 
+typedef struct glyph_buffer_t {
+  glyph_t buffer[GLYPH_BUFFER_SIZE];
+  size_t count;
+} glyph_buffer_t;
+
 typedef struct window_t {
-  glyph_t glyph_buffer[GLYPH_BUFFER_SIZE];
+  glyph_buffer_t glyphs;
   tile_bounds_t tile_bounds;
   window_bounds_t bounds;
   draw_state_t state;
-  size_t glyph_count;
+  float ortho[4][4];
   void* glfw_win;
   void* script_state;  // assigned upon script creation, for use during event
                        // callbacks (script_state_t)

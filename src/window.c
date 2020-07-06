@@ -39,6 +39,21 @@ void set_state_dirty(window_t* w) { w->state = WINDOW_STATE_DIRTY; }
 
 void set_state_wait(window_t* w) { w->state = WINDOW_STATE_WAIT; }
 
+static void set_ortho_projection(window_t* window) {
+  int width = window->bounds.width;
+  int height = window->bounds.height;
+
+  memset(&window->ortho[0][0], 0, 16);
+
+  window->ortho[0][0] = 2.0F / (float)width;
+  window->ortho[0][3] = -1.0F;
+  window->ortho[1][1] = 2.0F / -(float)height;
+  window->ortho[1][3] = 1.0F;
+  window->ortho[2][2] = -2.0F;
+  window->ortho[2][3] = -1.0F;
+  window->ortho[3][3] = 1.0F;
+}
+
 static void window_resized(GLFWwindow* w, int width, int height) {
   log_debug("Window resized to %dx%d", width, height);
 
@@ -48,6 +63,8 @@ static void window_resized(GLFWwindow* w, int width, int height) {
   window->bounds.width = width;
   window->bounds.height = height;
 
+  set_ortho_projection(window);
+
   set_state_dirty(window);
 }
 
@@ -55,10 +72,7 @@ static void set_window_callbacks(GLFWwindow* w) {
   glfwSetFramebufferSizeCallback(w, window_resized);
 }
 
-static void clear_glyph_buffer(window_t* window) {
-  window->glyph_count = 0;
-  memset(&window->glyph_buffer[0], 0, GLYPH_BUFFER_SIZE);
-}
+static void clear_glyph_buffer(window_t* window) { window->glyphs.count = 0; }
 
 window_t* create_window(config_t* cfg) {
   glfwSetErrorCallback(glfw_error_callback);
@@ -89,8 +103,8 @@ window_t* create_window(config_t* cfg) {
   window->bounds.width = cfg->window_w;
   window->bounds.height = cfg->window_h;
 
+  set_ortho_projection(window);
   clear_glyph_buffer(window);
-
   glfwSetWindowUserPointer(glfw_win, window);
   set_window_callbacks(glfw_win);
 
@@ -111,32 +125,30 @@ void destroy_window(window_t* window) {
 }
 
 bool add_glyph_to_buffer(window_t* window, glyph_t op) {
-  if (window->glyph_count >= GLYPH_BUFFER_SIZE) {
+  if (window->glyphs.count >= GLYPH_BUFFER_SIZE) {
     // no more room for draw ops
     return false;
   }
 
-  window->glyph_buffer[window->glyph_count++] = op;
-
+  window->glyphs.buffer[window->glyphs.count++] = op;
   set_state_dirty(window);
-
   return true;
 }
 
 void begin_loop(window_t* window) {
-  shader_program_t glyph_shader = create_glyph_shader();
+  glyph_shader_program_t glyph_shader = create_glyph_shader();
 
   GLFWwindow* w = (GLFWwindow*)window->glfw_win;
   while (!glfwWindowShouldClose(w) && !window->quitting) {
-    glfwWaitEventsTimeout(0.5);
+    glfwWaitEventsTimeout(0.5F);
 
     if (window->state == WINDOW_STATE_DIRTY) {
-      glClearColor(0.0, 0.0, 0.0, 1.0);
+      glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
       glClear(GL_COLOR_BUFFER_BIT);
 
-      if (window->glyph_count > 0 && glyph_shader.valid) {
-        draw_glyphs(&glyph_shader, window, window->glyph_buffer,
-                    window->glyph_count);
+      if (window->glyphs.count > 0 && glyph_shader.program.valid) {
+        draw_glyphs(&glyph_shader, window, window->glyphs.buffer,
+                    window->glyphs.count);
         clear_glyph_buffer(window);
       }
 
@@ -145,6 +157,6 @@ void begin_loop(window_t* window) {
     }
   }
 
-  destroy_shader_program(&glyph_shader);
+  destroy_glyph_shader_program(&glyph_shader);
 }
 

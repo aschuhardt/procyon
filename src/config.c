@@ -15,7 +15,7 @@ static const char* const usage[] = {
 static const unsigned short DEFAULT_WINDOW_W = 800;
 static const unsigned short DEFAULT_WINDOW_H = 600;
 static const unsigned short DEFAULT_TILE_W = 16;
-static const unsigned short DEFAULT_TILE_H = 18;
+static const unsigned short DEFAULT_TILE_H = 20;
 
 bool parse_args(int argc, const char** argv, config_t* cfg) {
   // setup available command-line arguments and their descriptions
@@ -78,7 +78,7 @@ bool parse_args(int argc, const char** argv, config_t* cfg) {
   argparse_parse(&argparse, argc, argv);
 
   // set log level
-  log_set_level(log_level);
+  log_set_level(log_level ? log_level : LOG_ERROR);
 
   // ensure that ONLY ONE of the script modes was selected
   if ((script_package_mode & script_file_mode) != 0 ||

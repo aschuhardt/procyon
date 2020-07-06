@@ -24,9 +24,7 @@ local function key_pressed(key)
     x = x + 1
   end
 
-  draw.string(x, y, "AAAAA")
-  draw.string(x + 1, y + 3, "AAAAA")
-  log.debug(string.format("%d, %d", x, y))
+  draw.string(x, y, "Hello world!")
 end
 
 input.key_released = nil

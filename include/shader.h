@@ -10,6 +10,12 @@ typedef struct shader_program_t {
   bool valid;
 } shader_program_t;
 
+typedef struct glyph_shader_program_t {
+  shader_program_t program;
+  unsigned int u_ortho, u_sampler, font_texture;
+  void* codepoints;
+} glyph_shader_program_t;
+
 struct window_t;
 struct glyph_t;
 
@@ -17,19 +23,12 @@ struct glyph_t;
  * Builds and compiles a shader program with information for rendering text
  * glyphs from a bitmap font. Note that this does not allocate its object on the
  * heap.
- *
- * After calling, check the `valid` flag on the resulting object in order to
- * determine whether the program successfully compiled.
  */
-shader_program_t create_glyph_shader();
+glyph_shader_program_t create_glyph_shader();
 
-void draw_glyphs(shader_program_t* program, struct window_t* window,
+void draw_glyphs(glyph_shader_program_t* glyph_shader, struct window_t* window,
                  struct glyph_t* data, size_t count);
 
-/*
- * Calls the OpenGL commands required to un-bind and free up GPU resources
- * associated with the shader program.
- */
-void destroy_shader_program(shader_program_t* program);
+void destroy_glyph_shader_program(glyph_shader_program_t* program);
 
 #endif

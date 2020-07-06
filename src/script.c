@@ -88,7 +88,7 @@ static bool load_script_package(lua_State* L, char* path) {
   return false;
 }
 
-static const size_t get_file_dir_length(char* path) {
+static size_t get_file_dir_length(char* path) {
 #ifdef WIN32
   char* last_segment = strrchr(path, '\\');
 #else
@@ -97,9 +97,8 @@ static const size_t get_file_dir_length(char* path) {
 
   if (last_segment == NULL) {
     return strnlen(path, PATH_MAX);
-  } else {
-    return last_segment - path;
-  }
+  }     return last_segment - path;
+ 
 }
 
 static void add_package_path_from_entry(lua_State* L, char* path) {
