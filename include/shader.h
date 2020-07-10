@@ -17,7 +17,7 @@ typedef struct glyph_shader_program_t {
 } glyph_shader_program_t;
 
 struct window_t;
-struct glyph_t;
+struct draw_op_t;
 
 /*
  * Builds and compiles a shader program with information for rendering text
@@ -26,9 +26,9 @@ struct glyph_t;
  */
 glyph_shader_program_t create_glyph_shader();
 
-void draw_glyphs(glyph_shader_program_t* glyph_shader, struct window_t* window,
-                 struct glyph_t* data, size_t count);
+void draw_glyph_shader(glyph_shader_program_t* shader, struct window_t* window,
+                       struct draw_op_t* ops, size_t n);
 
-void destroy_glyph_shader_program(glyph_shader_program_t* program);
+void destroy_glyph_shader_program(glyph_shader_program_t* shader);
 
 #endif

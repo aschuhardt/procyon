@@ -11,6 +11,9 @@
 
 #include "shader.h"
 #include "config.h"
+#include "drawing.h"
+
+static const size_t INITIAL_DRAW_OPS_BUFFER_SIZE = 32;
 
 static void glfw_error_callback(int code, const char* msg) {
   log_error("GLFW error %d: %s", code, msg);
@@ -35,15 +38,13 @@ static int setup_gl_context(GLFWwindow* w) {
   return true;
 }
 
-void set_state_dirty(window_t* w) { w->state = WINDOW_STATE_DIRTY; }
-
-void set_state_wait(window_t* w) { w->state = WINDOW_STATE_WAIT; }
-
 static void set_ortho_projection(window_t* window) {
   int width = window->bounds.width;
   int height = window->bounds.height;
 
-  memset(&window->ortho[0][0], 0, 16);
+  for (int i = 0; i < 4; ++i) {
+    memset(&window->ortho[i][0], 0, 4 * sizeof(float));
+  }
 
   window->ortho[0][0] = 2.0F / (float)width;
   window->ortho[0][3] = -1.0F;
@@ -65,48 +66,95 @@ static void window_resized(GLFWwindow* w, int width, int height) {
 
   set_ortho_projection(window);
 
-  set_state_dirty(window);
+  set_window_state_dirty(window);
 }
 
 static void set_window_callbacks(GLFWwindow* w) {
   glfwSetFramebufferSizeCallback(w, window_resized);
 }
 
-static void clear_glyph_buffer(window_t* window) { window->glyphs.count = 0; }
+static void set_default_window_bounds(window_t* w, config_t* cfg) {
+  w->bounds.width = cfg->window_w;
+  w->bounds.height = cfg->window_h;
+}
 
-window_t* create_window(config_t* cfg) {
-  glfwSetErrorCallback(glfw_error_callback);
+static void set_default_tile_bounds(window_t* w, config_t* cfg) {
+  w->tile_bounds.width = cfg->tile_w;
+  w->tile_bounds.height = cfg->tile_h;
+}
 
+/*
+ * Returns false upon failing to initialize a GLFW window
+ */
+static bool set_gl_window_pointer(window_t* w) {
   if (!glfwInit()) {
-    return NULL;
+    return false;
   }
 
   set_gl_hints();
 
-  GLFWwindow* glfw_win =
-      glfwCreateWindow(cfg->window_w, cfg->window_h, "Surulia", NULL, NULL);
-  if (glfw_win == NULL || !setup_gl_context(glfw_win)) {
+  window_bounds_t bounds = w->bounds;
+  w->glfw_win =
+      glfwCreateWindow(bounds.width, bounds.height, "Surulia", NULL, NULL);
+  if (w->glfw_win == NULL || !setup_gl_context(w->glfw_win)) {
     glfwTerminate();
-    return NULL;
+    return false;
   }
 
-  glViewport(0, 0, cfg->window_w, cfg->window_h);
+  glfwSetWindowUserPointer(w->glfw_win, w);
+  set_window_callbacks(w->glfw_win);
 
+  glViewport(0, 0, bounds.width, bounds.height);
+
+  return true;
+}
+
+static void init_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
+  draw_ops->length = 0;
+  draw_ops->capacity = INITIAL_DRAW_OPS_BUFFER_SIZE;
+
+  size_t buffer_size = sizeof(draw_op_t) * draw_ops->capacity;
+  draw_ops->buffer = malloc(buffer_size);
+
+  log_debug("Initial string draw op buffer size: %zu", buffer_size);
+}
+
+static void expand_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
+  size_t buffer_size = draw_ops->capacity * sizeof(draw_op_t);
+  draw_ops->capacity *= 2;
+  draw_ops->buffer = realloc(draw_ops->buffer, buffer_size);
+
+  log_trace("Expanded string draw operations buffer size to %zu bytes",
+            buffer_size);
+}
+
+static void clear_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
+  log_trace("Clearing draw operations buffer...");
+
+  draw_ops->length = 0;
+  draw_ops->capacity = INITIAL_DRAW_OPS_BUFFER_SIZE;
+  size_t string_ops_buffer_size = draw_ops->capacity * sizeof(draw_op_t);
+  draw_ops->buffer = realloc(draw_ops->buffer, string_ops_buffer_size);
+
+  log_trace("String draw operations buffer shrunk to %zu bytes",
+            string_ops_buffer_size);
+}
+
+window_t* create_window(config_t* cfg) {
+  glfwSetErrorCallback(glfw_error_callback);
   window_t* window = malloc(sizeof(window_t));
 
-  window->glfw_win = glfw_win;
-  window->script_state = NULL;
-  window->state = WINDOW_STATE_DIRTY;
-  window->quitting = false;
-  window->tile_bounds.width = cfg->tile_w;
-  window->tile_bounds.height = cfg->tile_h;
-  window->bounds.width = cfg->window_w;
-  window->bounds.height = cfg->window_h;
-
+  set_default_window_bounds(window, cfg);
+  set_gl_window_pointer(window);
+  set_default_tile_bounds(window, cfg);
+  set_window_state_dirty(window);
   set_ortho_projection(window);
-  clear_glyph_buffer(window);
-  glfwSetWindowUserPointer(glfw_win, window);
-  set_window_callbacks(glfw_win);
+  init_draw_ops_buffer(&window->draw_ops);
+
+  window->script_state = NULL;
+  window->glyph_shader = NULL;
+  window->quitting = false;
+  window->last_bound_texture = UINT32_MAX;
 
   return window;
 }
@@ -120,23 +168,43 @@ void destroy_window(window_t* window) {
     glfwDestroyWindow(window->glfw_win);
   }
 
+  if (window->draw_ops.buffer != NULL) {
+    free(window->draw_ops.buffer);
+  }
+
   glfwTerminate();
   free(window);
 }
 
-bool add_glyph_to_buffer(window_t* window, glyph_t op) {
-  if (window->glyphs.count >= GLYPH_BUFFER_SIZE) {
-    // no more room for draw ops
-    return false;
+void append_string_draw_op(window_t* window, int x, int y,
+                           const char* contents) {
+  draw_op_buffer_t* draw_ops = &window->draw_ops;
+  if (draw_ops->length + 1 > draw_ops->capacity) {
+    expand_draw_ops_buffer(draw_ops);
   }
 
-  window->glyphs.buffer[window->glyphs.count++] = op;
-  set_state_dirty(window);
-  return true;
+  draw_ops->buffer[draw_ops->length++] = create_draw_op_string(x, y, contents);
+  set_window_state_dirty(window);
+}
+
+void set_window_state_dirty(window_t* w) { w->state = WINDOW_STATE_DIRTY; }
+
+void set_window_state_wait(window_t* w) { w->state = WINDOW_STATE_WAIT; }
+
+void set_window_bound_texture(window_t* w, unsigned int tex) {
+  w->last_bound_texture = tex;
+}
+
+bool is_window_texture_bound(window_t* w, unsigned int tex) {
+  return w->last_bound_texture == tex;
 }
 
 void begin_loop(window_t* window) {
   glyph_shader_program_t glyph_shader = create_glyph_shader();
+
+  // store a reference to the glyph shader so that script functions can modify
+  // text rendering
+  window->glyph_shader = &glyph_shader;
 
   GLFWwindow* w = (GLFWwindow*)window->glfw_win;
   while (!glfwWindowShouldClose(w) && !window->quitting) {
@@ -146,17 +214,16 @@ void begin_loop(window_t* window) {
       glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
       glClear(GL_COLOR_BUFFER_BIT);
 
-      if (window->glyphs.count > 0 && glyph_shader.program.valid) {
-        draw_glyphs(&glyph_shader, window, window->glyphs.buffer,
-                    window->glyphs.count);
-        clear_glyph_buffer(window);
+      if (window->draw_ops.length > 0 && glyph_shader.program.valid) {
+        draw_glyph_shader(&glyph_shader, window, window->draw_ops.buffer,
+                          window->draw_ops.length);
+        clear_draw_ops_buffer(&window->draw_ops);
       }
 
       glfwSwapBuffers(w);
-      set_state_wait(window);
+      set_window_state_wait(window);
     }
   }
 
   destroy_glyph_shader_program(&glyph_shader);
 }
-

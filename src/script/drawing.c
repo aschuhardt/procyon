@@ -24,12 +24,7 @@ int draw_string(lua_State* L) {
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
   window_t* window = (window_t*)lua_touserdata(L, -1);
 
-  size_t len = strnlen(contents, MAX_STRING_DRAW_LENGTH);
-  for (int i = 0; i < len; ++i) {
-    glyph_t g = {x + i, y, (unsigned char)contents[i]};
-    add_glyph_to_buffer(window, g);
-  }
-
+  append_string_draw_op(window, x, y, contents);
   return 0;
 }
 

@@ -7,7 +7,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message("Building in debug mode")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDEBUG -ggdb -g3")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -DDEBUG -ggdb -g3")
 else()
   message("Building in release mode")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
@@ -23,6 +23,7 @@ endif()
 
 set(SU_SOURCE
   src/main.c
+  src/drawing.c
   src/window.c
   src/script.c
   src/config.c
@@ -40,7 +41,9 @@ target_include_directories(procyon
 target_link_libraries(procyon 
   PRIVATE ${LUA_LIBRARIES} argparse log glad glfw)
 set_property(TARGET procyon PROPERTY C_STANDARD 11)
-target_compile_definitions(procyon PRIVATE __STDC_WANT_LIB_EXT1__=1)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  target_compile_definitions(procyon PRIVATE EXPORT_GLYPH_BITMAP=1)
+endif()
 
 add_custom_target(script_test
   COMMAND procyon --debug -f -e "${PROJECT_SOURCE_DIR}/sample/test.lua"

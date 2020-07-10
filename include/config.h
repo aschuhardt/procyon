@@ -16,6 +16,6 @@ typedef struct config_t {
   unsigned short window_w, window_h, tile_w, tile_h;
 } config_t;
 
-bool parse_args(int argc, const char** argv, config_t* cfg);
+bool parse_config_args(int argc, const char** argv, config_t* cfg);
 
 #endif

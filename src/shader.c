@@ -10,10 +10,16 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include <stb_truetype.h>
 
+#ifdef EXPORT_GLYPH_BITMAP
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+#endif
+
 #include "gen/glyph_frag.h"
 #include "gen/glyph_vert.h"
 #include "gen/vga_ttf.h"
 #include "window.h"
+#include "drawing.h"
 
 #pragma pack(0)
 typedef struct glyph_vertex_t {
@@ -26,11 +32,21 @@ static const size_t VBO_GLYPH_INDICES = 1;
 static const size_t ATTR_GLYPH_POSITION = 0;
 static const size_t ATTR_GLYPH_TEXCOORDS = 1;
 
-static const float FONT_SIZE = 32.0F;
-static const int FONT_TEXTURE_SIZE = 512;
+static const float FONT_SIZE = 16.0F;
+static const int FONT_TEXTURE_WIDTH = 256;
+static const int FONT_TEXTURE_HEIGHT = 128;
+static const float FONT_PADDING = 8.0F;
 
 // the font we're using supports full "extended" ASCII (0 thru 256)
 static const int FONT_CODEPOINTS = 256;
+
+static void bind_texture(window_t* window, unsigned int texture) {
+  if (!is_window_texture_bound(window, texture)) {
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    set_window_bound_texture(window, texture);
+  }
+}
 
 static bool compile_shader(const char* data, int shader_type, GLuint* index) {
   *index = glCreateShader(shader_type);
@@ -84,12 +100,68 @@ static bool compile_frag_shader(const char* data, GLuint* index) {
   return compile_shader(data, GL_FRAGMENT_SHADER, index);
 }
 
+static void load_glyph_font(glyph_shader_program_t* shader, const float* size) {
+  // load font codepoint geometry and texture coordinates and bitmap
+  unsigned char* bitmap_buffer =
+      malloc(FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT * sizeof(unsigned char));
+
+  if (shader->codepoints != NULL) {
+    free(shader->codepoints);
+  }
+
+  shader->codepoints = malloc(sizeof(stbtt_bakedchar) * FONT_CODEPOINTS);
+
+  stbtt_BakeFontBitmap(embed_vga_ttf, 0, (size == NULL ? FONT_SIZE : *size),
+                       bitmap_buffer, FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT,
+                       0, FONT_CODEPOINTS,
+                       (stbtt_bakedchar*)shader->codepoints);
+
+  // create font texture from bitmap
+  glGenTextures(1, &shader->font_texture);
+  glBindTexture(GL_TEXTURE_2D, shader->font_texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, FONT_TEXTURE_WIDTH,
+               FONT_TEXTURE_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap_buffer);
+
+#ifdef EXPORT_GLYPH_BITMAP
+  stbi_write_bmp("output.bmp", FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT, 1,
+                 bitmap_buffer);
+#endif
+
+  // cleanup bitmap data
+  free(bitmap_buffer);
+
+  // set font texture filtering style
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+}
+
+static size_t count_glyphs_in_ops_buffer(draw_op_t* ops, size_t n) {
+  // get total number of characters
+  size_t glyph_count = 0;
+  for (size_t i = 0; i < n; ++i) {
+    if (ops[i].type != DRAW_OP_TEXT) {
+      continue;
+    }
+
+    for (size_t j = 0; ops[i].data.text.contents[j] != '\0'; j++) {
+      ++glyph_count;
+    }
+  }
+
+  return glyph_count;
+}
+
 glyph_shader_program_t create_glyph_shader() {
   glyph_shader_program_t glyph_shader;
+  glyph_shader.codepoints = NULL;
+
   shader_program_t* prog = &glyph_shader.program;
   if ((prog->valid =
            compile_vert_shader((char*)embed_glyph_vert, &prog->vertex) &&
            compile_frag_shader((char*)embed_glyph_frag, &prog->fragment))) {
+    // load font texture and codepoints
+    load_glyph_font(&glyph_shader, NULL);
+
     // create vertex array
     glGenVertexArrays(1, &prog->vao);
     glBindVertexArray(prog->vao);
@@ -98,28 +170,6 @@ glyph_shader_program_t create_glyph_shader() {
     prog->vbo_count = 2;
     prog->vbo = malloc(sizeof(GLuint) * prog->vbo_count);
     glGenBuffers(prog->vbo_count, prog->vbo);
-
-    // load font codepoint geometry and texture coordinates and bitmap
-    unsigned char* bitmap_buffer =
-        malloc(FONT_TEXTURE_SIZE * FONT_TEXTURE_SIZE * sizeof(unsigned char));
-    glyph_shader.codepoints = malloc(sizeof(stbtt_bakedchar) * FONT_CODEPOINTS);
-    stbtt_BakeFontBitmap(embed_vga_ttf, 0, FONT_SIZE, bitmap_buffer,
-                         FONT_TEXTURE_SIZE, FONT_TEXTURE_SIZE, 0,
-                         FONT_CODEPOINTS,
-                         (stbtt_bakedchar*)glyph_shader.codepoints);
-
-    // create font texture from bitmap
-    glGenTextures(1, &glyph_shader.font_texture);
-    glBindTexture(GL_TEXTURE_2D, glyph_shader.font_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, FONT_TEXTURE_SIZE, FONT_TEXTURE_SIZE,
-                 0, GL_RED, GL_UNSIGNED_BYTE, bitmap_buffer);
-
-    // cleanup bitmap data
-    free(bitmap_buffer);
-
-    // set font texture filtering style
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     prog->valid &=
         link_shader_program(prog->vertex, prog->fragment, &prog->program);
@@ -134,76 +184,98 @@ glyph_shader_program_t create_glyph_shader() {
   return glyph_shader;
 }
 
-void draw_glyphs(glyph_shader_program_t* glyph_shader, window_t* window,
-                 glyph_t* data, size_t count) {
-  glyph_vertex_t verts[count * 4];
-  GLushort indices[count * 6];
-
-  float tile_w = (float)window->tile_bounds.width;
-  float tile_h = (float)window->tile_bounds.height;
-  for (int i = 0; i < count; ++i) {
-    float x = (float)data[i].x * tile_w;
-    float y = (float)data[i].y * tile_h;
-
-    stbtt_aligned_quad tex_quad;
-    stbtt_GetBakedQuad(glyph_shader->codepoints, FONT_TEXTURE_SIZE,
-                       FONT_TEXTURE_SIZE, data[i].data, &x, &y, &tex_quad, 1);
-
-    size_t vert_ix = i * 4;
-
-    // top left
-    verts[vert_ix].x = x;
-    verts[vert_ix].y = y;
-    verts[vert_ix].u = tex_quad.s0;
-    verts[vert_ix].v = tex_quad.t0;
-
-    // top right
-    verts[vert_ix + 1].x = x + tile_w;
-    verts[vert_ix + 1].y = y;
-    verts[vert_ix + 1].u = tex_quad.s1;
-    verts[vert_ix + 1].v = tex_quad.t0;
-
-    // bottom left
-    verts[vert_ix + 2].x = x;
-    verts[vert_ix + 2].y = y + tile_h;
-    verts[vert_ix + 2].u = tex_quad.s0;
-    verts[vert_ix + 2].v = tex_quad.t1;
-
-    // bottom right
-    verts[vert_ix + 3].x = x + tile_w;
-    verts[vert_ix + 3].y = y + tile_h;
-    verts[vert_ix + 3].u = tex_quad.s1;
-    verts[vert_ix + 3].v = tex_quad.t1;
-
-    size_t index_ix = i * 6;
-
-    // first triangle
-    indices[index_ix] = vert_ix;
-    indices[index_ix + 1] = vert_ix + 1;
-    indices[index_ix + 2] = vert_ix + 2;
-
-    // second triangle
-    indices[index_ix + 3] = vert_ix + 1;
-    indices[index_ix + 4] = vert_ix + 3;
-    indices[index_ix + 5] = vert_ix + 2;
+void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
+                       draw_op_t* ops, size_t n) {
+  size_t glyph_count = count_glyphs_in_ops_buffer(ops, n);
+  if (glyph_count == 0) {
+    return;
   }
 
-  shader_program_t* prog = &glyph_shader->program;
+  glyph_vertex_t vertices[glyph_count * 4];
+  GLushort indices[glyph_count * 6];
+
+  size_t glyph_index = 0;
+  for (size_t i = 0; i < n; ++i) {
+    // iterate over each draw operation...
+    if (ops[i].type != DRAW_OP_TEXT) {
+      continue;
+    }
+
+    float x_offset = 0;
+    draw_op_t* op = &ops[i];
+    for (size_t j = 0; op->data.text.contents[j] != '\0'; j++) {
+      // iterate over each character in the draw op's buffer...
+
+      size_t vert_ix = glyph_index * 4;
+      size_t index_ix = glyph_index * 6;
+      float x = (float)op->x + x_offset;
+      float y = (float)op->y;
+
+      stbtt_aligned_quad quad;  // current glyph bounds
+      stbtt_GetBakedQuad(shader->codepoints, FONT_TEXTURE_WIDTH,
+                         FONT_TEXTURE_HEIGHT, op->data.text.contents[j], &x, &y,
+                         &quad, 1);
+
+      // increment x-offset by the quad's width
+      x_offset += FONT_PADDING;
+
+      // vertex positions
+      //
+      // top left
+      vertices[vert_ix].x = quad.x0;
+      vertices[vert_ix].y = quad.y0;
+      vertices[vert_ix].u = quad.s0;
+      vertices[vert_ix].v = quad.t0;
+
+      // top right
+      vertices[vert_ix + 1].x = quad.x1;
+      vertices[vert_ix + 1].y = quad.y0;
+      vertices[vert_ix + 1].u = quad.s1;
+      vertices[vert_ix + 1].v = quad.t0;
+
+      // bottom left
+      vertices[vert_ix + 2].x = quad.x0;
+      vertices[vert_ix + 2].y = quad.y1;
+      vertices[vert_ix + 2].u = quad.s0;
+      vertices[vert_ix + 2].v = quad.t1;
+
+      // bottom right
+      vertices[vert_ix + 3].x = quad.x1;
+      vertices[vert_ix + 3].y = quad.y1;
+      vertices[vert_ix + 3].u = quad.s1;
+      vertices[vert_ix + 3].v = quad.t1;
+
+      // indices
+      //
+      // first triangle
+      indices[index_ix] = vert_ix;
+      indices[index_ix + 1] = vert_ix + 1;
+      indices[index_ix + 2] = vert_ix + 2;
+
+      // second triangle
+      indices[index_ix + 3] = vert_ix + 1;
+      indices[index_ix + 4] = vert_ix + 3;
+      indices[index_ix + 5] = vert_ix + 2;
+
+      ++glyph_index;
+    }
+  }
+
+  shader_program_t* prog = &shader->program;
 
   glUseProgram(prog->program);
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, glyph_shader->font_texture);
+  bind_texture(window, shader->font_texture);
 
   // set font texture attribute
-  glUniform1i(glyph_shader->u_sampler, GL_TEXTURE0);
+  glUniform1i(shader->u_sampler, GL_TEXTURE0);
 
   // set orthographic projection matrix
-  glUniformMatrix4fv(glyph_shader->u_ortho, 1, GL_FALSE, &window->ortho[0][0]);
+  glUniformMatrix4fv(shader->u_ortho, 1, GL_FALSE, &window->ortho[0][0]);
 
   // copy vertex data to video memory
   glBindBuffer(GL_ARRAY_BUFFER, prog->vbo[VBO_GLYPH_POSITION]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
   // associate the vertex data with the correct shader attribute
   glEnableVertexAttribArray(ATTR_GLYPH_POSITION);
@@ -229,52 +301,52 @@ void draw_glyphs(glyph_shader_program_t* glyph_shader, window_t* window,
   glUseProgram(0);
 }
 
-static void destroy_shader_program(shader_program_t* prog) {
+static void destroy_shader_program(shader_program_t* shader) {
   // detach shaders from program and delete program
-  if (glIsProgram(prog->program) == GL_TRUE) {
-    if (glIsShader(prog->fragment) == GL_TRUE) {
-      glDetachShader(prog->program, prog->fragment);
+  if (glIsProgram(shader->program) == GL_TRUE) {
+    if (glIsShader(shader->fragment) == GL_TRUE) {
+      glDetachShader(shader->program, shader->fragment);
     }
-    if (glIsShader(prog->vertex) == GL_TRUE) {
-      glDetachShader(prog->program, prog->vertex);
+    if (glIsShader(shader->vertex) == GL_TRUE) {
+      glDetachShader(shader->program, shader->vertex);
     }
-    glDeleteProgram(prog->program);
+    glDeleteProgram(shader->program);
   }
 
   // delete shaders
-  if (glIsShader(prog->fragment) == GL_TRUE) {
-    glDeleteShader(prog->fragment);
+  if (glIsShader(shader->fragment) == GL_TRUE) {
+    glDeleteShader(shader->fragment);
   }
-  if (glIsShader(prog->vertex) == GL_TRUE) {
-    glDeleteShader(prog->vertex);
+  if (glIsShader(shader->vertex) == GL_TRUE) {
+    glDeleteShader(shader->vertex);
   }
 
   // delete vertex buffers
-  if (prog->vbo_count > 0 && prog->vbo != NULL) {
-    glDeleteBuffers(prog->vbo_count, prog->vbo);
-    free(prog->vbo);
+  if (shader->vbo_count > 0 && shader->vbo != NULL) {
+    glDeleteBuffers(shader->vbo_count, shader->vbo);
+    free(shader->vbo);
   }
 
   // delete vertex array
-  if (glIsVertexArray(prog->vao)) {
-    glDeleteVertexArrays(1, &prog->vao);
+  if (glIsVertexArray(shader->vao)) {
+    glDeleteVertexArrays(1, &shader->vao);
   }
 
-  prog->valid = false;
+  shader->valid = false;
 }
 
-void destroy_glyph_shader_program(glyph_shader_program_t* program) {
-  if (program != NULL) {
-    destroy_shader_program(&program->program);
+void destroy_glyph_shader_program(glyph_shader_program_t* shader) {
+  if (shader != NULL) {
+    destroy_shader_program(&shader->program);
 
     // free codepoint data
-    if (program->codepoints != NULL) {
-      free(program->codepoints);
+    if (shader->codepoints != NULL) {
+      free(shader->codepoints);
     }
 
     // delete font texture
-    if (glIsTexture(program->font_texture)) {
-      glDeleteTextures(1, &program->font_texture);
+    if (glIsTexture(shader->font_texture)) {
+      glDeleteTextures(1, &shader->font_texture);
     }
   }
 }

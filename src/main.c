@@ -6,7 +6,7 @@
 
 int main(int argc, const char** argv) {
   config_t config;
-  if (!parse_args(argc, argv, &config)) {
+  if (!parse_config_args(argc, argv, &config)) {
     return -1;
   }
 

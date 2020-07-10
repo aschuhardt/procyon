@@ -17,7 +17,7 @@ static const unsigned short DEFAULT_WINDOW_H = 600;
 static const unsigned short DEFAULT_TILE_W = 16;
 static const unsigned short DEFAULT_TILE_H = 20;
 
-bool parse_args(int argc, const char** argv, config_t* cfg) {
+bool parse_config_args(int argc, const char** argv, config_t* cfg) {
   // setup available command-line arguments and their descriptions
   int script_file_mode = 0;
   int script_package_mode = 0;
