@@ -167,19 +167,11 @@ static void* script_state_alloc(void* ud, void* ptr, size_t osize,
   (void)ud;
   if (ptr != NULL) {
     if (nsize == 0) {
-      log_trace("Lua state free'd a block of size %zu", osize);
-
       free(ptr);
       return NULL;
     }
-
-    log_trace("Lua state realloc'd a block to size %zu (originally size %zu)",
-              nsize, osize);
     return realloc(ptr, nsize);
   }
-
-  log_trace("Lua state is alloc'd a block of size %zu (type is %s)", nsize,
-            get_lua_alloc_type_name(osize));
   return malloc(nsize);
 }
 

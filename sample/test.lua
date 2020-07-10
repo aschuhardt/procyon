@@ -37,5 +37,10 @@ local function key_pressed(key)
   end
 end
 
+local function char_entered(c)
+  log.info("Character entered: %s", c)
+end
+
 input.key_released = nil
-input.key_pressed = key_pressed; 
+input.key_pressed = key_pressed 
+input.char_entered = char_entered

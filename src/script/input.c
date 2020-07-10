@@ -14,6 +14,9 @@
 
 #define FUNC_EVENTS_KEYPRESS "key_pressed"
 #define FUNC_EVENTS_KEYRELEASED "key_released"
+#define FUNC_EVENTS_CHAR "char_entered"
+
+#define CHAR_MAX_CODEPOINT 255
 
 static inline lua_State* get_lua_env_from_glfwwindow(GLFWwindow* w) {
   return ((script_env_t*)((window_t*)glfwGetWindowUserPointer(w))->script_state)
@@ -44,40 +47,36 @@ static void glfw_key_callback(GLFWwindow* w, int key, int scancode, int action,
   }
 }
 
-/*
- * default input handlers (can help with debugging and documenting
- * functionality)
- */
-
-static int default_key_pressed(lua_State* L) {
-  verify_arg_count(L, 1, __func__);
-  if (lua_isinteger(L, -1)) {
-    log_debug("%s.%s (key = %d) was unhandled", TBL_INPUT, FUNC_EVENTS_KEYPRESS,
-              lua_tointeger(L, -1));
+static void glfw_char_callback(GLFWwindow* w, unsigned int codepoint) {
+  // for the time being we're using a font that only supports so-called
+  // "extended ASCII", up to value 255
+  if (codepoint > CHAR_MAX_CODEPOINT) {
+    return;
   }
-  return 0;
-}
 
-static int default_key_released(lua_State* L) {
-  verify_arg_count(L, 1, __func__);
-  if (lua_isinteger(L, -1)) {
-    log_debug("%s.%s (key = %d) was unhandled", TBL_INPUT,
-              FUNC_EVENTS_KEYRELEASED, lua_tointeger(L, -1));
+  lua_State* L = get_lua_env_from_glfwwindow(w);
+
+  lua_getglobal(L, TBL_INPUT);
+  if (lua_isnoneornil(L, -1)) {
+    log_warn("The global %s table does not exist", TBL_INPUT);
+    return;
   }
-  return 0;
+
+  lua_getfield(L, -1, FUNC_EVENTS_CHAR);
+  if (lua_isfunction(L, -1)) {
+    char buffer[2] = {(char)codepoint,
+                      '\0'};  // pass the truncated codepoint, followed by a
+                              // null-terminator as a two-byte string
+    lua_pushstring(L, &buffer[0]);
+    if (lua_pcall(L, 1, 0, 0) == LUA_ERRRUN) {
+      log_error("Error calling %s.%s: %s", TBL_INPUT, FUNC_EVENTS_CHAR,
+                lua_tostring(L, -1));
+    }
+  }
 }
 
 static void add_event_handler_table(lua_State* L) {
   lua_newtable(L);
-
-  // define the default key-pressed handler
-  lua_pushcfunction(L, default_key_pressed);
-  lua_setfield(L, -2, FUNC_EVENTS_KEYPRESS);
-
-  // define the default key-released handler
-  lua_pushcfunction(L, default_key_released);
-  lua_setfield(L, -2, FUNC_EVENTS_KEYRELEASED);
-
   lua_setglobal(L, TBL_INPUT);
 }
 
@@ -110,4 +109,5 @@ void add_input(lua_State* L, script_env_t* env) {
   add_event_handler_table(L);
   add_keys(L);
   glfwSetKeyCallback((GLFWwindow*)env->window->glfw_win, glfw_key_callback);
+  glfwSetCharCallback((GLFWwindow*)env->window->glfw_win, glfw_char_callback);
 }
