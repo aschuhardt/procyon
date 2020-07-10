@@ -159,6 +159,7 @@ glyph_shader_program_t create_glyph_shader(window_t* window) {
   glyph_shader_program_t glyph_shader;
   glyph_shader.codepoints = NULL;
   glyph_shader.window = window;
+  glyph_shader.font_texture = 0;
 
   shader_program_t* prog = &glyph_shader.program;
   if ((prog->valid =

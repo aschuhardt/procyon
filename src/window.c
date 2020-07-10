@@ -179,11 +179,13 @@ void destroy_window(window_t* window) {
 void append_string_draw_op(window_t* window, int x, int y,
                            const char* contents) {
   draw_op_buffer_t* draw_ops = &window->draw_ops;
-  if (draw_ops->length + 1 > draw_ops->capacity) {
+  draw_ops->length++;
+  size_t new_index = draw_ops->length - 1;
+  if (draw_ops->length >= draw_ops->capacity) {
     expand_draw_ops_buffer(draw_ops);
   }
 
-  draw_ops->buffer[draw_ops->length++] = create_draw_op_string(x, y, contents);
+  draw_ops->buffer[new_index] = create_draw_op_string(x, y, contents);
   set_window_state_dirty(window);
 }
 

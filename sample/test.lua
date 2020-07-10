@@ -27,7 +27,10 @@ local function key_pressed(key)
     x = x + delta
   end
 
-  draw.string(x, y, "\x01 Hello! \x02")
+  for i = 0, 15
+  do
+    draw.string(x + i * 20, y + i * 20, "\x01 Hello! \x02")
+  end 
 
   if key == keys.KEY_U then
     window.font_size = 64
