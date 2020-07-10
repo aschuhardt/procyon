@@ -8,6 +8,7 @@
 
 #define FUNC_CLOSE "close"
 #define FUNC_REFRESH "refresh"
+#define FUNC_SET_FONT_SIZE
 
 static int close_window(lua_State* L) {
   if (!verify_arg_count(L, 0, __func__)) {
