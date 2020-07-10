@@ -1,6 +1,8 @@
 #include <GLFW/glfw3.h>
 #include <log.h>
+#include <lua.h>
 
+#include "script.h"
 #include "script/environment.h"
 #include "script/keys.h"
 #include "window.h"

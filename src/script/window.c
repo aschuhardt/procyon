@@ -1,5 +1,7 @@
 #include "window.h"
 
+#include <lua.h>
+
 #include "script/environment.h"
 
 #define TBL_WINDOW "window"

@@ -22,8 +22,7 @@ int main(int argc, const char** argv) {
     }
 
     // load scripts from disk according to configuration settings
-    if (load_scripts(script_env, config.script_mode, config.script_entry) !=
-        LOAD_SUCCESS) {
+    if (!load_scripts(script_env, config.script_entry)) {
       log_error("Failed to load script from %s", config.script_entry);
     }
 

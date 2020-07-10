@@ -27,9 +27,11 @@ local function key_pressed(key)
     x = x + delta
   end
 
-  draw.string(x, y, string.format("Tile width: %d x %d", width, height))
-  draw.string(x + 20, y + 20, string.format("Tile width: %d x %d", width, height))
-  draw.string(x + 30, y + 10, string.format("Tile width: %d x %d", width, height))
+  draw.string(x, y, "\x01 Hello! \x02")
+
+  if key == keys.KEY_U then
+    window.font_size = 64
+  end
 end
 
 input.key_released = nil

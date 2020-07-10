@@ -7,13 +7,13 @@
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H
 
-#include <lua.h>
 #include <stdbool.h>
-
-#include "script.h"
 
 #define GLOBAL_ENV_PTR "ptr_env"
 #define GLOBAL_WINDOW_PTR "ptr_window"
+
+typedef struct lua_State lua_State;
+typedef struct script_env_t script_env_t;
 
 void add_globals(lua_State* L, script_env_t* env);
 void add_input(lua_State* L, script_env_t* env);

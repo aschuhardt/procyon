@@ -1,4 +1,5 @@
 #include <log.h>
+#include <lua.h>
 #include <string.h>
 
 #include "script/environment.h"

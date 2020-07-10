@@ -46,7 +46,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 add_custom_target(script_test
-  COMMAND procyon --debug -f -e "${PROJECT_SOURCE_DIR}/sample/test.lua"
+  COMMAND procyon --debug -e "${PROJECT_SOURCE_DIR}/sample/test.lua"
   DEPENDS procyon
   USES_TERMINAL)
 

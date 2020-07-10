@@ -7,6 +7,8 @@
 struct window_t;
 struct config_t;
 struct draw_op_t;
+struct GLFWwindow;
+struct script_env_t;
 
 typedef enum draw_state_t {
   WINDOW_STATE_WAIT,
@@ -32,13 +34,13 @@ typedef struct window_t {
   tile_bounds_t tile_bounds;
   window_bounds_t bounds;
   draw_state_t state;
-  unsigned int last_bound_texture;  // used to avoid re-binding already textures
+  unsigned int last_bound_texture;  // used to avoid re-binding textures
                                     // that are already bound
   float ortho[4][4];
-  void* glfw_win;
-  void* script_state;  // assigned upon script creation, for use during event
-                       // callbacks (script_state_t)
-  void* glyph_shader;
+  struct GLFWwindow* glfw_win;
+  struct script_env_t* script_state;  // assigned upon script creation, for use
+                                      // during event callbacks (script_state_t)
+  struct glyph_shader_program_t* glyph_shader;
   bool quitting;
 } window_t;
 

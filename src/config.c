@@ -19,8 +19,6 @@ static const unsigned short DEFAULT_TILE_H = 20;
 
 bool parse_config_args(int argc, const char** argv, config_t* cfg) {
   // setup available command-line arguments and their descriptions
-  int script_file_mode = 0;
-  int script_package_mode = 0;
   int log_level = 0;
   const char* entry_path = NULL;
 
@@ -47,11 +45,6 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
       OPT_GROUP("Script loading"),
       OPT_STRING('e', "entry", &entry_path,
                  "script entry point (.lua file name)"),
-      OPT_BOOLEAN('f', "file", &script_file_mode,
-                  "load scripts in file-mode, as individual files on-disk"),
-      OPT_BOOLEAN(
-          'p', "package", &script_package_mode,
-          "load scripts in package-mode, from a single compressed file"),
       OPT_GROUP("Visuals"),
       OPT_INTEGER('w', "width", &cfg->window_w, "window width"),
       OPT_INTEGER('h', "height", &cfg->window_h, "window height"),
@@ -80,13 +73,6 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
   // set log level
   log_set_level(log_level ? log_level : LOG_ERROR);
 
-  // ensure that ONLY ONE of the script modes was selected
-  if ((script_package_mode & script_file_mode) != 0 ||
-      script_package_mode == script_file_mode) {
-    log_error("Didn't specify a script mode, or specified more than one");
-    return false;
-  }
-
   // ensure that an entry point was provided and that it's of a valid length
   size_t max_path_length = sizeof(cfg->script_entry) / sizeof(char);
   if (entry_path != NULL &&
@@ -103,12 +89,7 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
     return false;
   }
 
-  // args are valid, setup the config object and return
-  cfg->script_mode =
-      script_package_mode != 0 ? SCRIPT_MODE_PACKAGED : SCRIPT_MODE_RAW;
-
   log_debug("Script entry path: %s", cfg->script_entry);
-  log_debug("Script mode: %d", cfg->script_mode);
 
   return true;
 }

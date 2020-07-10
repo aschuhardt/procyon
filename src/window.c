@@ -200,7 +200,7 @@ bool is_window_texture_bound(window_t* w, unsigned int tex) {
 }
 
 void begin_loop(window_t* window) {
-  glyph_shader_program_t glyph_shader = create_glyph_shader();
+  glyph_shader_program_t glyph_shader = create_glyph_shader(window);
 
   // store a reference to the glyph shader so that script functions can modify
   // text rendering

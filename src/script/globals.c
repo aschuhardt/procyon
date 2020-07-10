@@ -1,3 +1,6 @@
+#include <lua.h>
+
+#include "script.h"
 #include "script/environment.h"
 
 void add_globals(lua_State* L, script_env_t* env) {

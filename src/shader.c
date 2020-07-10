@@ -109,6 +109,10 @@ static void load_glyph_font(glyph_shader_program_t* shader, const float* size) {
     free(shader->codepoints);
   }
 
+  if (glIsTexture(shader->font_texture)) {
+    glDeleteTextures(1, &shader->font_texture);
+  }
+
   shader->codepoints = malloc(sizeof(stbtt_bakedchar) * FONT_CODEPOINTS);
 
   stbtt_BakeFontBitmap(embed_vga_ttf, 0, (size == NULL ? FONT_SIZE : *size),
@@ -118,7 +122,7 @@ static void load_glyph_font(glyph_shader_program_t* shader, const float* size) {
 
   // create font texture from bitmap
   glGenTextures(1, &shader->font_texture);
-  glBindTexture(GL_TEXTURE_2D, shader->font_texture);
+  bind_texture(shader->window, shader->font_texture);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, FONT_TEXTURE_WIDTH,
                FONT_TEXTURE_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap_buffer);
 
@@ -151,9 +155,10 @@ static size_t count_glyphs_in_ops_buffer(draw_op_t* ops, size_t n) {
   return glyph_count;
 }
 
-glyph_shader_program_t create_glyph_shader() {
+glyph_shader_program_t create_glyph_shader(window_t* window) {
   glyph_shader_program_t glyph_shader;
   glyph_shader.codepoints = NULL;
+  glyph_shader.window = window;
 
   shader_program_t* prog = &glyph_shader.program;
   if ((prog->valid =
@@ -212,9 +217,9 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
       float y = (float)op->y;
 
       stbtt_aligned_quad quad;  // current glyph bounds
-      stbtt_GetBakedQuad(shader->codepoints, FONT_TEXTURE_WIDTH,
-                         FONT_TEXTURE_HEIGHT, op->data.text.contents[j], &x, &y,
-                         &quad, 1);
+      stbtt_GetBakedQuad((const stbtt_bakedchar*)shader->codepoints,
+                         FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT,
+                         op->data.text.contents[j], &x, &y, &quad, 1);
 
       // increment x-offset by the quad's width
       x_offset += FONT_PADDING;

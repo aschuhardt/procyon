@@ -97,8 +97,8 @@ static size_t get_file_dir_length(char* path) {
 
   if (last_segment == NULL) {
     return strnlen(path, PATH_MAX);
-  }     return last_segment - path;
- 
+  }
+  return last_segment - path;
 }
 
 static void add_package_path_from_entry(lua_State* L, char* path) {
@@ -200,21 +200,11 @@ void destroy_script_env(script_env_t* env) {
   free(env);
 }
 
-load_result_t load_scripts(script_env_t* env, script_mode_t mode, char* path) {
+bool load_scripts(script_env_t* env, char* path) {
   lua_State* L = (lua_State*)env->env;
   luaL_openlibs(L);
 
-  bool success = false;
-  switch (mode) {
-    case SCRIPT_MODE_RAW:
-      success = load_script_raw(L, path);
-      break;
-    case SCRIPT_MODE_PACKAGED:
-      success = load_script_package(L, path);
-      break;
-  }
-
-  if (success) {
+  if (load_script_raw(L, path)) {
     add_globals(L, env);
     add_utilities(L);
     add_input(L, env);
@@ -223,8 +213,13 @@ load_result_t load_scripts(script_env_t* env, script_mode_t mode, char* path) {
 
     if (lua_pcall(L, 0, LUA_MULTRET, 0) == LUA_ERRRUN) {
       log_error("%s", lua_tostring(L, -1));
+      return false;
     }
+
+    // script is loaded without errors
+    return true;
   }
 
-  return success ? LOAD_SUCCESS : LOAD_FAILURE;
+  // failed to load the script
+  return false;
 }

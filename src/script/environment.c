@@ -1,6 +1,7 @@
 #include "script/environment.h"
 
 #include <log.h>
+#include <lua.h>
 
 bool verify_arg_count(lua_State* L, int n, const char* name) {
   int arg_count = lua_gettop(L);
