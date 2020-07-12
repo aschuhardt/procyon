@@ -12,6 +12,7 @@
 #include "shader.h"
 #include "config.h"
 #include "drawing.h"
+#include "script.h"
 
 static const size_t INITIAL_DRAW_OPS_BUFFER_SIZE = 32;
 
@@ -42,9 +43,11 @@ static void set_ortho_projection(window_t* window) {
   int width = window->bounds.width;
   int height = window->bounds.height;
 
-  for (int i = 0; i < 4; ++i) {
-    memset(&window->ortho[i][0], 0, 4 * sizeof(float));
-  }
+  // zero-out matrix
+  memset(&window->ortho[0][0], 0, 4 * sizeof(float));
+  memset(&window->ortho[1][0], 0, 4 * sizeof(float));
+  memset(&window->ortho[2][0], 0, 4 * sizeof(float));
+  memset(&window->ortho[3][0], 0, 4 * sizeof(float));
 
   window->ortho[0][0] = 2.0F / (float)width;
   window->ortho[0][3] = -1.0F;
@@ -66,7 +69,11 @@ static void window_resized(GLFWwindow* w, int width, int height) {
 
   set_ortho_projection(window);
 
-  set_window_state_dirty(window);
+  // trigger any script-defined resize events
+  script_env_t* script = window->script_state;
+  if (script->on_resized != NULL) {
+    script->on_resized(window->script_state, width, height);
+  }
 }
 
 static void set_window_callbacks(GLFWwindow* w) {
@@ -76,11 +83,6 @@ static void set_window_callbacks(GLFWwindow* w) {
 static void set_default_window_bounds(window_t* w, config_t* cfg) {
   w->bounds.width = cfg->window_w;
   w->bounds.height = cfg->window_h;
-}
-
-static void set_default_tile_bounds(window_t* w, config_t* cfg) {
-  w->tile_bounds.width = cfg->tile_w;
-  w->tile_bounds.height = cfg->tile_h;
 }
 
 /*
@@ -146,13 +148,10 @@ window_t* create_window(config_t* cfg) {
 
   set_default_window_bounds(window, cfg);
   set_gl_window_pointer(window);
-  set_default_tile_bounds(window, cfg);
-  set_window_state_dirty(window);
   set_ortho_projection(window);
   init_draw_ops_buffer(&window->draw_ops);
 
   window->script_state = NULL;
-  window->glyph_shader = NULL;
   window->quitting = false;
   window->last_bound_texture = UINT32_MAX;
 
@@ -186,12 +185,7 @@ void append_string_draw_op(window_t* window, int x, int y,
   }
 
   draw_ops->buffer[new_index] = create_draw_op_string(x, y, contents);
-  set_window_state_dirty(window);
 }
-
-void set_window_state_dirty(window_t* w) { w->state = WINDOW_STATE_DIRTY; }
-
-void set_window_state_wait(window_t* w) { w->state = WINDOW_STATE_WAIT; }
 
 void set_window_bound_texture(window_t* w, unsigned int tex) {
   w->last_bound_texture = tex;
@@ -202,29 +196,39 @@ bool is_window_texture_bound(window_t* w, unsigned int tex) {
 }
 
 void begin_loop(window_t* window) {
+  // set up shader used for drawing text
   glyph_shader_program_t glyph_shader = create_glyph_shader(window);
 
-  // store a reference to the glyph shader so that script functions can modify
-  // text rendering
-  window->glyph_shader = &glyph_shader;
+  // a pointer to the script environment is required in order to call certain
+  // events
+  script_env_t* script = window->script_state;
+
+  if (script->on_load != NULL) {
+    script->on_load(script);
+  }
 
   GLFWwindow* w = (GLFWwindow*)window->glfw_win;
   while (!glfwWindowShouldClose(w) && !window->quitting) {
-    glfwWaitEventsTimeout(0.5F);
+    glfwWaitEventsTimeout(2.0F);
 
-    if (window->state == WINDOW_STATE_DIRTY) {
-      glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
-      glClear(GL_COLOR_BUFFER_BIT);
+    glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-      if (window->draw_ops.length > 0 && glyph_shader.program.valid) {
-        draw_glyph_shader(&glyph_shader, window, window->draw_ops.buffer,
-                          window->draw_ops.length);
-        clear_draw_ops_buffer(&window->draw_ops);
-      }
-
-      glfwSwapBuffers(w);
-      set_window_state_wait(window);
+    if (script->on_draw != NULL) {
+      script->on_draw(script);
     }
+
+    if (window->draw_ops.length > 0 && glyph_shader.program.valid) {
+      draw_glyph_shader(&glyph_shader, window, window->draw_ops.buffer,
+                        window->draw_ops.length);
+      clear_draw_ops_buffer(&window->draw_ops);
+    }
+
+    glfwSwapBuffers(w);
+  }
+
+  if (script->on_unload != NULL) {
+    script->on_unload(script);
   }
 
   destroy_glyph_shader_program(&glyph_shader);

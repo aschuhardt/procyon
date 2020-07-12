@@ -20,7 +20,7 @@
 
 static inline lua_State* get_lua_env_from_glfwwindow(GLFWwindow* w) {
   return ((script_env_t*)((window_t*)glfwGetWindowUserPointer(w))->script_state)
-      ->env;
+      ->L;
 }
 
 static void glfw_key_callback(GLFWwindow* w, int key, int scancode, int action,

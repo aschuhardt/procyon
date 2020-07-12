@@ -11,7 +11,7 @@
 
 #define MAX_STRING_DRAW_LENGTH 1024
 
-int draw_string(lua_State* L) {
+static int draw_string(lua_State* L) {
   if (!verify_arg_count(L, 3, __func__)) {
     return 0;
   }

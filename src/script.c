@@ -177,23 +177,27 @@ static void* script_state_alloc(void* ud, void* ptr, size_t osize,
 
 script_env_t* create_script_env(window_t* window) {
   script_env_t* env = malloc(sizeof(script_env_t));
-  env->env = lua_newstate(script_state_alloc, NULL);
+  env->L = lua_newstate(script_state_alloc, NULL);
   window->script_state =
       env;  // window gets a pointer back to the script_state_t
             // object for use during input callbacks
   env->window = window;
+  env->on_draw = NULL;
+  env->on_resized = NULL;
+  env->on_load = NULL;
+  env->on_unload = NULL;
   return env;
 }
 
 void destroy_script_env(script_env_t* env) {
-  if (env != NULL && env->env != NULL) {
-    lua_close((lua_State*)env->env);
+  if (env != NULL && env->L != NULL) {
+    lua_close((lua_State*)env->L);
   }
   free(env);
 }
 
 bool load_scripts(script_env_t* env, char* path) {
-  lua_State* L = (lua_State*)env->env;
+  lua_State* L = (lua_State*)env->L;
   luaL_openlibs(L);
 
   if (load_script_raw(L, path)) {

@@ -7,15 +7,12 @@
 #include "argparse.h"
 
 static const char* const usage[] = {
-    "File-mode:    procyon -f|--file -e|--entry LUA_SCRIPT_PATH",
-    "Package-mode: procyon -p|--package -e|--entry "
-    "SCRIPT_PACKAGE_PATH",
-    NULL};
+    "Usage:    procyon [--(log level)] -e|--entry LUA_SCRIPT_PATH\n"
+    "Log levels: error (default), warn, info, debug, trace",
+    "SCRIPT_PACKAGE_PATH", NULL};
 
 static const unsigned short DEFAULT_WINDOW_W = 800;
 static const unsigned short DEFAULT_WINDOW_H = 600;
-static const unsigned short DEFAULT_TILE_W = 16;
-static const unsigned short DEFAULT_TILE_H = 20;
 
 bool parse_config_args(int argc, const char** argv, config_t* cfg) {
   // setup available command-line arguments and their descriptions
@@ -24,8 +21,6 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
 
   cfg->window_w = DEFAULT_WINDOW_W;
   cfg->window_h = DEFAULT_WINDOW_H;
-  cfg->tile_w = DEFAULT_TILE_W;
-  cfg->tile_h = DEFAULT_TILE_H;
 
   memset(cfg->script_entry, '\0', sizeof(cfg->script_entry) / sizeof(char));
 
@@ -48,8 +43,6 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
       OPT_GROUP("Visuals"),
       OPT_INTEGER('w', "width", &cfg->window_w, "window width"),
       OPT_INTEGER('h', "height", &cfg->window_h, "window height"),
-      OPT_INTEGER(0, "tile-width", &cfg->tile_w, "tile width"),
-      OPT_INTEGER(0, "tile-height", &cfg->tile_w, "tile height"),
       OPT_END(),
   };
 

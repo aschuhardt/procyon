@@ -35,7 +35,7 @@ static const size_t ATTR_GLYPH_TEXCOORDS = 1;
 static const float FONT_SIZE = 16.0F;
 static const int FONT_TEXTURE_WIDTH = 256;
 static const int FONT_TEXTURE_HEIGHT = 128;
-static const float FONT_PADDING = 8.0F;
+static const float FONT_WIDTH = 8.0F;
 
 // the font we're using supports full "extended" ASCII (0 thru 256)
 static const int FONT_CODEPOINTS = 256;
@@ -223,7 +223,7 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
                          op->data.text.contents[j], &x, &y, &quad, 1);
 
       // increment x-offset by the quad's width
-      x_offset += FONT_PADDING;
+      x_offset += FONT_WIDTH;
 
       // vertex positions
       //
