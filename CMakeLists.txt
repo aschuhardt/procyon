@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.17.2)
 project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message("Building in debug mode")
@@ -14,12 +13,6 @@ else()
 endif()
 
 add_subdirectory(lib)
-
-find_package(Lua REQUIRED)
-
-if(NOT LUA_FOUND)
-  message(SEND_ERROR "Could not find Lua libraries")
-endif()
 
 set(SU_SOURCE
   src/main.c
@@ -39,7 +32,7 @@ add_executable(procyon ${SU_SOURCE})
 target_include_directories(procyon 
   PRIVATE include ${LUA_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${STB_INCLUDE_DIR})
 target_link_libraries(procyon 
-  PRIVATE ${LUA_LIBRARIES} argparse log glad glfw)
+  PRIVATE ${LUA_LIBRARIES} argparse log glad glfw liblua)
 set_property(TARGET procyon PROPERTY C_STANDARD 11)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(procyon PRIVATE EXPORT_GLYPH_BITMAP=1)

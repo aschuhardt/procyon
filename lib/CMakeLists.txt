@@ -1,6 +1,11 @@
 add_subdirectory(glad)
 add_subdirectory(glfw)
 
+add_subdirectory(lua)
+target_compile_options(liblua PRIVATE
+  -DLUA_INT_TYPE=LUA_INT_INT
+  -DLUA_FLOAT_TYPE=LUA_FLOAT_FLOAT)
+
 add_library(tinydir INTERFACE)
 target_include_directories(tinydir 
   INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/tinydir")
