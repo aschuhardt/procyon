@@ -7,7 +7,7 @@
 
 int main(int argc, const char** argv) {
   if (argc < 4) {
-    fprintf(stderr, "Usage: genhexer <infile> <outfile> <name>\n");
+    fputs("Usage: genhexer <infile> <outfile> <name>\n", stderr);
     return -1;
   }
 
