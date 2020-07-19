@@ -13,11 +13,11 @@ TODO:
 - [x] Tightly-coupled Lua integration
 - [x] Event-based input handling (keyboard only for now)
 - [x] Compile-time asset embedding (currently done in CMakeLists.txt)
-- [] More flexible non-cmake asset pipeline
+- [ ] More flexible non-cmake asset pipeline
 - [x] Bitmap font rendering
-- [] Colored text
-- [] Graphics primitives
-- [] API calls for generating continuous 1D/2D/3D noise (via stb_perlin.h)
+- [ ] Colored text
+- [ ] Graphics primitives
+- [ ] API calls for generating continuous 1D/2D/3D noise (via stb_perlin.h)
 
 ## Usage
 
