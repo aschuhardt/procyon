@@ -1,5 +1,4 @@
 # Procyon Engine
-
 A lightweight game engine written in C.
 
 Goals:
@@ -20,7 +19,6 @@ TODO:
 - [ ] API calls for generating continuous 1D/2D/3D noise (via stb_perlin.h)
 
 ## Usage
-
 The engine is run via the `procyon` executable.
 
 By default, the engine will attempt to load a file called `script/main.lua`.  This, along with several other settings, can be overridden via command-line options:
@@ -53,11 +51,9 @@ Visuals
 The scripting API itself is described below.
 
 ## Modules
-
 Procyon uses Lua for scripting.  High-level objects are grouped into global tables that I refer to as "modules".  Modules consist of various pieces of functionality bearing similar areas of concern.
 
 ### Window
-
 #### Functions
 - `window.close()` - Returns nothing.  Closes the window.
 - `window.size()` - Returns two integers (width and height), representing the dimensions of the window in pixels.
@@ -70,12 +66,10 @@ Procyon uses Lua for scripting.  High-level objects are grouped into global tabl
 - `window.on_unload`
 
 ### Drawing
-
 #### Functions
 - `draw.string(x, y, contents)`
 
 ### Input
-
 #### Fields
 - `input.on_key_pressed`
 - `input.on_key_released`
@@ -85,7 +79,6 @@ Procyon uses Lua for scripting.  High-level objects are grouped into global tabl
 - `keys[k].value`
 
 ### Utility
-
 #### Functions
 - `log.info(contents)`
 - `log.error(contents)`
