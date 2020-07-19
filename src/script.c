@@ -82,11 +82,6 @@ static const char* raw_file_reader(lua_State* L, void* data, size_t* size) {
   return rdr_state->buffer;
 }
 
-static bool load_script_package(lua_State* L, char* path) {
-  log_error("Package loading is not implemented yet.");
-  return false;
-}
-
 static size_t get_file_dir_length(char* path) {
 #ifdef WIN32
   char* last_segment = strrchr(path, '\\');
@@ -97,6 +92,7 @@ static size_t get_file_dir_length(char* path) {
   if (last_segment == NULL) {
     return strnlen(path, PATH_MAX);
   }
+
   return last_segment - path;
 }
 
@@ -126,7 +122,7 @@ static bool load_script_raw(lua_State* L, char* path) {
   log_debug("Attempting to load raw script file %s", path);
 
   FILE* handle = fopen(path, "rb");
-  if (handle == NULL) {
+  if (handle == NULL || ferror(handle)) {
     log_error("Could not open file %s", path);
     return false;
   }

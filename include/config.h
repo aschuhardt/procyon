@@ -7,7 +7,7 @@
 
 typedef struct config_t {
   char script_entry[CONFIG_SCRIPT_ENTRY_BUFFER_LENGTH];
-  unsigned short window_w, window_h;
+  int window_w, window_h;
   float glyph_scale;
 } config_t;
 

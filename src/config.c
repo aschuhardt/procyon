@@ -5,13 +5,15 @@
 
 #include "argparse.h"
 
-static const char* const usage[] = {
-    "Usage:    procyon [--(log level)] -e|--entry LUA_SCRIPT_PATH\n"
+static const char* usage[] = {
+    "procyon [--(log level)] [-e|--entry (file path)]\n"
     "Log levels: error (default), warn, info, debug, trace",
-    "SCRIPT_PACKAGE_PATH", NULL};
+    NULL};
 
-static const unsigned short DEFAULT_WINDOW_W = 800;
-static const unsigned short DEFAULT_WINDOW_H = 600;
+static const char DEFAULT_SCRIPT_PATH[] = "script/main.lua";
+
+static const int DEFAULT_WINDOW_W = 800;
+static const int DEFAULT_WINDOW_H = 600;
 
 bool parse_config_args(int argc, const char** argv, config_t* cfg) {
   // setup available command-line arguments and their descriptions
@@ -25,6 +27,7 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
   memset(cfg->script_entry, '\0', sizeof(cfg->script_entry) / sizeof(char));
 
   struct argparse_option options[] = {
+      OPT_GROUP("General"),
       OPT_HELP(),
       OPT_GROUP("Logging"),
       OPT_BIT(0, "error", &log_level, "enable ERROR log level", NULL, LOG_ERROR,
@@ -39,7 +42,7 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
               OPT_NONEG),
       OPT_GROUP("Script loading"),
       OPT_STRING('e', "entry", &entry_path,
-                 "script entry point (.lua file name)"),
+                 "script entry point (default = 'script/main.lua')"),
       OPT_GROUP("Visuals"),
       OPT_INTEGER('w', "width", &cfg->window_w, "window width"),
       OPT_INTEGER('h', "height", &cfg->window_h, "window height"),
@@ -55,12 +58,6 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
       "A GPU-accelerated tile-based game engine with scripting via Lua",
       "Created by Addison Schuhardt");
 
-  // if no arguments are provided
-  if (argc <= 1) {
-    log_error("Too few arguments provided");
-    return false;
-  }
-
   // parse arguments
   argparse_parse(&argparse, argc, argv);
 
@@ -69,13 +66,10 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
 
   // ensure that an entry point was provided and that it's of a valid length
   size_t max_path_length = sizeof(cfg->script_entry) / sizeof(char);
-  if (entry_path != NULL &&
-      strnlen(entry_path, max_path_length) < max_path_length) {
-    memset(cfg->script_entry, '\0', max_path_length);
+  if (entry_path == NULL) {
+    memcpy(cfg->script_entry, DEFAULT_SCRIPT_PATH, sizeof(DEFAULT_SCRIPT_PATH));
+  } else if (strnlen(entry_path, max_path_length) < max_path_length) {
     memcpy(cfg->script_entry, entry_path, strnlen(entry_path, max_path_length));
-  } else if (entry_path == NULL) {
-    log_error("A script entry path is required");
-    return false;
   } else {
     log_error(
         "The script entry path must be fewer than %zu characters in length",
