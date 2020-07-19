@@ -36,11 +36,13 @@ end
 
 local function on_draw()
   draw.string(x, y, input_text)
-  draw.string(x, y + 20, input_text)
+  draw.string(x, y + 36, input_text)
 end
 
 local function on_load()
   log.info("Hello!")
+  local w, h = window.glyph_size()
+  log.info(string.format("Glyph size: %dx%d", w, h))
 end
 
 local function on_unload()

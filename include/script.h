@@ -1,5 +1,4 @@
 #ifndef SCRIPT_H
-
 #define SCRIPT_H
 
 #include <stdbool.h>

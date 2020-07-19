@@ -6,7 +6,6 @@
 // clang-format on
 
 #include <log.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "shader.h"
@@ -85,6 +84,11 @@ static void set_default_window_bounds(window_t* w, config_t* cfg) {
   w->bounds.height = cfg->window_h;
 }
 
+static void set_default_glyph_bounds(window_t* w) {
+  w->glyph.width = -1;
+  w->glyph.height = -1;
+}
+
 /*
  * Returns false upon failing to initialize a GLFW window
  */
@@ -147,6 +151,7 @@ window_t* create_window(config_t* cfg) {
   window_t* window = malloc(sizeof(window_t));
 
   set_default_window_bounds(window, cfg);
+  set_default_glyph_bounds(window);
   set_gl_window_pointer(window);
   set_ortho_projection(window);
   init_draw_ops_buffer(&window->draw_ops);
@@ -154,6 +159,7 @@ window_t* create_window(config_t* cfg) {
   window->script_state = NULL;
   window->quitting = false;
   window->last_bound_texture = UINT32_MAX;
+  window->config = cfg;
 
   return window;
 }

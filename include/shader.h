@@ -15,10 +15,11 @@ typedef struct shader_program_t {
 } shader_program_t;
 
 typedef struct glyph_shader_program_t {
-  shader_program_t program;
   unsigned int u_ortho, u_sampler, font_texture;
+  int texture_w, texture_h;
   struct window_t* window;
   struct stbtt_bakedchar* codepoints;
+  shader_program_t program;
 } glyph_shader_program_t;
 
 /*

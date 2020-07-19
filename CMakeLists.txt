@@ -9,7 +9,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -DDEBUG -ggdb -g3")
 else()
   message("Building in release mode")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os")
 endif()
 
 add_subdirectory(lib)
@@ -39,7 +39,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 add_custom_target(script_test
-  COMMAND procyon --debug -e "${PROJECT_SOURCE_DIR}/sample/test.lua"
+  COMMAND procyon --debug -s 2.0 -e "${PROJECT_SOURCE_DIR}/sample/test.lua"
   DEPENDS procyon
   USES_TERMINAL)
 
@@ -55,19 +55,19 @@ add_executable(genhexer util/genhexer.c)
 list(APPEND EMBED_FILES
   glyph.vert
   glyph.frag
-  LessPerfectDOSVGA.ttf)
+  cp437.png)
 
 # ... and their corresponding header file names ...
 list(APPEND EMBED_HEADERS
   glyph_vert.h
   glyph_frag.h
-  vga_ttf.h)
+  tileset.h)
 
 # ... and specify target names for each embedded object
 list(APPEND EMBED_TARGETS
   embed_glyph_vert
   embed_glyph_frag
-  embed_vga_ttf)
+  embed_tileset)
 
 # Convert each embedded resource into a C header file
 foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARGETS)

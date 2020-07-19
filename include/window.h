@@ -14,6 +14,10 @@ typedef struct window_bounds_t {
   int width, height;
 } window_bounds_t;
 
+typedef struct glyph_bounds_t {
+  int width, height;
+} glyph_bounds_t;
+
 typedef struct draw_op_buffer_t {
   struct draw_op_t* buffer;
   size_t length;
@@ -23,12 +27,13 @@ typedef struct draw_op_buffer_t {
 typedef struct window_t {
   draw_op_buffer_t draw_ops;
   window_bounds_t bounds;
+  glyph_bounds_t glyph;
   unsigned int last_bound_texture;  // used to avoid re-binding textures
                                     // that are already bound
   float ortho[4][4];
   struct GLFWwindow* glfw_win;
-  struct script_env_t* script_state;  // assigned upon script creation, for use
-                                      // during event callbacks (script_state_t)
+  struct script_env_t* script_state;
+  struct config_t* config;
   bool quitting;
 } window_t;
 

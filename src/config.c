@@ -1,7 +1,6 @@
 #include "config.h"
 
 #include <log.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "argparse.h"
@@ -21,6 +20,7 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
 
   cfg->window_w = DEFAULT_WINDOW_W;
   cfg->window_h = DEFAULT_WINDOW_H;
+  cfg->glyph_scale = 1.0F;
 
   memset(cfg->script_entry, '\0', sizeof(cfg->script_entry) / sizeof(char));
 
@@ -43,6 +43,7 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
       OPT_GROUP("Visuals"),
       OPT_INTEGER('w', "width", &cfg->window_w, "window width"),
       OPT_INTEGER('h', "height", &cfg->window_h, "window height"),
+      OPT_FLOAT('s', "scale", &cfg->glyph_scale, "text scale (default = 1.0)"),
       OPT_END(),
   };
 

@@ -1,6 +1,4 @@
-#include <log.h>
 #include <lua.h>
-#include <string.h>
 
 #include "script/environment.h"
 #include "window.h"
@@ -8,8 +6,6 @@
 #define TBL_DRAWING "draw"
 
 #define FUNC_DRAWSTRING "string"
-
-#define MAX_STRING_DRAW_LENGTH 1024
 
 static int draw_string(lua_State* L) {
   if (!verify_arg_count(L, 3, __func__)) {

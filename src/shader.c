@@ -7,19 +7,15 @@
 
 #include <log.h>
 
-#define STB_TRUETYPE_IMPLEMENTATION
-#include <stb_truetype.h>
-
-#ifdef EXPORT_GLYPH_BITMAP
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
-#endif
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 #include "gen/glyph_frag.h"
 #include "gen/glyph_vert.h"
-#include "gen/vga_ttf.h"
+#include "gen/tileset.h"
 #include "window.h"
 #include "drawing.h"
+#include "config.h"
 
 #pragma pack(0)
 typedef struct glyph_vertex_t {
@@ -32,13 +28,9 @@ static const size_t VBO_GLYPH_INDICES = 1;
 static const size_t ATTR_GLYPH_POSITION = 0;
 static const size_t ATTR_GLYPH_TEXCOORDS = 1;
 
-static const float FONT_SIZE = 16.0F;
-static const int FONT_TEXTURE_WIDTH = 256;
-static const int FONT_TEXTURE_HEIGHT = 128;
-static const float FONT_WIDTH = 8.0F;
-
-// the font we're using supports full "extended" ASCII (0 thru 256)
-static const int FONT_CODEPOINTS = 256;
+// size of the glyph texture in terms of number of glyphs per side
+static const size_t GLYPH_WIDTH_COUNT = 16;
+static const size_t GLYPH_HEIGHT_COUNT = 16;
 
 static void bind_texture(window_t* window, unsigned int texture) {
   if (!is_window_texture_bound(window, texture)) {
@@ -101,10 +93,6 @@ static bool compile_frag_shader(const char* data, GLuint* index) {
 }
 
 static void load_glyph_font(glyph_shader_program_t* shader, const float* size) {
-  // load font codepoint geometry and texture coordinates and bitmap
-  unsigned char* bitmap_buffer =
-      malloc(FONT_TEXTURE_WIDTH * FONT_TEXTURE_HEIGHT * sizeof(unsigned char));
-
   if (shader->codepoints != NULL) {
     free(shader->codepoints);
   }
@@ -113,26 +101,25 @@ static void load_glyph_font(glyph_shader_program_t* shader, const float* size) {
     glDeleteTextures(1, &shader->font_texture);
   }
 
-  shader->codepoints = malloc(sizeof(stbtt_bakedchar) * FONT_CODEPOINTS);
+  int c;
+  unsigned char* bitmap = stbi_load_from_memory(
+      embed_tileset, sizeof(embed_tileset) / sizeof(unsigned char),
+      &shader->texture_w, &shader->texture_h, &c, 1);
 
-  stbtt_BakeFontBitmap(embed_vga_ttf, 0, (size == NULL ? FONT_SIZE : *size),
-                       bitmap_buffer, FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT,
-                       0, FONT_CODEPOINTS,
-                       (stbtt_bakedchar*)shader->codepoints);
+  // set glyph size on window so that it's accessible to the script environment
+  shader->window->glyph.width = shader->texture_w / GLYPH_WIDTH_COUNT *
+                                shader->window->config->glyph_scale;
+  shader->window->glyph.height = shader->texture_h / GLYPH_HEIGHT_COUNT *
+                                 shader->window->config->glyph_scale;
 
   // create font texture from bitmap
   glGenTextures(1, &shader->font_texture);
   bind_texture(shader->window, shader->font_texture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, FONT_TEXTURE_WIDTH,
-               FONT_TEXTURE_HEIGHT, 0, GL_RED, GL_UNSIGNED_BYTE, bitmap_buffer);
-
-#ifdef EXPORT_GLYPH_BITMAP
-  stbi_write_bmp("output.bmp", FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT, 1,
-                 bitmap_buffer);
-#endif
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, shader->texture_w, shader->texture_h,
+               0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
 
   // cleanup bitmap data
-  free(bitmap_buffer);
+  stbi_image_free(bitmap);
 
   // set font texture filtering style
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -157,6 +144,7 @@ static size_t count_glyphs_in_ops_buffer(draw_op_t* ops, size_t n) {
 
 glyph_shader_program_t create_glyph_shader(window_t* window) {
   glyph_shader_program_t glyph_shader;
+
   glyph_shader.codepoints = NULL;
   glyph_shader.window = window;
   glyph_shader.font_texture = 0;
@@ -200,6 +188,12 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
   glyph_vertex_t vertices[glyph_count * 4];
   GLushort indices[glyph_count * 6];
 
+  float scale = shader->window->config->glyph_scale;
+  float glyph_w = (float)(shader->texture_w / GLYPH_WIDTH_COUNT);
+  float glyph_h = (float)(shader->texture_h / GLYPH_HEIGHT_COUNT);
+  float glyph_tw = glyph_w / (float)shader->texture_w;
+  float glyph_th = glyph_h / (float)shader->texture_h;
+
   size_t glyph_index = 0;
   for (size_t i = 0; i < n; ++i) {
     // iterate over each draw operation...
@@ -209,47 +203,50 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
 
     float x_offset = 0;
     draw_op_t* op = &ops[i];
-    for (size_t j = 0; op->data.text.contents[j] != '\0'; j++) {
+    unsigned char c = 0;
+    for (size_t j = 0; (c = op->data.text.contents[j]) != '\0'; j++) {
       // iterate over each character in the draw op's buffer...
-
       size_t vert_ix = glyph_index * 4;
       size_t index_ix = glyph_index * 6;
+
+      // screen coordinates
       float x = (float)op->x + x_offset;
       float y = (float)op->y;
 
-      stbtt_aligned_quad quad;  // current glyph bounds
-      stbtt_GetBakedQuad((const stbtt_bakedchar*)shader->codepoints,
-                         FONT_TEXTURE_WIDTH, FONT_TEXTURE_HEIGHT,
-                         op->data.text.contents[j], &x, &y, &quad, 1);
+      // texture coordinates
+      float tx = ((float)((int)c % GLYPH_WIDTH_COUNT) * glyph_w) /
+                 (float)shader->texture_w;
+      float ty = ((float)((int)c / GLYPH_HEIGHT_COUNT) * glyph_h) /
+                 (float)shader->texture_h;
 
       // increment x-offset by the quad's width
-      x_offset += FONT_WIDTH;
+      x_offset += glyph_w * scale;
 
       // vertex positions
       //
       // top left
-      vertices[vert_ix].x = quad.x0;
-      vertices[vert_ix].y = quad.y0;
-      vertices[vert_ix].u = quad.s0;
-      vertices[vert_ix].v = quad.t0;
+      vertices[vert_ix].x = x;
+      vertices[vert_ix].y = y;
+      vertices[vert_ix].u = tx;
+      vertices[vert_ix].v = ty;
 
       // top right
-      vertices[vert_ix + 1].x = quad.x1;
-      vertices[vert_ix + 1].y = quad.y0;
-      vertices[vert_ix + 1].u = quad.s1;
-      vertices[vert_ix + 1].v = quad.t0;
+      vertices[vert_ix + 1].x = x + glyph_w * scale;
+      vertices[vert_ix + 1].y = y;
+      vertices[vert_ix + 1].u = tx + glyph_tw;
+      vertices[vert_ix + 1].v = ty;
 
       // bottom left
-      vertices[vert_ix + 2].x = quad.x0;
-      vertices[vert_ix + 2].y = quad.y1;
-      vertices[vert_ix + 2].u = quad.s0;
-      vertices[vert_ix + 2].v = quad.t1;
+      vertices[vert_ix + 2].x = x;
+      vertices[vert_ix + 2].y = y + glyph_h * scale;
+      vertices[vert_ix + 2].u = tx;
+      vertices[vert_ix + 2].v = ty + glyph_th;
 
       // bottom right
-      vertices[vert_ix + 3].x = quad.x1;
-      vertices[vert_ix + 3].y = quad.y1;
-      vertices[vert_ix + 3].u = quad.s1;
-      vertices[vert_ix + 3].v = quad.t1;
+      vertices[vert_ix + 3].x = x + glyph_w * scale;
+      vertices[vert_ix + 3].y = y + glyph_h * scale;
+      vertices[vert_ix + 3].u = tx + glyph_tw;
+      vertices[vert_ix + 3].v = ty + glyph_th;
 
       // indices
       //
