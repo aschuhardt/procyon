@@ -101,10 +101,10 @@ static void load_glyph_font(glyph_shader_program_t* shader, const float* size) {
     glDeleteTextures(1, &shader->font_texture);
   }
 
-  int c;
+  int components;
   unsigned char* bitmap = stbi_load_from_memory(
       embed_tileset, sizeof(embed_tileset) / sizeof(unsigned char),
-      &shader->texture_w, &shader->texture_h, &c, 1);
+      &shader->texture_w, &shader->texture_h, &components, 1);
 
   // set glyph size on window so that it's accessible to the script environment
   shader->window->glyph.width = shader->texture_w / GLYPH_WIDTH_COUNT *
