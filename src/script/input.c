@@ -12,9 +12,9 @@
 #define FLD_KEY_NAME "name"
 #define FLD_KEY_VALUE "value"
 
-#define FUNC_EVENTS_KEYPRESS "key_pressed"
-#define FUNC_EVENTS_KEYRELEASED "key_released"
-#define FUNC_EVENTS_CHAR "char_entered"
+#define FUNC_EVENTS_KEYPRESS "on_key_pressed"
+#define FUNC_EVENTS_KEYRELEASED "on_key_released"
+#define FUNC_EVENTS_CHAR "on_char_entered"
 
 #define CHAR_MAX_CODEPOINT 255
 

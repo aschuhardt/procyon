@@ -10,7 +10,7 @@ local delta = 5
 
 local input_text = ">"
 
-local function key_pressed(key)
+local function on_key_pressed(key)
   -- if keys[key] ~= nil then
   --  log.info(keys[key].name)
   -- end
@@ -30,7 +30,7 @@ local function key_pressed(key)
   end
 end
 
-local function char_entered(c)
+local function on_char_entered(c)
   input_text = input_text..c
 end
 
@@ -49,8 +49,8 @@ local function on_unload()
   log.info("Goodbye!")
 end
 
-input.key_released = nil
-input.key_pressed = key_pressed 
+input.on_key_released = nil
+input.on_key_pressed = key_pressed 
 input.char_entered = char_entered
 
 window.on_draw = on_draw
