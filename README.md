@@ -1,4 +1,5 @@
 # Procyon Engine
+
 A lightweight game engine written in C.
 
 Goals:
@@ -51,9 +52,11 @@ Visuals
 The scripting API itself is described below.
 
 ## Modules
+
 Procyon uses Lua for scripting.  High-level objects are grouped into global tables that I refer to as "modules".  Modules consist of various pieces of functionality bearing similar areas of concern.
 
 ### Window
+
 #### Functions
 - `window.close()` - Returns nothing.  Closes the window.
 - `window.size()` - Returns two integers (width and height), representing the dimensions of the window in pixels.
@@ -65,11 +68,17 @@ Procyon uses Lua for scripting.  High-level objects are grouped into global tabl
 - `window.on_load`
 - `window.on_unload`
 
+---
+
 ### Drawing
+
 #### Functions
 - `draw.string(x, y, contents)`
 
+---
+
 ### Input
+
 #### Fields
 - `input.on_key_pressed`
 - `input.on_key_released`
@@ -78,7 +87,10 @@ Procyon uses Lua for scripting.  High-level objects are grouped into global tabl
 - `keys[k].name`
 - `keys[k].value`
 
+---
+
 ### Utility
+
 #### Functions
 - `log.info(contents)`
 - `log.error(contents)`
