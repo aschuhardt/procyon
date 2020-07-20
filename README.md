@@ -63,29 +63,42 @@ Procyon uses Lua for scripting.  High-level objects are grouped into global tabl
 - `window.glyph_size()` - Returns two integers (width and height), representing the *scaled* dimensions of text glyphs.
 
 #### Fields
-- `window.on_draw`
-- `window.on_resize`
-- `window.on_load`
-- `window.on_unload`
+- `window.on_draw` - If assigned, `on_draw` is called before each new frame is drawn.  Perform any drawing routines here.  No arguments are passed to `on_draw`.
+- `window.on_resize` - If assigned, `on_resize` is called when the window is resized.  Two arguments, `width` and `height`, are passed to the function. 
+- `window.on_load` - If assigned, `on_load` is called prior to the beginning of the main game loop.  Perform any initialization here.  No arguments are passed to `on_load`.
+- `window.on_unload` - If assigned, `on_unload` is called after the main game loop has terminated.  Perform any cleanup logic here.  No arguments are passed to `on_unload`.
 
 ---
 
 ### Drawing
 
 #### Functions
-- `draw.string(x, y, contents)`
+- `draw.string(x, y, contents)` - Draws `contents` at pixel coordinates `(x, y)` on the window.
 
 ---
 
 ### Input
 
 #### Fields
-- `input.on_key_pressed`
-- `input.on_key_released`
-- `input.on_char_entered`
-- `keys.KEY_A ...`
-- `keys[k].name`
-- `keys[k].value`
+- `input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed.  It is passed a single argument, `key`, which is one of the `keys.KEY_...` fields.  `key` has members `name` and `value`, though they are not required to be used.  See the example implementation provided below:
+
+```lua
+local function handle_key_pressed(key)
+  -- key info can be indexed by the key object itself
+  log.debug("Key %s was pressed!", keys[key].name)
+
+  if key == keys.KEY_ESCAPE then
+    window.close()
+  end
+end
+
+window.on_key_pressed = handle_key_pressed
+```
+
+- `input.on_key_released` - Same as `on_key_pressed` above, but called when a key is released.
+- `input.on_char_entered` - If assigned, `on_char_entered` is called when the user enters text via the keyboard.
+- `keys.KEY_A ...` - Named key objects.  See `script/keys.h` for a complete list.
+- `keys[k].name`, `keys[k].value` - In addition to named objects, data pertaining to each key is stored in the `keys` table indexed by the key values themselves.
 
 ---
 
