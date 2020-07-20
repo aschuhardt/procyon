@@ -80,7 +80,7 @@ Procyon uses Lua for scripting.  High-level objects are grouped into global tabl
 ### Input
 
 #### Fields
-- `input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed.  It is four arguments: `key`, which is one of the `keys.KEY_...` fields, and four boolean values indicating whether the `shift`, `control`, or `alt` mods are in effect.  See the example implementation provided below:
+- `input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed.  It is four arguments: `key`, which is one of the `keys.KEY_...` fields, followed by and  three boolean values indicating whether the `shift`, `control`, or `alt` mods are in effect.  See the example implementation provided below:
 
 ```lua
 local function handle_key_pressed(key, ...)
