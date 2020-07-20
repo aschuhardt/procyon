@@ -10,23 +10,28 @@ local delta = 5
 
 local input_text = ">"
 
-local function on_key_pressed(key)
+local function on_key_pressed(key, shift, ctrl, alt) 
   -- if keys[key] ~= nil then
   --  log.info(keys[key].name)
   -- end
+
+  local n = delta
+  if shift then
+    n = n + (delta * 2)
+  end
   
   if key == keys.KEY_ESCAPE then
     window.close()
   elseif key == keys.KEY_R then
     other.do_thing()
   elseif key == keys.KEY_UP then
-    y = y - delta 
+    y = y - n 
   elseif key == keys.KEY_DOWN then
-    y = y + delta
+    y = y + n 
   elseif key == keys.KEY_LEFT then 
-    x = x - delta
+    x = x - n 
   elseif key == keys.KEY_RIGHT then
-    x = x + delta
+    x = x + n
   end
 end
 
@@ -50,8 +55,8 @@ local function on_unload()
 end
 
 input.on_key_released = nil
-input.on_key_pressed = key_pressed 
-input.char_entered = char_entered
+input.on_key_pressed = on_key_pressed 
+input.on_char_entered = on_char_entered
 
 window.on_draw = on_draw
 window.on_load = on_load

@@ -27,20 +27,17 @@ static void glfw_key_callback(GLFWwindow* w, int key, int scancode, int action,
                               int mods) {
   lua_State* L = get_lua_env_from_glfwwindow(w);
 
-  lua_getglobal(L, TBL_INPUT);
-  if (lua_isnoneornil(L, -1)) {
-    log_warn("The global %s table does not exist", TBL_INPUT);
-    return;
-  }
-
-  // keep this in memory for logging purposes
   const char* func_name =
       action == GLFW_PRESS ? FUNC_EVENTS_KEYPRESS : FUNC_EVENTS_KEYRELEASED;
 
+  lua_getglobal(L, TBL_INPUT);
   lua_getfield(L, -1, func_name);
   if (lua_isfunction(L, -1)) {
     lua_pushinteger(L, key);
-    if (lua_pcall(L, 1, 0, 0) == LUA_ERRRUN) {
+    lua_pushboolean(L, (mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT);
+    lua_pushboolean(L, (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL);
+    lua_pushboolean(L, (mods & GLFW_MOD_ALT) == GLFW_MOD_ALT);
+    if (lua_pcall(L, 4, 0, 0) == LUA_ERRRUN) {
       log_error("Error calling %s.%s: %s", TBL_INPUT, func_name,
                 lua_tostring(L, -1));
     }
@@ -57,11 +54,6 @@ static void glfw_char_callback(GLFWwindow* w, unsigned int codepoint) {
   lua_State* L = get_lua_env_from_glfwwindow(w);
 
   lua_getglobal(L, TBL_INPUT);
-  if (lua_isnoneornil(L, -1)) {
-    log_warn("The global %s table does not exist", TBL_INPUT);
-    return;
-  }
-
   lua_getfield(L, -1, FUNC_EVENTS_CHAR);
   if (lua_isfunction(L, -1)) {
     char buffer[2] = {(char)codepoint,
