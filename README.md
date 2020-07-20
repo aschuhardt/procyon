@@ -92,7 +92,7 @@ local function handle_key_pressed(key, ...)
   end
 end
 
-window.on_key_pressed = handle_key_pressed
+input.on_key_pressed = handle_key_pressed
 ```
 
 - `input.on_key_released` - Same as `on_key_pressed` above, but called when a key is released.
