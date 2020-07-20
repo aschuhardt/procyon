@@ -6,7 +6,6 @@
 
 struct window_t;
 struct draw_op_t;
-struct stbtt_bakedchar;
 
 typedef struct shader_program_t {
   unsigned int vertex, fragment, program, vao, *vbo;
@@ -18,7 +17,6 @@ typedef struct glyph_shader_program_t {
   unsigned int u_ortho, u_sampler, font_texture;
   int texture_w, texture_h;
   struct window_t* window;
-  struct stbtt_bakedchar* codepoints;
   shader_program_t program;
 } glyph_shader_program_t;
 

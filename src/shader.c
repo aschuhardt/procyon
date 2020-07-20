@@ -6,6 +6,7 @@
 // clang-format on
 
 #include <log.h>
+#include <math.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -93,10 +94,6 @@ static bool compile_frag_shader(const char* data, GLuint* index) {
 }
 
 static void load_glyph_font(glyph_shader_program_t* shader, const float* size) {
-  if (shader->codepoints != NULL) {
-    free(shader->codepoints);
-  }
-
   if (glIsTexture(shader->font_texture)) {
     glDeleteTextures(1, &shader->font_texture);
   }
@@ -104,26 +101,33 @@ static void load_glyph_font(glyph_shader_program_t* shader, const float* size) {
   int components;
   unsigned char* bitmap = stbi_load_from_memory(
       embed_tileset, sizeof(embed_tileset) / sizeof(unsigned char),
-      &shader->texture_w, &shader->texture_h, &components, 1);
+      &shader->texture_w, &shader->texture_h, &components, 0);
 
-  // set glyph size on window so that it's accessible to the script environment
-  shader->window->glyph.width = shader->texture_w / GLYPH_WIDTH_COUNT *
-                                shader->window->config->glyph_scale;
-  shader->window->glyph.height = shader->texture_h / GLYPH_HEIGHT_COUNT *
-                                 shader->window->config->glyph_scale;
+  if (shader->texture_w < 0 || shader->texture_h < 0) {
+    log_error("Failed to read glyph texture");
+  } else {
+    // set glyph size on window so that it's accessible to the script
+    // environment
+    shader->window->glyph.width =
+        (int)floorf((float)shader->texture_w / GLYPH_WIDTH_COUNT *
+                    shader->window->config->glyph_scale);
+    shader->window->glyph.height =
+        (int)floorf((float)shader->texture_h / GLYPH_HEIGHT_COUNT *
+                    shader->window->config->glyph_scale);
 
-  // create font texture from bitmap
-  glGenTextures(1, &shader->font_texture);
-  bind_texture(shader->window, shader->font_texture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, shader->texture_w, shader->texture_h,
-               0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
+    // create font texture from bitmap
+    glGenTextures(1, &shader->font_texture);
+    bind_texture(shader->window, shader->font_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, shader->texture_w, shader->texture_h,
+                 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
+
+    // set font texture filtering style
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  }
 
   // cleanup bitmap data
   stbi_image_free(bitmap);
-
-  // set font texture filtering style
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 }
 
 static size_t count_glyphs_in_ops_buffer(draw_op_t* ops, size_t n) {
@@ -145,9 +149,10 @@ static size_t count_glyphs_in_ops_buffer(draw_op_t* ops, size_t n) {
 glyph_shader_program_t create_glyph_shader(window_t* window) {
   glyph_shader_program_t glyph_shader;
 
-  glyph_shader.codepoints = NULL;
   glyph_shader.window = window;
   glyph_shader.font_texture = 0;
+  glyph_shader.texture_w = -1;
+  glyph_shader.texture_h = -1;
 
   shader_program_t* prog = &glyph_shader.program;
   if ((prog->valid =
@@ -189,8 +194,8 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
   GLushort indices[glyph_count * 6];
 
   float scale = shader->window->config->glyph_scale;
-  float glyph_w = (float)(shader->texture_w / GLYPH_WIDTH_COUNT);
-  float glyph_h = (float)(shader->texture_h / GLYPH_HEIGHT_COUNT);
+  float glyph_w = (float)shader->texture_w / GLYPH_WIDTH_COUNT;
+  float glyph_h = (float)shader->texture_h / GLYPH_HEIGHT_COUNT;
   float glyph_tw = glyph_w / (float)shader->texture_w;
   float glyph_th = glyph_h / (float)shader->texture_h;
 
@@ -214,9 +219,9 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
       float y = (float)op->y;
 
       // texture coordinates
-      float tx = ((float)((int)c % GLYPH_WIDTH_COUNT) * glyph_w) /
-                 (float)shader->texture_w;
-      float ty = ((float)((int)c / GLYPH_HEIGHT_COUNT) * glyph_h) /
+      float tx =
+          (float)(c % GLYPH_WIDTH_COUNT) * glyph_w / (float)shader->texture_w;
+      float ty = floorf((float)c / GLYPH_HEIGHT_COUNT) * glyph_h /
                  (float)shader->texture_h;
 
       // increment x-offset by the quad's width
@@ -341,11 +346,6 @@ static void destroy_shader_program(shader_program_t* shader) {
 void destroy_glyph_shader_program(glyph_shader_program_t* shader) {
   if (shader != NULL) {
     destroy_shader_program(&shader->program);
-
-    // free codepoint data
-    if (shader->codepoints != NULL) {
-      free(shader->codepoints);
-    }
 
     // delete font texture
     if (glIsTexture(shader->font_texture)) {
