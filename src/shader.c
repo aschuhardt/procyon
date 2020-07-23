@@ -20,7 +20,7 @@
 
 #pragma pack(0)
 typedef struct glyph_vertex_t {
-  float x, y, u, v;
+  float x, y, u, v, r, g, b;
 } glyph_vertex_t;
 #pragma pack(1)
 
@@ -28,6 +28,7 @@ static const size_t VBO_GLYPH_POSITION = 0;
 static const size_t VBO_GLYPH_INDICES = 1;
 static const size_t ATTR_GLYPH_POSITION = 0;
 static const size_t ATTR_GLYPH_TEXCOORDS = 1;
+static const size_t ATTR_GLYPH_COLOR = 2;
 
 // size of the glyph texture in terms of number of glyphs per side
 static const size_t GLYPH_WIDTH_COUNT = 16;
@@ -218,6 +219,11 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
       float x = (float)op->x + x_offset;
       float y = (float)op->y;
 
+      // color
+      float r = op->color.r;
+      float g = op->color.g;
+      float b = op->color.b;
+
       // texture coordinates
       float tx =
           (float)(c % GLYPH_WIDTH_COUNT) * glyph_w / (float)shader->texture_w;
@@ -227,31 +233,25 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
       // increment x-offset by the quad's width
       x_offset += glyph_w * scale;
 
-      // vertex positions
-      //
-      // top left
-      vertices[vert_ix].x = x;
-      vertices[vert_ix].y = y;
-      vertices[vert_ix].u = tx;
-      vertices[vert_ix].v = ty;
+      // vertex attributes
 
-      // top right
-      vertices[vert_ix + 1].x = x + glyph_w * scale;
-      vertices[vert_ix + 1].y = y;
-      vertices[vert_ix + 1].u = tx + glyph_tw;
-      vertices[vert_ix + 1].v = ty;
+      glyph_vertex_t top_left = {x, y, tx, ty, r, g, b};
+      glyph_vertex_t top_right = {
+          x + glyph_w * scale, y, tx + glyph_tw, ty, r, g, b};
+      glyph_vertex_t bottom_left = {
+          x, y + glyph_h * scale, tx, ty + glyph_th, r, g, b};
+      glyph_vertex_t bottom_right = {x + glyph_w * scale,
+                                     y + glyph_h * scale,
+                                     tx + glyph_tw,
+                                     ty + glyph_th,
+                                     r,
+                                     g,
+                                     b};
 
-      // bottom left
-      vertices[vert_ix + 2].x = x;
-      vertices[vert_ix + 2].y = y + glyph_h * scale;
-      vertices[vert_ix + 2].u = tx;
-      vertices[vert_ix + 2].v = ty + glyph_th;
-
-      // bottom right
-      vertices[vert_ix + 3].x = x + glyph_w * scale;
-      vertices[vert_ix + 3].y = y + glyph_h * scale;
-      vertices[vert_ix + 3].u = tx + glyph_tw;
-      vertices[vert_ix + 3].v = ty + glyph_th;
+      vertices[vert_ix] = top_left;
+      vertices[vert_ix + 1] = top_right;
+      vertices[vert_ix + 2] = bottom_left;
+      vertices[vert_ix + 3] = bottom_right;
 
       // indices
       //
@@ -294,6 +294,10 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
   glVertexAttribPointer(ATTR_GLYPH_TEXCOORDS, 2, GL_FLOAT, GL_FALSE,
                         sizeof(glyph_vertex_t), (void*)(2 * sizeof(float)));
 
+  glEnableVertexAttribArray(ATTR_GLYPH_COLOR);
+  glVertexAttribPointer(ATTR_GLYPH_COLOR, 3, GL_FLOAT, GL_FALSE,
+                        sizeof(glyph_vertex_t), (void*)(4 * sizeof(float)));
+
   // copy indices
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prog->vbo[VBO_GLYPH_INDICES]);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
@@ -306,6 +310,7 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
 
   glDisableVertexAttribArray(ATTR_GLYPH_POSITION);
   glDisableVertexAttribArray(ATTR_GLYPH_TEXCOORDS);
+  glDisableVertexAttribArray(ATTR_GLYPH_COLOR);
   glUseProgram(0);
 }
 

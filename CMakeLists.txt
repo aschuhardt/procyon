@@ -4,14 +4,6 @@ project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  message("Building in debug mode")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -DDEBUG -ggdb -g3")
-else()
-  message("Building in release mode")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os")
-endif()
-
 add_subdirectory(lib)
 
 set(SU_SOURCE
@@ -35,7 +27,9 @@ target_link_libraries(procyon
   PRIVATE ${LUA_LIBRARIES} argparse log glad glfw liblua)
 set_property(TARGET procyon PROPERTY C_STANDARD 11)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  target_compile_definitions(procyon PRIVATE EXPORT_GLYPH_BITMAP=1)
+  target_compile_options(procyon PRIVATE -O0 -DDEBUG -ggdb -g3)
+else()
+  target_compile_options(procyon PRIVATE -O3)
 endif()
 
 add_custom_target(script_test

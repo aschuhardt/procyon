@@ -8,7 +8,9 @@ local height = 0
 
 local delta = 5
 
-local input_text = ">"
+local input_text = "\x04\x02\x03 >"
+
+local line_height = 0
 
 local function on_key_pressed(key, shift, ctrl, alt) 
   -- if keys[key] ~= nil then
@@ -41,12 +43,13 @@ end
 
 local function on_draw()
   draw.string(x, y, input_text)
-  draw.string(x, y + 36, input_text)
+  draw.string(x, y + line_height, input_text)
 end
 
 local function on_load()
   log.info("Hello!")
   local w, h = window.glyph_size()
+  line_height = h
   log.info(string.format("Glyph size: %dx%d", w, h))
 end
 

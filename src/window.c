@@ -190,7 +190,9 @@ void append_string_draw_op(window_t* window, int x, int y,
     expand_draw_ops_buffer(draw_ops);
   }
 
-  draw_ops->buffer[new_index] = create_draw_op_string(x, y, contents);
+  color_t c = {0.6F, 0.8F, 0.75F};
+  draw_ops->buffer[new_index] =
+      create_draw_op_string_colored(x, y, c, contents);
 }
 
 void set_window_bound_texture(window_t* w, unsigned int tex) {
