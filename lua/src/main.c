@@ -1,8 +1,8 @@
 #include <log.h>
 
 #include "config.h"
+#include "procyon.h"
 #include "script.h"
-#include "window.h"
 
 int main(int argc, const char** argv) {
   config_t config;
@@ -10,13 +10,19 @@ int main(int argc, const char** argv) {
     return -1;
   }
 
+  procy_state_t state;
+  state.data = NULL;
+
   // create window object
-  window_t* window = create_window(&config);
+  procy_window_t* window =
+      procy_create_window(config.window_w, config.window_h, "Procyon Lua",
+                          config.glyph_scale, &state);
   if (window == NULL) {
     log_error("Failed to create window");
   } else {
     // create script environment object
-    script_env_t* script_env = create_script_env(window);
+    script_env_t* script_env = create_script_env(window, &state);
+    state.data = script_env;
     if (script_env == NULL) {
       log_error("Failed to create script environment object");
     }
@@ -27,11 +33,11 @@ int main(int argc, const char** argv) {
     }
 
     // start display loop
-    begin_loop(window);
+    procy_begin_loop(window);
 
     destroy_script_env(script_env);
   }
 
-  destroy_window(window);
+  procy_destroy_window(window);
   return 0;
 }

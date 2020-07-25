@@ -1,8 +1,7 @@
-#include "window.h"
-
 #include <log.h>
 #include <lua.h>
 
+#include "procyon.h"
 #include "script.h"
 #include "script/environment.h"
 
@@ -22,7 +21,7 @@ static int close_window(lua_State* L) {
   }
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  window_t* window = (window_t*)lua_touserdata(L, -1);
+  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
   window->quitting = true;
   lua_pop(L, 1);
   return 0;
@@ -34,7 +33,7 @@ static int window_size(lua_State* L) {
   }
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  window_t* window = (window_t*)lua_touserdata(L, -1);
+  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
   lua_pushinteger(L, window->bounds.width);
   lua_pushinteger(L, window->bounds.height);
   return 2;
@@ -46,15 +45,15 @@ static int window_glyph_size(lua_State* L) {
   }
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  window_t* window = (window_t*)lua_touserdata(L, -1);
+  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
   lua_pushinteger(L, window->glyph.width);
   lua_pushinteger(L, window->glyph.height);
   return 2;
 }
 
 // called from the main window loop by way of script_env_t.on_draw
-static void perform_draw(script_env_t* env) {
-  lua_State* L = env->L;
+static void perform_draw(procy_state_t* const state) {
+  lua_State* L = ((script_env_t*)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
 
   lua_getfield(L, -1, FUNC_ON_DRAW);
@@ -68,8 +67,8 @@ static void perform_draw(script_env_t* env) {
   lua_pop(L, 1);
 }
 
-static void handle_window_resized(script_env_t* env, int w, int h) {
-  lua_State* L = env->L;
+static void handle_window_resized(procy_state_t* const state, int w, int h) {
+  lua_State* L = ((script_env_t*)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
 
   lua_getfield(L, -1, FUNC_ON_RESIZE);
@@ -85,8 +84,8 @@ static void handle_window_resized(script_env_t* env, int w, int h) {
   lua_pop(L, 1);
 }
 
-static void handle_window_loaded(script_env_t* env) {
-  lua_State* L = env->L;
+static void handle_window_loaded(procy_state_t* const state) {
+  lua_State* L = ((script_env_t*)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
 
   lua_getfield(L, -1, FUNC_ON_LOAD);
@@ -100,8 +99,8 @@ static void handle_window_loaded(script_env_t* env) {
   lua_pop(L, 1);
 }
 
-static void handle_window_unloaded(script_env_t* env) {
-  lua_State* L = env->L;
+static void handle_window_unloaded(procy_state_t* const state) {
+  lua_State* L = ((script_env_t*)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
 
   lua_getfield(L, -1, FUNC_ON_UNLOAD);
@@ -118,10 +117,12 @@ static void handle_window_unloaded(script_env_t* env) {
 void add_window(lua_State* L, script_env_t* env) {
   lua_newtable(L);
 
-  env->on_draw = perform_draw;
-  env->on_resized = handle_window_resized;
-  env->on_load = handle_window_loaded;
-  env->on_unload = handle_window_unloaded;
+  env->state->on_draw = perform_draw;
+  env->state->on_resize = handle_window_resized;
+  env->state->on_load = handle_window_loaded;
+  env->state->on_unload = handle_window_unloaded;
+
+  env->state->on_draw = perform_draw;
 
   lua_pushcfunction(L, close_window);
   lua_setfield(L, -2, FUNC_CLOSE);

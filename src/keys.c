@@ -1,10 +1,9 @@
-#ifndef KEYS_H
-#define KEYS_H
+#include "keys.h"
 
-typedef struct key_info_t {
-  const char* name;
-  int value;
-} key_info_t;
+#include <stdlib.h>
+#include <string.h>
+
+typedef procy_key_info_t key_info_t;
 
 const key_info_t KEYS[] = {{"KEY_SPACE", 32},
                            {"KEY_APOSTROPHE", 39},
@@ -127,4 +126,12 @@ const key_info_t KEYS[] = {{"KEY_SPACE", 32},
                            {"KEY_RIGHT_SUPER", 347},
                            {"KEY_MENU", 348}};
 
-#endif
+/* --------------------------- */
+/* Public interface definition */
+/* --------------------------- */
+
+void procy_get_keys(key_info_t** buffer, size_t* len) {
+  *len = sizeof(KEYS) / sizeof(key_info_t);
+  *buffer = malloc(*len * sizeof(key_info_t));
+  memcpy(*buffer, KEYS, *len * sizeof(key_info_t));
+}

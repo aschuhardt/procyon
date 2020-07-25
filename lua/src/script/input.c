@@ -1,11 +1,9 @@
-#include <GLFW/glfw3.h>
 #include <log.h>
 #include <lua.h>
 
+#include "procyon.h"
 #include "script.h"
 #include "script/environment.h"
-#include "script/keys.h"
-#include "window.h"
 
 #define TBL_INPUT "input"
 #define TBL_KEYS "keys"
@@ -13,45 +11,57 @@
 #define FLD_KEY_VALUE "value"
 
 #define FUNC_EVENTS_KEYPRESS "on_key_pressed"
-#define FUNC_EVENTS_KEYRELEASED "on_key_released"
+#define FUNC_EVENTS_KEYRELEASE "on_key_released"
 #define FUNC_EVENTS_CHAR "on_char_entered"
 
 #define CHAR_MAX_CODEPOINT 255
 
-static inline lua_State* get_lua_env_from_glfwwindow(GLFWwindow* w) {
-  return ((script_env_t*)((window_t*)glfwGetWindowUserPointer(w))->script_state)
-      ->L;
-}
-
-static void glfw_key_callback(GLFWwindow* w, int key, int scancode, int action,
-                              int mods) {
-  lua_State* L = get_lua_env_from_glfwwindow(w);
-
-  const char* func_name =
-      action == GLFW_PRESS ? FUNC_EVENTS_KEYPRESS : FUNC_EVENTS_KEYRELEASED;
+static void handle_key_pressed(procy_state_t* const state, procy_key_info_t key,
+                               bool shift, bool ctrl, bool alt) {
+  lua_State* L = ((script_env_t*)state->data)->L;
 
   lua_getglobal(L, TBL_INPUT);
-  lua_getfield(L, -1, func_name);
+  lua_getfield(L, -1, FUNC_EVENTS_KEYPRESS);
   if (lua_isfunction(L, -1)) {
-    lua_pushinteger(L, key);
-    lua_pushboolean(L, (mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT);
-    lua_pushboolean(L, (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL);
-    lua_pushboolean(L, (mods & GLFW_MOD_ALT) == GLFW_MOD_ALT);
+    lua_pushinteger(L, key.value);
+    lua_pushboolean(L, shift);
+    lua_pushboolean(L, ctrl);
+    lua_pushboolean(L, alt);
     if (lua_pcall(L, 4, 0, 0) == LUA_ERRRUN) {
-      log_error("Error calling %s.%s: %s", TBL_INPUT, func_name,
+      log_error("Error calling %s.%s: %s", TBL_INPUT, FUNC_EVENTS_KEYPRESS,
                 lua_tostring(L, -1));
     }
   }
 }
 
-static void glfw_char_callback(GLFWwindow* w, unsigned int codepoint) {
+static void handle_key_released(procy_state_t* const state,
+                                procy_key_info_t key, bool shift, bool ctrl,
+                                bool alt) {
+  lua_State* L = ((script_env_t*)state->data)->L;
+
+  lua_getglobal(L, TBL_INPUT);
+  lua_getfield(L, -1, FUNC_EVENTS_KEYRELEASE);
+  if (lua_isfunction(L, -1)) {
+    lua_pushinteger(L, key.value);
+    lua_pushboolean(L, shift);
+    lua_pushboolean(L, ctrl);
+    lua_pushboolean(L, alt);
+    if (lua_pcall(L, 4, 0, 0) == LUA_ERRRUN) {
+      log_error("Error calling %s.%s: %s", TBL_INPUT, FUNC_EVENTS_KEYPRESS,
+                lua_tostring(L, -1));
+    }
+  }
+}
+
+static void handle_char_entered(procy_state_t* const state,
+                                unsigned int codepoint) {
   // for the time being we're using a font that only supports so-called
   // "extended ASCII", up to value 255
   if (codepoint > CHAR_MAX_CODEPOINT) {
     return;
   }
 
-  lua_State* L = get_lua_env_from_glfwwindow(w);
+  lua_State* L = ((script_env_t*)state->data)->L;
 
   lua_getglobal(L, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_CHAR);
@@ -75,9 +85,13 @@ static void add_event_handler_table(lua_State* L) {
 static void add_keys(lua_State* L) {
   lua_newtable(L);
 
+  size_t keys_count = 0;
+  procy_key_info_t* keys = NULL;
+  procy_get_keys(&keys, &keys_count);
+
   // store named key values
-  for (int i = 0; i < sizeof(KEYS) / sizeof(key_info_t); ++i) {
-    key_info_t key = KEYS[i];
+  for (int i = 0; i < keys_count; ++i) {
+    procy_key_info_t key = keys[i];
 
     // [name] = value
     lua_pushinteger(L, key.value);
@@ -94,12 +108,15 @@ static void add_keys(lua_State* L) {
     log_trace("Adding key value (%s, %d)", key.name, key.value);
   }
 
+  free(keys);
+
   lua_setglobal(L, TBL_KEYS);
 }
 
 void add_input(lua_State* L, script_env_t* env) {
   add_event_handler_table(L);
   add_keys(L);
-  glfwSetKeyCallback((GLFWwindow*)env->window->glfw_win, glfw_key_callback);
-  glfwSetCharCallback((GLFWwindow*)env->window->glfw_win, glfw_char_callback);
+  env->state->on_key_pressed = handle_key_pressed;
+  env->state->on_key_released = handle_key_released;
+  env->state->on_char_entered = handle_char_entered;
 }

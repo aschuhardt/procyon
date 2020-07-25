@@ -16,13 +16,18 @@
 #include "gen/tileset.h"
 #include "window.h"
 #include "drawing.h"
-#include "config.h"
 
 #pragma pack(0)
 typedef struct glyph_vertex_t {
-  float x, y, u, v, r, g, b;
+  float x, y, u, v;
+  unsigned int color;
 } glyph_vertex_t;
 #pragma pack(1)
+
+typedef procy_draw_op_t draw_op_t;
+typedef procy_window_t window_t;
+typedef procy_shader_program_t shader_program_t;
+typedef procy_glyph_shader_program_t glyph_shader_program_t;
 
 static const size_t VBO_GLYPH_POSITION = 0;
 static const size_t VBO_GLYPH_INDICES = 1;
@@ -35,10 +40,10 @@ static const size_t GLYPH_WIDTH_COUNT = 16;
 static const size_t GLYPH_HEIGHT_COUNT = 16;
 
 static void bind_texture(window_t* window, unsigned int texture) {
-  if (!is_window_texture_bound(window, texture)) {
+  if (window->last_bound_texture != texture) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-    set_window_bound_texture(window, texture);
+    window->last_bound_texture = texture;
   }
 }
 
@@ -109,12 +114,10 @@ static void load_glyph_font(glyph_shader_program_t* shader, const float* size) {
   } else {
     // set glyph size on window so that it's accessible to the script
     // environment
-    shader->window->glyph.width =
-        (int)floorf((float)shader->texture_w / GLYPH_WIDTH_COUNT *
-                    shader->window->config->glyph_scale);
-    shader->window->glyph.height =
-        (int)floorf((float)shader->texture_h / GLYPH_HEIGHT_COUNT *
-                    shader->window->config->glyph_scale);
+    shader->window->glyph.width = (int)floorf(
+        (float)shader->texture_w / GLYPH_WIDTH_COUNT * shader->scale);
+    shader->window->glyph.height = (int)floorf(
+        (float)shader->texture_h / GLYPH_HEIGHT_COUNT * shader->scale);
 
     // create font texture from bitmap
     glGenTextures(1, &shader->font_texture);
@@ -139,13 +142,17 @@ static size_t count_glyphs_in_ops_buffer(draw_op_t* ops, size_t n) {
       continue;
     }
 
-    for (size_t j = 0; ops[i].data.text.contents[j] != '\0'; j++) {
+    if (ops[i].data.text.character != '\0') {
       ++glyph_count;
     }
   }
 
   return glyph_count;
 }
+
+/* --------------------------- */
+/* Public interface definition */
+/* --------------------------- */
 
 glyph_shader_program_t create_glyph_shader(window_t* window) {
   glyph_shader_program_t glyph_shader;
@@ -154,6 +161,7 @@ glyph_shader_program_t create_glyph_shader(window_t* window) {
   glyph_shader.font_texture = 0;
   glyph_shader.texture_w = -1;
   glyph_shader.texture_h = -1;
+  glyph_shader.scale = window->text_scale;
 
   shader_program_t* prog = &glyph_shader.program;
   if ((prog->valid =
@@ -194,7 +202,7 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
   glyph_vertex_t vertices[glyph_count * 4];
   GLushort indices[glyph_count * 6];
 
-  float scale = shader->window->config->glyph_scale;
+  float scale = shader->scale;
   float glyph_w = (float)shader->texture_w / GLYPH_WIDTH_COUNT;
   float glyph_h = (float)shader->texture_h / GLYPH_HEIGHT_COUNT;
   float glyph_tw = glyph_w / (float)shader->texture_w;
@@ -202,71 +210,53 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
 
   size_t glyph_index = 0;
   for (size_t i = 0; i < n; ++i) {
-    // iterate over each draw operation...
-    if (ops[i].type != DRAW_OP_TEXT) {
+    draw_op_t* op = &ops[i];
+    if (op->type != DRAW_OP_TEXT) {
       continue;
     }
 
-    float x_offset = 0;
-    draw_op_t* op = &ops[i];
-    unsigned char c = 0;
-    for (size_t j = 0; (c = op->data.text.contents[j]) != '\0'; j++) {
-      // iterate over each character in the draw op's buffer...
-      size_t vert_ix = glyph_index * 4;
-      size_t index_ix = glyph_index * 6;
+    size_t vert_ix = glyph_index * 4;
+    size_t index_ix = glyph_index * 6;
+    unsigned int color = op->color.rgba;
+    unsigned char c = op->data.text.character;
 
-      // screen coordinates
-      float x = (float)op->x + x_offset;
-      float y = (float)op->y;
+    // screen coordinates
+    float x = (float)op->x;
+    float y = (float)op->y;
 
-      // color
-      float r = op->color.r;
-      float g = op->color.g;
-      float b = op->color.b;
+    // texture coordinates
+    float tx =
+        (float)(c % GLYPH_WIDTH_COUNT) * glyph_w / (float)shader->texture_w;
+    float ty = floorf((float)c / GLYPH_HEIGHT_COUNT) * glyph_h /
+               (float)shader->texture_h;
 
-      // texture coordinates
-      float tx =
-          (float)(c % GLYPH_WIDTH_COUNT) * glyph_w / (float)shader->texture_w;
-      float ty = floorf((float)c / GLYPH_HEIGHT_COUNT) * glyph_h /
-                 (float)shader->texture_h;
+    // vertex attributes
+    glyph_vertex_t top_left = {x, y, tx, ty, color};
+    glyph_vertex_t top_right = {x + glyph_w * scale, y, tx + glyph_tw, ty,
+                                color};
+    glyph_vertex_t bottom_left = {x, y + glyph_h * scale, tx, ty + glyph_th,
+                                  color};
+    glyph_vertex_t bottom_right = {x + glyph_w * scale, y + glyph_h * scale,
+                                   tx + glyph_tw, ty + glyph_th, color};
 
-      // increment x-offset by the quad's width
-      x_offset += glyph_w * scale;
+    vertices[vert_ix] = top_left;
+    vertices[vert_ix + 1] = top_right;
+    vertices[vert_ix + 2] = bottom_left;
+    vertices[vert_ix + 3] = bottom_right;
 
-      // vertex attributes
+    // indices
+    //
+    // first triangle
+    indices[index_ix] = vert_ix;
+    indices[index_ix + 1] = vert_ix + 1;
+    indices[index_ix + 2] = vert_ix + 2;
 
-      glyph_vertex_t top_left = {x, y, tx, ty, r, g, b};
-      glyph_vertex_t top_right = {
-          x + glyph_w * scale, y, tx + glyph_tw, ty, r, g, b};
-      glyph_vertex_t bottom_left = {
-          x, y + glyph_h * scale, tx, ty + glyph_th, r, g, b};
-      glyph_vertex_t bottom_right = {x + glyph_w * scale,
-                                     y + glyph_h * scale,
-                                     tx + glyph_tw,
-                                     ty + glyph_th,
-                                     r,
-                                     g,
-                                     b};
+    // second triangle
+    indices[index_ix + 3] = vert_ix + 1;
+    indices[index_ix + 4] = vert_ix + 3;
+    indices[index_ix + 5] = vert_ix + 2;
 
-      vertices[vert_ix] = top_left;
-      vertices[vert_ix + 1] = top_right;
-      vertices[vert_ix + 2] = bottom_left;
-      vertices[vert_ix + 3] = bottom_right;
-
-      // indices
-      //
-      // first triangle
-      indices[index_ix] = vert_ix;
-      indices[index_ix + 1] = vert_ix + 1;
-      indices[index_ix + 2] = vert_ix + 2;
-
-      // second triangle
-      indices[index_ix + 3] = vert_ix + 1;
-      indices[index_ix + 4] = vert_ix + 3;
-      indices[index_ix + 5] = vert_ix + 2;
-
-      ++glyph_index;
-    }
+    ++glyph_index;
   }
 
   shader_program_t* prog = &shader->program;
@@ -295,7 +285,7 @@ void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
                         sizeof(glyph_vertex_t), (void*)(2 * sizeof(float)));
 
   glEnableVertexAttribArray(ATTR_GLYPH_COLOR);
-  glVertexAttribPointer(ATTR_GLYPH_COLOR, 3, GL_FLOAT, GL_FALSE,
+  glVertexAttribPointer(ATTR_GLYPH_COLOR, 1, GL_UNSIGNED_INT, GL_FALSE,
                         sizeof(glyph_vertex_t), (void*)(4 * sizeof(float)));
 
   // copy indices

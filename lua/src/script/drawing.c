@@ -1,7 +1,8 @@
 #include <lua.h>
+#include <string.h>
 
+#include "procyon.h"
 #include "script/environment.h"
-#include "window.h"
 
 #define TBL_DRAWING "draw"
 
@@ -19,9 +20,15 @@ static int draw_string(lua_State* L) {
   lua_pop(L, 3);
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  window_t* window = (window_t*)lua_touserdata(L, -1);
+  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
 
-  append_string_draw_op(window, x, y, contents);
+  size_t length = strlen(contents);
+  procy_draw_op_t op;
+  for (size_t i = 0; i < length; i++) {
+    op = procy_create_draw_op_string(x, y, window->glyph.width, contents, i);
+    procy_append_draw_op(window, &op);
+  }
+
   return 0;
 }
 

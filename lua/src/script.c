@@ -4,11 +4,12 @@
 #include <lua.h>
 #include <lualib.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "config.h"
+#include "procyon.h"
 #include "script/environment.h"
-#include "window.h"
 
 static const char* get_lua_alloc_type_name(size_t t) {
   switch (t) {
@@ -170,17 +171,11 @@ static void* script_state_alloc(void* ud, void* ptr, size_t osize,
   return malloc(nsize);
 }
 
-script_env_t* create_script_env(window_t* window) {
+script_env_t* create_script_env(procy_window_t* window, procy_state_t* state) {
   script_env_t* env = malloc(sizeof(script_env_t));
   env->L = lua_newstate(script_state_alloc, NULL);
-  window->script_state =
-      env;  // window gets a pointer back to the script_state_t
-            // object for use during input callbacks
   env->window = window;
-  env->on_draw = NULL;
-  env->on_resized = NULL;
-  env->on_load = NULL;
-  env->on_unload = NULL;
+  env->state = state;
   return env;
 }
 

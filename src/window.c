@@ -9,9 +9,18 @@
 #include <string.h>
 
 #include "shader.h"
-#include "config.h"
 #include "drawing.h"
-#include "script.h"
+#include "keys.h"
+#include "state.h"
+
+typedef procy_window_t window_t;
+typedef procy_window_bounds_t window_bounds_t;
+typedef procy_draw_op_t draw_op_t;
+typedef procy_draw_op_buffer_t draw_op_buffer_t;
+typedef procy_glyph_shader_program_t glyph_shader_program_t;
+typedef procy_key_info_t key_info_t;
+typedef procy_color_t color_t;
+typedef procy_state_t state_t;
 
 static const size_t INITIAL_DRAW_OPS_BUFFER_SIZE = 32;
 
@@ -68,10 +77,8 @@ static void window_resized(GLFWwindow* w, int width, int height) {
 
   set_ortho_projection(window);
 
-  // trigger any script-defined resize events
-  script_env_t* script = window->script_state;
-  if (script->on_resized != NULL) {
-    script->on_resized(window->script_state, width, height);
+  if (window->state->on_resize != NULL) {
+    window->state->on_resize(window->state, width, height);
   }
 }
 
@@ -79,9 +86,9 @@ static void set_window_callbacks(GLFWwindow* w) {
   glfwSetFramebufferSizeCallback(w, window_resized);
 }
 
-static void set_default_window_bounds(window_t* w, config_t* cfg) {
-  w->bounds.width = cfg->window_w;
-  w->bounds.height = cfg->window_h;
+static void set_default_window_bounds(window_t* w, int width, int height) {
+  w->bounds.width = width;
+  w->bounds.height = height;
 }
 
 static void set_default_glyph_bounds(window_t* w) {
@@ -146,20 +153,66 @@ static void clear_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
             string_ops_buffer_size);
 }
 
-window_t* create_window(config_t* cfg) {
+static void handle_key_entered(GLFWwindow* w, int key, int scancode, int action,
+                               int mods) {
+  window_t* window = glfwGetWindowUserPointer(w);
+  bool shift = (mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT;
+  bool ctrl = (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL;
+  bool alt = (mods & GLFW_MOD_ALT) == GLFW_MOD_ALT;
+  if (action == GLFW_PRESS && window->state->on_key_pressed != NULL) {
+    window->state->on_key_pressed(window->state, window->key_table[key], shift,
+                                  ctrl, alt);
+  } else if (action == GLFW_RELEASE && window->state->on_key_released != NULL) {
+    window->state->on_key_released(window->state, window->key_table[key], shift,
+                                   ctrl, alt);
+  }
+}
+
+static void handle_char_entered(GLFWwindow* w, unsigned int codepoint) {
+  window_t* window = glfwGetWindowUserPointer(w);
+  if (window->state->on_char_entered != NULL) {
+    window->state->on_char_entered(window->state, codepoint);
+  }
+}
+
+static void set_event_callbacks(window_t* w) {
+  glfwSetKeyCallback(w->glfw_win, handle_key_entered);
+  glfwSetCharCallback(w->glfw_win, handle_char_entered);
+}
+
+static void init_key_table(window_t* w) {
+  // map key values to objects
+  size_t keys_count = 0;
+  key_info_t* keys = NULL;
+  procy_get_keys(&keys, &keys_count);
+  w->key_table = malloc(keys[keys_count - 1].value * sizeof(key_info_t));
+  for (size_t i = 0; i < keys_count - 1; i++) {
+    w->key_table[keys[i].value] = keys[i];
+  }
+  free(keys);
+}
+
+/* --------------------------- */
+/* Public interface definition */
+/* --------------------------- */
+
+window_t* create_window(int width, int height, const char* title,
+                        float text_scale, state_t* state) {
   glfwSetErrorCallback(glfw_error_callback);
   window_t* window = malloc(sizeof(window_t));
 
-  set_default_window_bounds(window, cfg);
+  set_default_window_bounds(window, width, height);
   set_default_glyph_bounds(window);
   set_gl_window_pointer(window);
   set_ortho_projection(window);
+  set_event_callbacks(window);
   init_draw_ops_buffer(&window->draw_ops);
+  init_key_table(window);
 
-  window->script_state = NULL;
   window->quitting = false;
   window->last_bound_texture = UINT32_MAX;
-  window->config = cfg;
+  window->text_scale = text_scale;
+  window->state = state;
 
   return window;
 }
@@ -177,42 +230,31 @@ void destroy_window(window_t* window) {
     free(window->draw_ops.buffer);
   }
 
+  if (window->key_table != NULL) {
+    free(window->key_table);
+  }
+
   glfwTerminate();
   free(window);
 }
 
-void append_string_draw_op(window_t* window, int x, int y,
-                           const char* contents) {
+void procy_append_draw_op(window_t* window, draw_op_t* draw_op) {
   draw_op_buffer_t* draw_ops = &window->draw_ops;
   draw_ops->length++;
   size_t new_index = draw_ops->length - 1;
   if (draw_ops->length >= draw_ops->capacity) {
     expand_draw_ops_buffer(draw_ops);
   }
-
-  color_t c = {0.6F, 0.8F, 0.75F};
-  draw_ops->buffer[new_index] =
-      create_draw_op_string_colored(x, y, c, contents);
-}
-
-void set_window_bound_texture(window_t* w, unsigned int tex) {
-  w->last_bound_texture = tex;
-}
-
-bool is_window_texture_bound(window_t* w, unsigned int tex) {
-  return w->last_bound_texture == tex;
+  draw_ops->buffer[new_index] = *draw_op;
 }
 
 void begin_loop(window_t* window) {
   // set up shader used for drawing text
-  glyph_shader_program_t glyph_shader = create_glyph_shader(window);
+  glyph_shader_program_t glyph_shader = procy_create_glyph_shader(window);
 
-  // a pointer to the script environment is required in order to call certain
-  // events
-  script_env_t* script = window->script_state;
-
-  if (script->on_load != NULL) {
-    script->on_load(script);
+  state_t* state = window->state;
+  if (state->on_load != NULL) {
+    state->on_load(state);
   }
 
   GLFWwindow* w = (GLFWwindow*)window->glfw_win;
@@ -222,22 +264,22 @@ void begin_loop(window_t* window) {
     glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    if (script->on_draw != NULL) {
-      script->on_draw(script);
+    if (state->on_draw != NULL) {
+      state->on_draw(state);
     }
 
     if (window->draw_ops.length > 0 && glyph_shader.program.valid) {
-      draw_glyph_shader(&glyph_shader, window, window->draw_ops.buffer,
-                        window->draw_ops.length);
+      procy_draw_glyph_shader(&glyph_shader, window, window->draw_ops.buffer,
+                              window->draw_ops.length);
       clear_draw_ops_buffer(&window->draw_ops);
     }
 
     glfwSwapBuffers(w);
   }
 
-  if (script->on_unload != NULL) {
-    script->on_unload(script);
+  if (state->on_unload != NULL) {
+    state->on_unload(state);
   }
 
-  destroy_glyph_shader_program(&glyph_shader);
+  procy_destroy_glyph_shader_program(&glyph_shader);
 }

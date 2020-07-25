@@ -7,7 +7,7 @@ layout(location = 1) in vec2 i_TexCoords;
 layout(location = 2) in vec3 i_Color;
 
 out vec2 f_TexCoords;
-out vec3 f_Color;
+out uint f_Color;
 
 void main(void) {
   f_TexCoords = i_TexCoords;

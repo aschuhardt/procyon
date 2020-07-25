@@ -7,35 +7,23 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_subdirectory(lib)
 
 set(SU_SOURCE
-  src/main.c
   src/drawing.c
   src/window.c
-  src/script.c
-  src/config.c
   src/shader.c
-  src/script/drawing.c
-  src/script/window.c
-  src/script/utility.c
-  src/script/globals.c
-  src/script/input.c
-  src/script/environment.c)
+  src/keys.c)
 
-add_executable(procyon ${SU_SOURCE})
+set(SU_INCLUDE
+  "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+add_library(procyon STATIC ${SU_SOURCE})
 target_include_directories(procyon 
-  PRIVATE include ${LUA_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${STB_INCLUDE_DIR})
-target_link_libraries(procyon 
-  PRIVATE ${LUA_LIBRARIES} argparse log glad glfw liblua)
-set_property(TARGET procyon PROPERTY C_STANDARD 11)
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  target_compile_options(procyon PRIVATE -O0 -DDEBUG -ggdb -g3)
-else()
-  target_compile_options(procyon PRIVATE -O3)
-endif()
+  PRIVATE ${SU_INCLUDE} ${STB_INCLUDE_DIR})
+target_link_libraries(procyon PRIVATE glad glfw)
+target_link_libraries(procyon PUBLIC log)
+target_compile_definitions(procyon PRIVATE PROCY_LIBRARY)
 
-add_custom_target(script_test
-  COMMAND procyon --debug -s 2.0 -e "${PROJECT_SOURCE_DIR}/sample/test.lua"
-  DEPENDS procyon
-  USES_TERMINAL)
+# build an implementation of a Lua wrapper for libprocyon
+add_subdirectory(lua)
 
 # Compile a small program that will convert files into
 # C header files
