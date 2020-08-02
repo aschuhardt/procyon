@@ -11,11 +11,10 @@ set(SU_LUA_SOURCE
   src/script/environment.c)
 
 add_executable(procyon-lua ${SU_LUA_SOURCE})
+target_link_libraries(procyon-lua PUBLIC argparse liblua ${SU_LIBRARY})
 target_include_directories(procyon-lua
-  PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include"
-          ${SU_INCLUDE} ${LUA_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR}) 
-target_link_libraries(procyon-lua
-  PRIVATE argparse liblua procyon)
+  PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  ${LUA_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${LOG_INCLUDE_DIR} ${SU_INCLUDE}) 
 
 add_custom_target(script_test
   COMMAND procyon-lua --debug -s 2.0 -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/test.lua"

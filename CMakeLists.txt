@@ -11,19 +11,16 @@ set(SU_SOURCE
   src/window.c
   src/shader.c
   src/keys.c)
-
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(SU_LIBRARY procyon)
 
-add_library(procyon STATIC ${SU_SOURCE})
-target_include_directories(procyon 
-  PRIVATE ${SU_INCLUDE} ${STB_INCLUDE_DIR})
-target_link_libraries(procyon PRIVATE glad glfw)
-target_link_libraries(procyon PUBLIC log)
-target_compile_definitions(procyon PRIVATE PROCY_LIBRARY)
-
-# build an implementation of a Lua wrapper for libprocyon
-add_subdirectory(lua)
+add_library(${SU_LIBRARY} ${SU_SOURCE})
+target_include_directories(${SU_LIBRARY} 
+  PRIVATE ${STB_INCLUDE_DIR})
+target_include_directories(${SU_LIBRARY} PUBLIC ${SU_INCLUDE} ${LOG_INCLUDE_DIR})
+target_link_libraries(${SU_LIBRARY} PRIVATE glad glfw)
+target_link_libraries(${SU_LIBRARY} PUBLIC log)
 
 # Compile a small program that will convert files into
 # C header files
@@ -61,5 +58,9 @@ foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARG
     COMMAND genhexer ${filename} ${header} ${target})
   set_source_files_properties(${header} PROPERTIES GENERATED 1)
   add_custom_target(${target} DEPENDS ${header})
-  add_dependencies(procyon ${target})
+  add_dependencies(${SU_LIBRARY} ${target})
 endforeach()
+
+# build an implementation of a Lua wrapper for lib${SU_LIBRARY}
+add_subdirectory(lua)
+

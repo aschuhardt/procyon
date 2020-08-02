@@ -154,7 +154,7 @@ static size_t count_glyphs_in_ops_buffer(draw_op_t* ops, size_t n) {
 /* Public interface definition */
 /* --------------------------- */
 
-glyph_shader_program_t create_glyph_shader(window_t* window) {
+glyph_shader_program_t procy_create_glyph_shader(window_t* window) {
   glyph_shader_program_t glyph_shader;
 
   glyph_shader.window = window;
@@ -192,8 +192,8 @@ glyph_shader_program_t create_glyph_shader(window_t* window) {
   return glyph_shader;
 }
 
-void draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
-                       draw_op_t* ops, size_t n) {
+void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
+                             draw_op_t* ops, size_t n) {
   size_t glyph_count = count_glyphs_in_ops_buffer(ops, n);
   if (glyph_count == 0) {
     return;
@@ -338,7 +338,7 @@ static void destroy_shader_program(shader_program_t* shader) {
   shader->valid = false;
 }
 
-void destroy_glyph_shader_program(glyph_shader_program_t* shader) {
+void procy_destroy_glyph_shader_program(glyph_shader_program_t* shader) {
   if (shader != NULL) {
     destroy_shader_program(&shader->program);
 

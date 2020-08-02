@@ -5,7 +5,7 @@
 
 static int s_log_info(lua_State* L) {
   if (verify_arg_count(L, 1, __func__)) {
-    log_info("%s", lua_tostring(L, -1));
+    log_info("%s", lua_tostring(L, 1));
   }
 
   return 0;
@@ -13,7 +13,7 @@ static int s_log_info(lua_State* L) {
 
 static int s_log_error(lua_State* L) {
   if (verify_arg_count(L, 1, __func__)) {
-    log_error("%s", lua_tostring(L, -1));
+    log_error("%s", lua_tostring(L, 1));
   }
 
   return 0;
@@ -21,7 +21,7 @@ static int s_log_error(lua_State* L) {
 
 static int s_log_warn(lua_State* L) {
   if (verify_arg_count(L, 1, __func__)) {
-    log_warn("%s", lua_tostring(L, -1));
+    log_warn("%s", lua_tostring(L, 1));
   }
 
   return 0;
@@ -29,7 +29,7 @@ static int s_log_warn(lua_State* L) {
 
 static int s_log_debug(lua_State* L) {
   if (verify_arg_count(L, 1, __func__)) {
-    log_debug("%s", lua_tostring(L, -1));
+    log_debug("%s", lua_tostring(L, 1));
   }
 
   return 0;

@@ -22,7 +22,7 @@ typedef procy_key_info_t key_info_t;
 typedef procy_color_t color_t;
 typedef procy_state_t state_t;
 
-static const size_t INITIAL_DRAW_OPS_BUFFER_SIZE = 32;
+static const size_t INITIAL_DRAW_OPS_BUFFER_SIZE = 1024;
 
 static void glfw_error_callback(int code, const char* msg) {
   log_error("GLFW error %d: %s", code, msg);
@@ -129,28 +129,19 @@ static void init_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
   size_t buffer_size = sizeof(draw_op_t) * draw_ops->capacity;
   draw_ops->buffer = malloc(buffer_size);
 
-  log_debug("Initial string draw op buffer size: %zu", buffer_size);
+  log_debug("Initial draw ops buffer size: %zu", buffer_size);
 }
 
 static void expand_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
-  size_t buffer_size = draw_ops->capacity * sizeof(draw_op_t);
   draw_ops->capacity *= 2;
+  size_t buffer_size = draw_ops->capacity * sizeof(draw_op_t);
   draw_ops->buffer = realloc(draw_ops->buffer, buffer_size);
 
-  log_trace("Expanded string draw operations buffer size to %zu bytes",
-            buffer_size);
+  log_trace("Expanded string draw ops buffer size to %zu bytes", buffer_size);
 }
 
-static void clear_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
-  log_trace("Clearing draw operations buffer...");
-
+static void reset_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
   draw_ops->length = 0;
-  draw_ops->capacity = INITIAL_DRAW_OPS_BUFFER_SIZE;
-  size_t string_ops_buffer_size = draw_ops->capacity * sizeof(draw_op_t);
-  draw_ops->buffer = realloc(draw_ops->buffer, string_ops_buffer_size);
-
-  log_trace("String draw operations buffer shrunk to %zu bytes",
-            string_ops_buffer_size);
 }
 
 static void handle_key_entered(GLFWwindow* w, int key, int scancode, int action,
@@ -196,8 +187,8 @@ static void init_key_table(window_t* w) {
 /* Public interface definition */
 /* --------------------------- */
 
-window_t* create_window(int width, int height, const char* title,
-                        float text_scale, state_t* state) {
+window_t* procy_create_window(int width, int height, const char* title,
+                              float text_scale, state_t* state) {
   glfwSetErrorCallback(glfw_error_callback);
   window_t* window = malloc(sizeof(window_t));
 
@@ -217,7 +208,7 @@ window_t* create_window(int width, int height, const char* title,
   return window;
 }
 
-void destroy_window(window_t* window) {
+void procy_destroy_window(window_t* window) {
   if (window == NULL) {
     return;
   }
@@ -248,7 +239,7 @@ void procy_append_draw_op(window_t* window, draw_op_t* draw_op) {
   draw_ops->buffer[new_index] = *draw_op;
 }
 
-void begin_loop(window_t* window) {
+void procy_begin_loop(window_t* window) {
   // set up shader used for drawing text
   glyph_shader_program_t glyph_shader = procy_create_glyph_shader(window);
 
@@ -271,7 +262,7 @@ void begin_loop(window_t* window) {
     if (window->draw_ops.length > 0 && glyph_shader.program.valid) {
       procy_draw_glyph_shader(&glyph_shader, window, window->draw_ops.buffer,
                               window->draw_ops.length);
-      clear_draw_ops_buffer(&window->draw_ops);
+      reset_draw_ops_buffer(&window->draw_ops);
     }
 
     glfwSwapBuffers(w);

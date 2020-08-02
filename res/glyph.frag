@@ -3,15 +3,20 @@
 uniform sampler2D u_GlyphTexture;
 
 in vec2 f_TexCoords;
-in uint f_Color; // RGBA
-
-const uint COLOR_MASK = 256;
+flat in uint f_Color; // RGBA
 
 void main(void) {
-  vec3 color = vec3(f_Color >> 24 & COLOR_MASK,
-                    f_Color >> 16 & COLOR_MASK,
-                    f_Color >> 8  & COLOR_MASK,
-                    f_Color       & COLOR_MASK);
-  vec3 value = texture(u_GlyphTexture, f_TexCoords).rrr;
-  gl_FragColor = vec4(value * f_Color, 1.0);
+  uint mask = uint(255);
+  uint red_shift = uint(24);
+  uint green_shift = uint(16);
+  uint blue_shift = uint(8);
+
+  vec4 color = vec4(float(f_Color >> red_shift   & mask),
+                    float(f_Color >> green_shift & mask),
+                    float(f_Color >> blue_shift  & mask),
+                    float(f_Color                & mask));
+  color /= 255.0;
+
+  vec4 value = texture(u_GlyphTexture, f_TexCoords).rrrr;
+  gl_FragColor = vec4(value * color);
 }
