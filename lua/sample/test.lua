@@ -41,8 +41,10 @@ local function on_char_entered(c)
   input_text = input_text..c
 end
 
+local red = color.from_rgb(1.0, 0.0, 0.0)
+
 local function on_draw()
-  draw.string(x, y, input_text)
+  draw.string(x, y, input_text, red)
   draw.string(x, y + line_height, input_text)
 end
 

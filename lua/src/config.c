@@ -15,9 +15,16 @@ static const char DEFAULT_SCRIPT_PATH[] = "script/main.lua";
 static const int DEFAULT_WINDOW_W = 800;
 static const int DEFAULT_WINDOW_H = 600;
 
+static const int LOG_LEVEL_INFO = 1;
+static const int LOG_LEVEL_ERROR = 1 << 1;
+static const int LOG_LEVEL_WARN = 1 << 2;
+static const int LOG_LEVEL_DEBUG = 1 << 3;
+static const int LOG_LEVEL_TRACE = 1 << 4;
+
 bool parse_config_args(int argc, const char** argv, config_t* cfg) {
   // setup available command-line arguments and their descriptions
-  int log_level = 0;
+  int log_level = LOG_LEVEL_INFO;
+  bool log_quiet = false;
   const char* entry_path = NULL;
 
   cfg->window_w = DEFAULT_WINDOW_W;
@@ -30,16 +37,16 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
       OPT_GROUP("General"),
       OPT_HELP(),
       OPT_GROUP("Logging"),
-      OPT_BIT(0, "error", &log_level, "enable ERROR log level", NULL, LOG_ERROR,
-              OPT_NONEG),
-      OPT_BIT(0, "warn", &log_level, "enable WARN log level", NULL, LOG_WARN,
-              OPT_NONEG),
-      OPT_BIT(0, "info", &log_level, "enable INFO log level", NULL, LOG_INFO,
-              OPT_NONEG),
-      OPT_BIT(0, "debug", &log_level, "enable DEBUG log level", NULL, LOG_DEBUG,
-              OPT_NONEG),
-      OPT_BIT(0, "trace", &log_level, "enable TRACE log level", NULL, LOG_TRACE,
-              OPT_NONEG),
+      OPT_BIT(0, "error", &log_level, "enable ERROR log level", NULL,
+              LOG_LEVEL_ERROR, OPT_NONEG),
+      OPT_BIT(0, "warn", &log_level, "enable WARN log level", NULL,
+              LOG_LEVEL_WARN, OPT_NONEG),
+      OPT_BIT(0, "info", &log_level, "enable INFO log level", NULL,
+              LOG_LEVEL_INFO, OPT_NONEG),
+      OPT_BIT(0, "debug", &log_level, "enable DEBUG log level", NULL,
+              LOG_LEVEL_DEBUG, OPT_NONEG),
+      OPT_BIT(0, "trace", &log_level, "enable TRACE log level", NULL,
+              LOG_LEVEL_TRACE, OPT_NONEG),
       OPT_GROUP("Script loading"),
       OPT_STRING('e', "entry", &entry_path,
                  "script entry point (default = 'script/main.lua')"),
@@ -56,13 +63,23 @@ bool parse_config_args(int argc, const char** argv, config_t* cfg) {
   argparse_describe(
       &argparse,
       "A GPU-accelerated tile-based game engine with scripting via Lua",
-      "Created by Addison Schuhardt");
+      "Created by Addison Schuhardt (http://schuhardt.net)");
 
   // parse arguments
   argparse_parse(&argparse, argc, argv);
 
   // set log level
-  log_set_level(log_level ? log_level : LOG_ERROR);
+  if ((log_level & LOG_LEVEL_TRACE) == LOG_LEVEL_TRACE) {
+    log_set_level(LOG_TRACE);
+  } else if ((log_level & LOG_LEVEL_DEBUG) == LOG_LEVEL_DEBUG) {
+    log_set_level(LOG_DEBUG);
+  } else if ((log_level & LOG_LEVEL_WARN) == LOG_LEVEL_WARN) {
+    log_set_level(LOG_WARN);
+  } else if ((log_level & LOG_LEVEL_ERROR) == LOG_LEVEL_ERROR) {
+    log_set_level(LOG_ERROR);
+  } else if ((log_level & LOG_LEVEL_INFO) == LOG_LEVEL_INFO) {
+    log_set_level(LOG_INFO);
+  }
 
   // ensure that an entry point was provided and that it's of a valid length
   size_t max_path_length = sizeof(cfg->script_entry) / sizeof(char);

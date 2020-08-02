@@ -33,17 +33,18 @@ draw_op_t procy_create_draw_op_char(int x, int y, char c) {
 
 draw_op_t procy_create_draw_op_char_colored(int x, int y, color_t color,
                                             char c) {
-  draw_op_t op = {WHITE, DRAW_OP_TEXT, x, y};
+  draw_op_t op = {color, DRAW_OP_TEXT, x, y};
   op.data.text.character = (unsigned char)c;
   return op;
 }
 
 color_t procy_create_color(unsigned char r, unsigned char g, unsigned char b,
                            unsigned char a) {
-  color_t color = {(unsigned int)r};
-  color.rgba = (color.rgba << 8) | g;
+  color_t color;
+  color.rgba = a;
   color.rgba = (color.rgba << 8) | b;
-  color.rgba = (color.rgba << 8) | a;
+  color.rgba = (color.rgba << 8) | g;
+  color.rgba = (color.rgba << 8) | r;
   return color;
 }
 
