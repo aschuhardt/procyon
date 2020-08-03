@@ -68,7 +68,7 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 ```lua
 local function handle_key_pressed(key, ...)
   -- key info can be indexed by the key object itself
-  log.debug("Key %s was pressed!", keys[key].name)
+  log.debug(string.format("Key %s was pressed!", keys[key].name))
 
   if key == keys.KEY_ESCAPE then
     window.close()
