@@ -41,15 +41,13 @@ local function on_char_entered(c)
   input_text = input_text..c
 end
 
-local red = color.from_rgb(1.0, 0.0, 0.0)
 
 local function on_draw()
-  draw.string(x, y, input_text, red)
+  draw.string(x, y, input_text, color.from_rgb(0.3, 0.2, 0.78))
   draw.string(x, y + line_height, input_text)
 end
 
 local function on_load()
-  log.info("Hello!")
   local w, h = window.glyph_size()
   line_height = h
   log.info(string.format("Glyph size: %dx%d", w, h))

@@ -19,8 +19,7 @@
 
 #pragma pack(0)
 typedef struct glyph_vertex_t {
-  float x, y, u, v;
-  unsigned int color;
+  float x, y, u, v, r, g, b, a;
 } glyph_vertex_t;
 #pragma pack(1)
 
@@ -28,6 +27,7 @@ typedef procy_draw_op_t draw_op_t;
 typedef procy_window_t window_t;
 typedef procy_shader_program_t shader_program_t;
 typedef procy_glyph_shader_program_t glyph_shader_program_t;
+typedef procy_color_t color_t;
 
 static const size_t VBO_GLYPH_POSITION = 0;
 static const size_t VBO_GLYPH_INDICES = 1;
@@ -217,8 +217,8 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
 
     size_t vert_ix = glyph_index * 4;
     size_t index_ix = glyph_index * 6;
-    unsigned int color = op->color.rgba;
     unsigned char c = op->data.text.character;
+    color_t color = op->color;
 
     // screen coordinates
     float x = (float)op->x;
@@ -231,13 +231,28 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
                (float)shader->texture_h;
 
     // vertex attributes
-    glyph_vertex_t top_left = {x, y, tx, ty, color};
-    glyph_vertex_t top_right = {x + glyph_w * scale, y, tx + glyph_tw, ty,
-                                color};
-    glyph_vertex_t bottom_left = {x, y + glyph_h * scale, tx, ty + glyph_th,
-                                  color};
-    glyph_vertex_t bottom_right = {x + glyph_w * scale, y + glyph_h * scale,
-                                   tx + glyph_tw, ty + glyph_th, color};
+    glyph_vertex_t top_left = {x,       y,       tx,      ty,
+                               color.r, color.g, color.b, color.a};
+    glyph_vertex_t top_right = {x + glyph_w * scale,
+                                y,
+                                tx + glyph_tw,
+                                ty,
+                                color.r,
+                                color.g,
+                                color.b,
+                                color.a};
+    glyph_vertex_t bottom_left = {x,       y + glyph_h * scale,
+                                  tx,      ty + glyph_th,
+                                  color.r, color.g,
+                                  color.b, color.a};
+    glyph_vertex_t bottom_right = {x + glyph_w * scale,
+                                   y + glyph_h * scale,
+                                   tx + glyph_tw,
+                                   ty + glyph_th,
+                                   color.r,
+                                   color.g,
+                                   color.b,
+                                   color.a};
 
     vertices[vert_ix] = top_left;
     vertices[vert_ix + 1] = top_right;
@@ -285,7 +300,7 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
                         sizeof(glyph_vertex_t), (void*)(2 * sizeof(float)));
 
   glEnableVertexAttribArray(ATTR_GLYPH_COLOR);
-  glVertexAttribPointer(ATTR_GLYPH_COLOR, 1, GL_UNSIGNED_INT, GL_FALSE,
+  glVertexAttribPointer(ATTR_GLYPH_COLOR, 4, GL_FLOAT, GL_FALSE,
                         sizeof(glyph_vertex_t), (void*)(4 * sizeof(float)));
 
   // copy indices

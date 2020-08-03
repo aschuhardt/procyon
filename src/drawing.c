@@ -38,13 +38,8 @@ draw_op_t procy_create_draw_op_char_colored(int x, int y, color_t color,
   return op;
 }
 
-color_t procy_create_color(unsigned char r, unsigned char g, unsigned char b,
-                           unsigned char a) {
-  color_t color;
-  color.rgba = a;
-  color.rgba = (color.rgba << 8) | b;
-  color.rgba = (color.rgba << 8) | g;
-  color.rgba = (color.rgba << 8) | r;
-  return color;
+color_t procy_create_color(float r, float g, float b, float a) {
+  color_t c = {r, g, b, a};
+  return c;
 }
 
