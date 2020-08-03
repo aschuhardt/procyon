@@ -15,7 +15,7 @@ TODO:
 - [x] Compile-time asset embedding (currently done in CMakeLists.txt)
 - [ ] More flexible non-cmake asset pipeline
 - [x] Bitmap font rendering
-- [ ] Colored text
+- [x] Colored text
 - [ ] Graphics primitives
 - [ ] API calls for generating continuous 1D/2D/3D noise (via stb_perlin.h)
 
@@ -73,7 +73,9 @@ Procyon uses Lua for scripting.  High-level objects are grouped into global tabl
 ### Drawing
 
 #### Functions
-- `draw.string(x, y, contents)` - Draws `contents` at pixel coordinates `(x, y)` on the window.
+- `draw.string(x, y, contents [, color])` - Draws `contents` at pixel coordinates `(x, y)` on the window. If no `color` argument is provided, the text will be white.
+- `color.from_rgb(r, g, b)` - Returns a table with fields `r`, `g`, `b`, and `a` that represents a color value.  Arguments should be floating-point values between `0.0` and `1.0`.
+- `color.from_rgba(r, g, b, a)` - Same as `color.from_rgb`, with an added alpha argument.
 
 ---
 
