@@ -12,7 +12,6 @@ See the `lua` directory for a sample implementation that adds a runtime scriptin
 
 TODO:
 - [x] Creating a window
-- [x] Tightly-coupled Lua integration
 - [x] Event-based input handling (keyboard only for now)
 - [x] Compile-time asset embedding (currently done in CMakeLists.txt)
 - [ ] More flexible non-cmake asset pipeline
