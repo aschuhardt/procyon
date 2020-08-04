@@ -176,6 +176,7 @@ script_env_t* create_script_env(procy_window_t* window, procy_state_t* state) {
   env->L = lua_newstate(script_state_alloc, NULL);
   env->window = window;
   env->state = state;
+  env->reload = false;
   return env;
 }
 
@@ -183,6 +184,7 @@ void destroy_script_env(script_env_t* env) {
   if (env != NULL && env->L != NULL) {
     lua_close((lua_State*)env->L);
   }
+
   free(env);
 }
 

@@ -21,6 +21,10 @@ local function on_key_pressed(key, shift, ctrl, alt)
   if shift then
     n = n + (delta * 2)
   end
+
+  if key == keys.KEY_F2 then
+    window.reload()
+  end
   
   if key == keys.KEY_ESCAPE then
     window.close()
@@ -35,6 +39,7 @@ local function on_key_pressed(key, shift, ctrl, alt)
   elseif key == keys.KEY_RIGHT then
     x = x + n
   end
+
 end
 
 local function on_char_entered(c)
