@@ -8,6 +8,7 @@
 #define TBL_WINDOW "window"
 
 #define FUNC_CLOSE "close"
+#define FUNC_RELOAD "reload"
 #define FUNC_SIZE "size"
 #define FUNC_GLYPH_SIZE "glyph_size"
 #define FUNC_ON_DRAW "on_draw"
@@ -49,6 +50,16 @@ static int window_glyph_size(lua_State* L) {
   lua_pushinteger(L, window->glyph.width);
   lua_pushinteger(L, window->glyph.height);
   return 2;
+}
+
+static int window_reload(lua_State* L) {
+  // close the window and set the "reload" flag to true
+  close_window(L);
+  lua_getglobal(L, GLOBAL_ENV_PTR);
+  script_env_t* env = (script_env_t*)lua_touserdata(L, -1);
+  env->reload = true;
+
+  return 0;
 }
 
 // called from the main window loop by way of script_env_t.on_draw
@@ -132,6 +143,9 @@ void add_window(lua_State* L, script_env_t* env) {
 
   lua_pushcfunction(L, window_glyph_size);
   lua_setfield(L, -2, FUNC_GLYPH_SIZE);
+
+  lua_pushcfunction(L, window_reload);
+  lua_setfield(L, -2, FUNC_RELOAD);
 
   lua_setglobal(L, TBL_WINDOW);
 }
