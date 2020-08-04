@@ -42,6 +42,7 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 - `window.close()` - Returns nothing.  Closes the window.
 - `window.size()` - Returns two integers (width and height), representing the dimensions of the window in pixels.
 - `window.glyph_size()` - Returns two integers (width and height), representing the *scaled* dimensions of text glyphs.
+- `window.reload()` - Returns nothing.  Causes the window and script environment to be disposed-of and reloaded (functionally "restarts" the app).
 
 #### Fields
 - `window.on_draw` - If assigned, `on_draw` is called before each new frame is drawn.  Perform any drawing routines here.  No arguments are passed to `on_draw`.
