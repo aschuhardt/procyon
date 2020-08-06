@@ -145,10 +145,6 @@ static bool load_script_raw(lua_State* L, char* path) {
       log_error("Out-of-memory error while loading %s: %s", path,
                 lua_tostring(L, -1));
       break;
-    case LUA_ERRGCMM:
-      log_error("Garbage-collection error while loading %s: %s", path,
-                lua_tostring(L, -1));
-      break;
     default:
       log_error("Unknown error occurred while loading %s: %s", path,
                 lua_tostring(L, -1));
