@@ -10,7 +10,3 @@
 [submodule "lib/stb"]
 	path = lib/stb
 	url = https://github.com/nothings/stb.git
-[submodule "lib/lua"]
-	path = lib/lua
-	url = https://github.com/LuaDist/lua.git
-	branch = lua-5.3
