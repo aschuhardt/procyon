@@ -4,7 +4,6 @@
 #include <lua.h>
 #include <lualib.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "config.h"
@@ -84,11 +83,7 @@ static const char* raw_file_reader(lua_State* L, void* data, size_t* size) {
 }
 
 static size_t get_file_dir_length(char* path) {
-#ifdef WIN32
-  char* last_segment = strrchr(path, '\\');
-#else
   char* last_segment = strrchr(path, '/');
-#endif
 
   if (last_segment == NULL) {
     return strnlen(path, PATH_MAX);
