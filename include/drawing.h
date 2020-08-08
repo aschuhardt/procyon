@@ -15,7 +15,7 @@ typedef struct procy_draw_op_t {
   int x, y;
   union {
     struct {
-      float character;
+      unsigned char character;
     } text;
   } data;
 } procy_draw_op_t;
