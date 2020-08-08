@@ -9,38 +9,11 @@
 #define TBL_DRAWING "draw"
 #define TBL_COLOR "color"
 
-#define FLD_COLOR_R "r"
-#define FLD_COLOR_G "g"
-#define FLD_COLOR_B "b"
-
 #define FUNC_DRAWSTRING "string"
 #define FUNC_FROMRGB "from_rgb"
 
 #define WHITE (procy_create_color(1.0F, 1.0F, 1.0F))
 #define BLACK (procy_create_color(0.0F, 0.0F, 0.0F))
-
-static procy_color_t get_color(lua_State* L, int index) {
-  if (!lua_istable(L, index)) {
-    // if there's no table at `index`, return white
-    return WHITE;
-  }
-
-  float r, g, b;
-
-  lua_getfield(L, index, FLD_COLOR_R);
-  r = lua_tonumber(L, -1);
-
-  lua_getfield(L, index, FLD_COLOR_G);
-  g = lua_tonumber(L, -1);
-
-  lua_getfield(L, index, FLD_COLOR_B);
-  b = lua_tonumber(L, -1);
-
-  // pop color values
-  lua_pop(L, 3);
-
-  return procy_create_color(r, g, b);
-}
 
 static int draw_string(lua_State* L) {
   int x = lua_tointeger(L, 1);
@@ -66,20 +39,6 @@ static int draw_string(lua_State* L) {
   return 0;
 }
 
-static void push_rgba_table(lua_State* L, float r, float g, float b) {
-  // clear the stack
-  lua_pop(L, lua_gettop(L));
-
-  lua_newtable(L);
-
-  lua_pushnumber(L, r);
-  lua_setfield(L, -2, FLD_COLOR_R);
-  lua_pushnumber(L, g);
-  lua_setfield(L, -2, FLD_COLOR_G);
-  lua_pushnumber(L, b);
-  lua_setfield(L, -2, FLD_COLOR_B);
-}
-
 static int from_rgb(lua_State* L) {
   if (!verify_arg_count(L, 3, __func__)) {
     return 0;
@@ -89,7 +48,7 @@ static int from_rgb(lua_State* L) {
   float g = lua_tonumber(L, 2);
   float b = lua_tonumber(L, 3);
 
-  push_rgba_table(L, r, g, b);
+  push_rgb_table(L, r, g, b);
 
   return 1;
 }

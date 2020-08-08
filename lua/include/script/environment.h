@@ -9,6 +9,8 @@
 
 #include <stdbool.h>
 
+#include "color.h"
+
 #define GLOBAL_ENV_PTR "ptr_env"
 #define GLOBAL_WINDOW_PTR "ptr_window"
 
@@ -27,5 +29,9 @@ void add_utilities(lua_State* L);
  */
 
 bool verify_arg_count(lua_State* L, int n, const char* name);
+
+void push_rgb_table(lua_State* L, float r, float g, float b);
+
+procy_color_t get_color(lua_State* L, int index);
 
 #endif

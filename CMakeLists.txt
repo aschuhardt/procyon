@@ -10,7 +10,8 @@ set(SU_SOURCE
   src/drawing.c
   src/window.c
   src/shader.c
-  src/keys.c)
+  src/keys.c
+  src/color.c)
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(SU_LIBRARY procyon)

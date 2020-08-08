@@ -8,10 +8,5 @@ in vec3 f_BackColor;
 
 void main(void) {
   float value = texture(u_GlyphTexture, f_TexCoords).r;
-  if (value == 0.0) {
-    gl_FragColor = vec4(f_BackColor, 1.0);
-  } else {
-    gl_FragColor = vec4(f_ForeColor, 1.0);
-  }
+  gl_FragColor = vec4(mix(f_BackColor, f_ForeColor, value), 1.0);
 }
-
