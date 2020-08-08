@@ -13,10 +13,6 @@ local input_text = "\x04\x02\x03 >"
 local line_height = 0
 
 local function on_key_pressed(key, shift, ctrl, alt) 
-  -- if keys[key] ~= nil then
-  --  log.info(keys[key].name)
-  -- end
-
   local n = delta
   if shift then
     n = n + (delta * 2)

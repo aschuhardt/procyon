@@ -12,13 +12,11 @@
 #define FLD_COLOR_R "r"
 #define FLD_COLOR_G "g"
 #define FLD_COLOR_B "b"
-#define FLD_COLOR_A "a"
 
 #define FUNC_DRAWSTRING "string"
 #define FUNC_FROMRGB "from_rgb"
-#define FUNC_FROMRGBA "from_rgba"
 
-#define WHITE procy_create_color(1.0F, 1.0F, 1.0F, 1.0F)
+#define WHITE procy_create_color(1.0F, 1.0F, 1.0F)
 
 static procy_color_t get_color(lua_State* L, int index) {
   if (!lua_istable(L, index)) {
@@ -37,13 +35,10 @@ static procy_color_t get_color(lua_State* L, int index) {
   lua_getfield(L, index, FLD_COLOR_B);
   b = lua_tonumber(L, -1);
 
-  lua_getfield(L, index, FLD_COLOR_A);
-  a = lua_tonumber(L, -1);
-
   // pop color values + table
   lua_pop(L, 5);
 
-  return procy_create_color(r, g, b, a);
+  return procy_create_color(r, g, b);
 }
 
 static int draw_string(lua_State* L) {
@@ -69,7 +64,7 @@ static int draw_string(lua_State* L) {
   return 0;
 }
 
-static void push_rgba_table(lua_State* L, float r, float g, float b, float a) {
+static void push_rgba_table(lua_State* L, float r, float g, float b) {
   // clear the stack
   lua_pop(L, lua_gettop(L));
 
@@ -81,8 +76,6 @@ static void push_rgba_table(lua_State* L, float r, float g, float b, float a) {
   lua_setfield(L, -2, FLD_COLOR_G);
   lua_pushnumber(L, b);
   lua_setfield(L, -2, FLD_COLOR_B);
-  lua_pushnumber(L, a);
-  lua_setfield(L, -2, FLD_COLOR_A);
 }
 
 static int from_rgb(lua_State* L) {
@@ -94,22 +87,7 @@ static int from_rgb(lua_State* L) {
   float g = lua_tonumber(L, 2);
   float b = lua_tonumber(L, 3);
 
-  push_rgba_table(L, r, g, b, 1.0F);
-
-  return 1;
-}
-
-static int from_rgba(lua_State* L) {
-  if (!verify_arg_count(L, 4, __func__)) {
-    return 0;
-  }
-
-  float r = lua_tonumber(L, 1);
-  float g = lua_tonumber(L, 2);
-  float b = lua_tonumber(L, 3);
-  float a = lua_tonumber(L, 4);
-
-  push_rgba_table(L, r, g, b, a);
+  push_rgba_table(L, r, g, b);
 
   return 1;
 }
@@ -128,9 +106,6 @@ static void add_color_table(lua_State* L) {
 
   lua_pushcfunction(L, from_rgb);
   lua_setfield(L, -2, FUNC_FROMRGB);
-
-  lua_pushcfunction(L, from_rgba);
-  lua_setfield(L, -2, FUNC_FROMRGBA);
 
   lua_setglobal(L, TBL_COLOR);
 }

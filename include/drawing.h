@@ -6,7 +6,7 @@
 #define PROCY_DRAW_OP_STRING_BUFFER_SIZE 64
 
 typedef struct procy_color_t {
-  float r, g, b, a;
+  float r, g, b;
 } procy_color_t;
 
 typedef enum procy_draw_op_type_t { DRAW_OP_TEXT } procy_draw_op_type_t;
@@ -47,6 +47,6 @@ procy_draw_op_t procy_create_draw_op_char_colored(int x, int y,
  * Encodes the four provided byte values (0 - 255) into a new procy_color_t
  * instance
  */
-procy_color_t procy_create_color(float r, float g, float b, float a);
+procy_color_t procy_create_color(float r, float g, float b);
 
 #endif

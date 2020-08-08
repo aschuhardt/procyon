@@ -7,7 +7,7 @@
 typedef procy_draw_op_t draw_op_t;
 typedef procy_color_t color_t;
 
-#define WHITE (procy_create_color(255, 255, 255, 255))
+#define WHITE (procy_create_color(1.0F, 1.0F, 1.0F))
 
 /* --------------------------- */
 /* Public interface definition */
@@ -38,8 +38,8 @@ draw_op_t procy_create_draw_op_char_colored(int x, int y, color_t color,
   return op;
 }
 
-color_t procy_create_color(float r, float g, float b, float a) {
-  color_t c = {r, g, b, a};
+color_t procy_create_color(float r, float g, float b) {
+  color_t c = {r, g, b};
   return c;
 }
 
