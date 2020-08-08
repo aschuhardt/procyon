@@ -40,8 +40,3 @@ draw_op_t procy_create_draw_op_char_colored(int x, int y, color_t forecolor,
   return op;
 }
 
-color_t procy_create_color(float r, float g, float b) {
-  color_t c = {r, g, b};
-  return c;
-}
-

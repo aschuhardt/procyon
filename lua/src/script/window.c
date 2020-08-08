@@ -15,6 +15,7 @@
 #define FUNC_ON_RESIZE "on_resize"
 #define FUNC_ON_LOAD "on_load"
 #define FUNC_ON_UNLOAD "on_unload"
+#define FUNC_SET_COLOR "set_color"
 
 static int close_window(lua_State* L) {
   if (!verify_arg_count(L, 0, __func__)) {
@@ -24,7 +25,6 @@ static int close_window(lua_State* L) {
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
   procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
   window->quitting = true;
-  lua_pop(L, 1);
   return 0;
 }
 
@@ -74,8 +74,6 @@ static void perform_draw(procy_state_t* const state) {
                 lua_tostring(L, -1));
     }
   }
-
-  lua_pop(L, 1);
 }
 
 static void handle_window_resized(procy_state_t* const state, int w, int h) {
@@ -91,8 +89,6 @@ static void handle_window_resized(procy_state_t* const state, int w, int h) {
                 lua_tostring(L, -1));
     }
   }
-
-  lua_pop(L, 1);
 }
 
 static void handle_window_loaded(procy_state_t* const state) {
@@ -106,8 +102,6 @@ static void handle_window_loaded(procy_state_t* const state) {
                 lua_tostring(L, -1));
     }
   }
-
-  lua_pop(L, 1);
 }
 
 static void handle_window_unloaded(procy_state_t* const state) {
@@ -121,8 +115,16 @@ static void handle_window_unloaded(procy_state_t* const state) {
                 lua_tostring(L, -1));
     }
   }
+}
 
-  lua_pop(L, 1);
+static int set_window_color(lua_State* L) {
+  if (!verify_arg_count(L, 1, __func__)) {
+    return 0;
+  }
+
+  procy_set_clear_color(get_color(L, 1));
+  lua_pop(L, lua_gettop(L));
+  return 0;
 }
 
 void add_window(lua_State* L, script_env_t* env) {
@@ -146,6 +148,9 @@ void add_window(lua_State* L, script_env_t* env) {
 
   lua_pushcfunction(L, window_reload);
   lua_setfield(L, -2, FUNC_RELOAD);
+
+  lua_pushcfunction(L, set_window_color);
+  lua_setfield(L, -2, FUNC_SET_COLOR);
 
   lua_setglobal(L, TBL_WINDOW);
 }

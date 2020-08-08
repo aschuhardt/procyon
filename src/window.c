@@ -243,6 +243,9 @@ void procy_begin_loop(window_t* window) {
   // set up shader used for drawing text
   glyph_shader_program_t glyph_shader = procy_create_glyph_shader(window);
 
+  // this can be overridden later, but black is a good default
+  glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
+
   state_t* state = window->state;
   if (state->on_load != NULL) {
     state->on_load(state);
@@ -252,7 +255,6 @@ void procy_begin_loop(window_t* window) {
   while (!glfwWindowShouldClose(w) && !window->quitting) {
     glfwWaitEventsTimeout(2.0F);
 
-    glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (state->on_draw != NULL) {
@@ -274,3 +276,6 @@ void procy_begin_loop(window_t* window) {
 
   procy_destroy_glyph_shader_program(&glyph_shader);
 }
+
+void procy_set_clear_color(color_t c) { glClearColor(c.r, c.g, c.b, 1.0F); }
+

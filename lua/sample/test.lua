@@ -52,6 +52,7 @@ local function on_load()
   local w, h = window.glyph_size()
   line_height = h
   log.info(string.format("Glyph size: %dx%d", w, h))
+  window.set_color(color.from_rgb(0.01, 0.3, 0.45));
 end
 
 local function on_unload()
