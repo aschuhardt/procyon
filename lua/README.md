@@ -55,9 +55,8 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 ### Drawing
 
 #### Functions
-- `draw.string(x, y, contents [, color])` - Draws `contents` at pixel coordinates `(x, y)` on the window. If no `color` argument is provided, the text will be white.
+- `draw.string(x, y, contents [, forecolor [, backcolor]])` - Draws `contents` at pixel coordinates `(x, y)` on the window. 
 - `color.from_rgb(r, g, b)` - Returns a table with fields `r`, `g`, `b`, and `a` that represents a color value.  Arguments should be floating-point values between `0.0` and `1.0`.
-- `color.from_rgba(r, g, b, a)` - Same as `color.from_rgb`, with an added alpha argument.
 
 ---
 

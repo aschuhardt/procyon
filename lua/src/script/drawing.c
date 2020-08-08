@@ -16,7 +16,8 @@
 #define FUNC_DRAWSTRING "string"
 #define FUNC_FROMRGB "from_rgb"
 
-#define WHITE procy_create_color(1.0F, 1.0F, 1.0F)
+#define WHITE (procy_create_color(1.0F, 1.0F, 1.0F))
+#define BLACK (procy_create_color(0.0F, 0.0F, 0.0F))
 
 static procy_color_t get_color(lua_State* L, int index) {
   if (!lua_istable(L, index)) {
@@ -24,7 +25,7 @@ static procy_color_t get_color(lua_State* L, int index) {
     return WHITE;
   }
 
-  float r, g, b, a;
+  float r, g, b;
 
   lua_getfield(L, index, FLD_COLOR_R);
   r = lua_tonumber(L, -1);
@@ -35,8 +36,8 @@ static procy_color_t get_color(lua_State* L, int index) {
   lua_getfield(L, index, FLD_COLOR_B);
   b = lua_tonumber(L, -1);
 
-  // pop color values + table
-  lua_pop(L, 5);
+  // pop color values
+  lua_pop(L, 3);
 
   return procy_create_color(r, g, b);
 }
@@ -46,7 +47,8 @@ static int draw_string(lua_State* L) {
   int y = lua_tointeger(L, 2);
   const char* contents = lua_tostring(L, 3);
 
-  procy_color_t color = lua_gettop(L) == 4 ? get_color(L, 4) : WHITE;
+  procy_color_t forecolor = lua_gettop(L) >= 4 ? get_color(L, 4) : WHITE;
+  procy_color_t backcolor = lua_gettop(L) >= 5 ? get_color(L, 5) : BLACK;
 
   lua_pop(L, lua_gettop(L));
 
@@ -56,8 +58,8 @@ static int draw_string(lua_State* L) {
   size_t length = strlen(contents);
   procy_draw_op_t op;
   for (size_t i = 0; i < length; i++) {
-    op = procy_create_draw_op_string_colored(x, y, window->glyph.width, color,
-                                             contents, i);
+    op = procy_create_draw_op_string_colored(x, y, window->glyph.width,
+                                             forecolor, backcolor, contents, i);
     procy_append_draw_op(window, &op);
   }
 
