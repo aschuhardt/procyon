@@ -3,9 +3,9 @@
 uniform sampler2D u_GlyphTexture;
 
 in vec2 f_TexCoords;
-in vec4 f_Color;
+in vec3 f_Color;
 
 void main(void) {
-  vec4 value = texture(u_GlyphTexture, f_TexCoords).rrrr;
-  gl_FragColor = vec4(value * f_Color);
+  vec3 value = texture(u_GlyphTexture, f_TexCoords).rrr;
+  gl_FragColor = vec4(value * f_Color, 1.0);
 }

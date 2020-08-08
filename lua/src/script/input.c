@@ -97,14 +97,6 @@ static void add_keys(lua_State* L) {
     lua_pushinteger(L, key.value);
     lua_setfield(L, -2, key.name);
 
-    // [value] = { name, value }
-    lua_newtable(L);
-    lua_pushstring(L, key.name);
-    lua_setfield(L, -2, FLD_KEY_NAME);
-    lua_pushinteger(L, key.value);
-    lua_setfield(L, -2, FLD_KEY_VALUE);
-    lua_seti(L, -2, key.value);
-
     log_trace("Adding key value (%s, %d)", key.name, key.value);
   }
 

@@ -162,6 +162,11 @@ static void* script_state_alloc(void* ud, void* ptr, size_t osize,
   return malloc(nsize);
 }
 
+static void script_log_warning(void* ud, const char* msg, int tocont) {
+  (void)ud;
+  log_warn("%s", msg);
+}
+
 script_env_t* create_script_env(procy_window_t* window, procy_state_t* state) {
   script_env_t* env = malloc(sizeof(script_env_t));
   env->L = lua_newstate(script_state_alloc, NULL);
@@ -181,6 +186,7 @@ void destroy_script_env(script_env_t* env) {
 
 bool load_scripts(script_env_t* env, char* path) {
   lua_State* L = (lua_State*)env->L;
+  lua_setwarnf(L, script_log_warning, NULL);
   luaL_openlibs(L);
 
   if (load_script_raw(L, path)) {
