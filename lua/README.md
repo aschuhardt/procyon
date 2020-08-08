@@ -64,19 +64,14 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 ### Input
 
 #### Fields
-- `input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed.  It is four arguments: `key`, which is one of the `keys.KEY_...` fields, followed by and  three boolean values indicating whether the `shift`, `control`, or `alt` mods are in effect.  See the example implementation provided below:
+- `input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed.  It has four arguments: `key`, which is one of the `keys.KEY_...` fields, followed by and  three boolean values indicating whether the `shift`, `control`, or `alt` mods are in effect.  See the example implementation provided below:
 
 ```lua
-local function handle_key_pressed(key, ...)
-  -- key info can be indexed by the key object itself
-  log.debug(string.format("Key %s was pressed!", keys[key].name))
-
+input.on_key_pressed = function(key, shift, ctrl, alt)
   if key == keys.KEY_ESCAPE then
     window.close()
   end
 end
-
-input.on_key_pressed = handle_key_pressed
 ```
 
 - `input.on_key_released` - Same as `on_key_pressed` above, but called when a key is released.
@@ -89,6 +84,10 @@ input.on_key_pressed = handle_key_pressed
 ### Utility
 
 #### Functions
+- `noise.perlin(x, y, z [, seed])` - Returns a floating-point value.  Only the lower 8 bits of `seed` are used.  Refer to `stb_perlin.h` for more information.
+- `noise.ridge(x, y, z [, lacunarity, gain, offset, octaves])` - Returns a floating-point value.  Refer to `stb_perlin.h` for more information.
+- `noise.fbm(x, y, z [, lacunarity, gain, octaves])` - Returns a floating-point value.  Refer to `stb_perlin.h` for more information.
+- `noise.turbulence(x, y, z [, lacunarity, gain, octaves])` - Returns a floating-point value.  Refer to `stb_perlin.h` for more information.
 - `log.info(contents)`
 - `log.error(contents)`
 - `log.warn(contents)`

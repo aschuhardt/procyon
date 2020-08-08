@@ -18,5 +18,5 @@ TODO:
 - [x] Bitmap font rendering
 - [x] Colored text
 - [ ] Graphics primitives
-- [ ] API calls for generating continuous 1D/2D/3D noise (via stb_perlin.h)
+- [x] (Lua only) API calls for generating continuous 3D noise (via stb_perlin.h)
 
