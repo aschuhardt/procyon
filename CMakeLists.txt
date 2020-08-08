@@ -17,9 +17,11 @@ set(SU_INCLUDE
 set(SU_LIBRARY procyon)
 
 add_library(${SU_LIBRARY} ${SU_SOURCE})
-target_include_directories(${SU_LIBRARY} 
-  PRIVATE ${STB_INCLUDE_DIR})
-target_include_directories(${SU_LIBRARY} PUBLIC ${SU_INCLUDE} ${LOG_INCLUDE_DIR})
+target_include_directories(${SU_LIBRARY}
+  PUBLIC
+  ${SU_INCLUDE}
+  ${LOG_INCLUDE_DIR}
+  ${STB_INCLUDE_DIR})
 target_link_libraries(${SU_LIBRARY} PRIVATE glad glfw)
 target_link_libraries(${SU_LIBRARY} PUBLIC log)
 
