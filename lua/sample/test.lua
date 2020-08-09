@@ -26,6 +26,8 @@ local function on_key_pressed(key, shift, ctrl, alt)
     window.close()
   elseif key == keys.KEY_R then
     other.do_thing()
+  elseif key == keys.KEY_J then
+    script.run("log.info(\"asdf\")")
   elseif key == keys.KEY_UP then
     y = y - n 
   elseif key == keys.KEY_DOWN then
@@ -49,7 +51,6 @@ local function on_draw()
   draw.line(400, 400, 100, 100, color.from_rgb(1.0, 1.0, 0.0))
   
   for n = 3, 8 do
-    script.run(string.format("log.info(\"n: %d\")", n))
     draw.poly(200, 320, 90.2, n)
   end
 end
