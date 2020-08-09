@@ -46,6 +46,7 @@ end
 local function on_draw()
   draw.string(x, y, input_text, color.from_rgb(0.3, 0.2, 0.78), color.from_rgb(0.8, 0.7, 0.1))
   draw.string(x, y + line_height, input_text)
+  draw.rect(100, 100, 64, 64, color.from_rgb(0.6, 0.4, 0.0))
 end
 
 local function on_load()

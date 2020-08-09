@@ -11,7 +11,10 @@ set(SU_SOURCE
   src/window.c
   src/shader.c
   src/keys.c
-  src/color.c)
+  src/color.c
+  src/shader/glyph.c
+  src/shader/rect.c
+  src/shader/line.c)
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(SU_LIBRARY procyon)
@@ -37,19 +40,25 @@ add_executable(genhexer util/genhexer.c)
 list(APPEND EMBED_FILES
   glyph.vert
   glyph.frag
-  cp437.png)
+  cp437.png
+  rect.vert
+  rect.frag)
 
 # ... and their corresponding header file names ...
 list(APPEND EMBED_HEADERS
   glyph_vert.h
   glyph_frag.h
-  tileset.h)
+  tileset.h
+  rect_vert.h
+  rect_frag.h)
 
 # ... and specify target names for each embedded object
 list(APPEND EMBED_TARGETS
   embed_glyph_vert
   embed_glyph_frag
-  embed_tileset)
+  embed_tileset
+  embed_rect_vert
+  embed_rect_frag)
 
 # Convert each embedded resource into a C header file
 foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARGETS)

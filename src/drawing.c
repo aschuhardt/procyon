@@ -40,3 +40,19 @@ draw_op_t procy_create_draw_op_char_colored(int x, int y, color_t forecolor,
   return op;
 }
 
+procy_draw_op_t procy_create_draw_op_rect(int x, int y, int width, int height,
+                                          procy_color_t color) {
+  draw_op_t op = {color, color, DRAW_OP_RECT, x, y};
+  op.data.rect.width = width;
+  op.data.rect.height = height;
+  return op;
+}
+
+procy_draw_op_t procy_create_draw_op_line(int x1, int y1, int x2, int y2,
+                                          procy_color_t color) {
+  draw_op_t op = {color, color, DRAW_OP_LINE, x1, y1};
+  op.data.line.x2 = x2;
+  op.data.line.y2 = y2;
+  return op;
+}
+
