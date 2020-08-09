@@ -1,5 +1,6 @@
 #include "script.h"
 
+#include <lauxlib.h>
 #include <log.h>
 #include <lua.h>
 #include <lualib.h>
@@ -25,61 +26,6 @@ static const char* get_lua_alloc_type_name(size_t t) {
     default:
       return "Other";
   }
-}
-
-typedef struct raw_file_reader_state_t {
-  FILE* handle;
-  char* buffer;
-  char* path;  // for logging
-} raw_file_reader_state_t;
-
-static const char* raw_file_reader(lua_State* L, void* data, size_t* size) {
-  (void)L;
-  raw_file_reader_state_t* rdr_state = (raw_file_reader_state_t*)data;
-
-  // the second time this is called, it needs to be cleaned up because it's
-  // finished reading
-  if (rdr_state->buffer != NULL) {
-    free(rdr_state->buffer);
-    *size = 0;
-    return NULL;
-  }
-
-  // TODO: make this a proper buffered reader that doesn't load the entire file
-  // at once
-
-  // make sure that we can actually read the file
-  if (rdr_state->handle == NULL) {
-    log_error("Attempted to read file \"%s\" that was never opened",
-              rdr_state->path);
-    *size = 0;
-    return NULL;
-  }
-
-  // read the file into memory and return a buffer containing its contents,
-  // setting `size` to the size of the returned block
-
-  FILE* handle = rdr_state->handle;
-
-  fseek(handle, 0, SEEK_END);
-  long length = ftell(handle);
-  *size = length * sizeof(char);
-
-  rdr_state->buffer = malloc(sizeof(char) * length);
-  if (rdr_state->buffer == NULL) {
-    log_error("Failed to allocate enough memory to hold file %s",
-              rdr_state->path);
-    *size = 0;
-    return NULL;
-  }
-
-  fseek(handle, 0, SEEK_SET);
-  fread(rdr_state->buffer, sizeof(char), length, handle);
-
-  log_debug("Successfully read %zu bytes from file %s", length,
-            rdr_state->path);
-
-  return rdr_state->buffer;
 }
 
 static size_t get_file_dir_length(char* path) {
@@ -114,54 +60,6 @@ static void add_package_path_from_entry(lua_State* L, char* path) {
   lua_pop(L, 1);
 }
 
-static bool load_script_raw(lua_State* L, char* path) {
-  log_debug("Attempting to load raw script file %s", path);
-
-  FILE* handle = fopen(path, "rb");
-  if (handle == NULL || ferror(handle)) {
-    log_error("Could not open file %s", path);
-    return false;
-  }
-
-  raw_file_reader_state_t rdr_state = {handle, NULL, path};
-  int status = lua_load(L, raw_file_reader, &rdr_state, path, NULL);
-
-  fclose(handle);
-
-  switch (status) {
-    case LUA_OK:
-      log_info("Successfully loaded script file %s", path);
-      add_package_path_from_entry(L, path);
-      return true;
-    case LUA_ERRSYNTAX:
-      log_error("Syntax error in %s: %s", path, lua_tostring(L, -1));
-      break;
-    case LUA_ERRMEM:
-      log_error("Out-of-memory error while loading %s: %s", path,
-                lua_tostring(L, -1));
-      break;
-    default:
-      log_error("Unknown error occurred while loading %s: %s", path,
-                lua_tostring(L, -1));
-      break;
-  }
-
-  return false;
-}
-
-static void* script_state_alloc(void* ud, void* ptr, size_t osize,
-                                size_t nsize) {
-  (void)ud;
-  if (ptr != NULL) {
-    if (nsize == 0) {
-      free(ptr);
-      return NULL;
-    }
-    return realloc(ptr, nsize);
-  }
-  return malloc(nsize);
-}
-
 static void script_log_warning(void* ud, const char* msg, int tocont) {
   (void)ud;
   log_warn("%s", msg);
@@ -169,7 +67,7 @@ static void script_log_warning(void* ud, const char* msg, int tocont) {
 
 script_env_t* create_script_env(procy_window_t* window, procy_state_t* state) {
   script_env_t* env = malloc(sizeof(script_env_t));
-  env->L = lua_newstate(script_state_alloc, NULL);
+  env->L = luaL_newstate();
   env->window = window;
   env->state = state;
   env->reload = false;
@@ -189,22 +87,24 @@ bool load_scripts(script_env_t* env, char* path) {
   lua_setwarnf(L, script_log_warning, NULL);
   luaL_openlibs(L);
 
-  if (load_script_raw(L, path)) {
-    add_globals(L, env);
-    add_utilities(L);
-    add_input(L, env);
-    add_window(L, env);
-    add_drawing(L, env);
-
-    if (lua_pcall(L, 0, LUA_MULTRET, 0) == LUA_ERRRUN) {
-      log_error("%s", lua_tostring(L, -1));
-      return false;
-    }
-
-    // script is loaded without errors
-    return true;
+  if (luaL_loadfile(L, path) != LUA_OK) {
+    log_error("Error loading file %s: %s", path, lua_tostring(L, -1));
+    return false;
   }
 
-  // failed to load the script
-  return false;
+  add_package_path_from_entry(L, path);
+
+  add_globals(L, env);
+  add_utilities(L);
+  add_input(L, env);
+  add_window(L, env);
+  add_drawing(L, env);
+
+  if (lua_pcall(L, 0, LUA_MULTRET, 0) != LUA_OK) {
+    log_error("Error running file %s: %s", path, lua_tostring(L, -1));
+    return false;
+  }
+
+  // script is loaded without errors
+  return true;
 }
