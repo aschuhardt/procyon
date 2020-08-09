@@ -141,9 +141,11 @@ glyph_shader_program_t procy_create_glyph_shader(window_t* window) {
   return glyph_shader;
 }
 
-void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
-                             draw_op_t* ops, size_t n) {
-  size_t glyph_count = count_glyphs_in_ops_buffer(ops, n);
+void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
+  size_t ops_count = window->draw_ops.length;
+  draw_op_t* ops_buffer = window->draw_ops.buffer;
+  size_t glyph_count = count_glyphs_in_ops_buffer(ops_buffer, ops_count);
+
   if (glyph_count == 0) {
     return;
   }
@@ -158,8 +160,8 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
   float glyph_th = glyph_h / (float)shader->texture_h;
 
   size_t glyph_index = 0;
-  for (size_t i = 0; i < n; ++i) {
-    draw_op_t* op = &ops[i];
+  for (size_t i = 0; i < ops_count; ++i) {
+    draw_op_t* op = &ops_buffer[i];
     if (op->type != DRAW_OP_TEXT) {
       continue;
     }
@@ -262,7 +264,7 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window,
   glUseProgram(0);
 }
 
-void procy_destroy_glyph_shader_program(glyph_shader_program_t* shader) {
+void procy_destroy_glyph_shader(glyph_shader_program_t* shader) {
   if (shader != NULL) {
     procy_destroy_shader_program(&shader->program);
 

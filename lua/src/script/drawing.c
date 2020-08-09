@@ -11,6 +11,7 @@
 
 #define FUNC_DRAWSTRING "string"
 #define FUNC_DRAWRECT "rect"
+#define FUNC_DRAWLINE "line"
 #define FUNC_FROMRGB "from_rgb"
 
 #define WHITE (procy_create_color(1.0F, 1.0F, 1.0F))
@@ -59,6 +60,25 @@ static int draw_rect(lua_State* L) {
   return 0;
 }
 
+static int draw_line(lua_State* L) {
+  int x1 = lua_tointeger(L, 1);
+  int y1 = lua_tointeger(L, 2);
+  int x2 = lua_tointeger(L, 3);
+  int y2 = lua_tointeger(L, 4);
+
+  procy_color_t color = lua_gettop(L) >= 5 ? get_color(L, 5) : WHITE;
+
+  lua_pop(L, lua_gettop(L));
+
+  lua_getglobal(L, GLOBAL_WINDOW_PTR);
+  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+
+  procy_draw_op_t op = procy_create_draw_op_line(x1, y1, x2, y2, color);
+  procy_append_draw_op(window, &op);
+
+  return 0;
+}
+
 static int from_rgb(lua_State* L) {
   if (!verify_arg_count(L, 3, __func__)) {
     return 0;
@@ -81,6 +101,9 @@ static void add_draw_ops_table(lua_State* L) {
 
   lua_pushcfunction(L, draw_rect);
   lua_setfield(L, -2, FUNC_DRAWRECT);
+
+  lua_pushcfunction(L, draw_line);
+  lua_setfield(L, -2, FUNC_DRAWLINE);
 
   lua_setglobal(L, TBL_DRAWING);
 }
