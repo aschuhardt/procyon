@@ -20,7 +20,7 @@ if(LUA_FOUND)
     ${LUA_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${LOG_INCLUDE_DIR} ${SU_INCLUDE}) 
   
   add_custom_target(script_test
-    COMMAND procyon-lua --debug -s 2.0 -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/test.lua"
+    COMMAND procyon-lua --debug -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/test.lua"
     DEPENDS procyon-lua
     USES_TERMINAL)
 endif()
