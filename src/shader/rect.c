@@ -65,26 +65,27 @@ rect_shader_program_t procy_create_rect_shader() {
   return rect_shader;
 }
 
-void procy_destroy_rect_shader_program(rect_shader_program_t* shader) {
+void procy_destroy_rect_shader(rect_shader_program_t* shader) {
   if (shader != NULL) {
     procy_destroy_shader_program(&shader->program);
   }
 }
 
 void procy_draw_rect_shader(rect_shader_program_t* shader,
-                            struct procy_window_t* window,
-                            struct procy_draw_op_t* ops, size_t n) {
-  size_t rect_count = count_rects_in_ops_buffer(ops, n);
+                            struct procy_window_t* window) {
+  size_t ops_count = window->draw_ops.length;
+  draw_op_t* ops_buffer = window->draw_ops.buffer;
+  size_t rect_count = count_rects_in_ops_buffer(ops_buffer, ops_count);
   if (rect_count == 0) {
     return;
   }
 
-  rect_vertex_t vertices[rect_count * 6];
+  rect_vertex_t vertices[rect_count * 4];
   GLushort indices[rect_count * 6];
 
   size_t rect_index = 0;
-  for (size_t i = 0; i < n; ++i) {
-    draw_op_t* op = &ops[i];
+  for (size_t i = 0; i < ops_count; ++i) {
+    draw_op_t* op = &ops_buffer[i];
     if (op->type != DRAW_OP_RECT) {
       continue;
     }

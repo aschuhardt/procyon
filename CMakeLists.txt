@@ -42,7 +42,9 @@ list(APPEND EMBED_FILES
   glyph.frag
   cp437.png
   rect.vert
-  rect.frag)
+  rect.frag
+  line.vert
+  line.frag)
 
 # ... and their corresponding header file names ...
 list(APPEND EMBED_HEADERS
@@ -50,7 +52,9 @@ list(APPEND EMBED_HEADERS
   glyph_frag.h
   tileset.h
   rect_vert.h
-  rect_frag.h)
+  rect_frag.h
+  line_vert.h
+  line_frag.h)
 
 # ... and specify target names for each embedded object
 list(APPEND EMBED_TARGETS
@@ -58,7 +62,9 @@ list(APPEND EMBED_TARGETS
   embed_glyph_frag
   embed_tileset
   embed_rect_vert
-  embed_rect_frag)
+  embed_rect_frag
+  embed_line_vert
+  embed_line_frag)
 
 # Convert each embedded resource into a C header file
 foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARGETS)

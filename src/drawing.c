@@ -55,4 +55,3 @@ procy_draw_op_t procy_create_draw_op_line(int x1, int y1, int x2, int y2,
   op.data.line.y2 = y2;
   return op;
 }
-

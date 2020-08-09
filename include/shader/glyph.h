@@ -24,13 +24,12 @@ procy_glyph_shader_program_t procy_create_glyph_shader(
  * from all of the `GLYPH` type draw operations
  */
 void procy_draw_glyph_shader(procy_glyph_shader_program_t* shader,
-                             struct procy_window_t* window,
-                             struct procy_draw_op_t* ops, size_t n);
+                             struct procy_window_t* window);
 
 /*
  * Disposes of a glyph shader program and deletes its bound resources from the
  * OpenGL context
  */
-void procy_destroy_glyph_shader_program(procy_glyph_shader_program_t* shader);
+void procy_destroy_glyph_shader(procy_glyph_shader_program_t* shader);
 
 #endif
