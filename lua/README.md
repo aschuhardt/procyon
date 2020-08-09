@@ -57,6 +57,9 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 
 #### Functions
 - `draw.string(x, y, contents [, forecolor [, backcolor]])` - Draws `contents` at pixel coordinates `(x, y)` on the window. 
+- `draw.rect(x, y, width, height [, color])` - Draws a rectangle with the provided integer bounds and optional color.
+- `draw.line(x1, y1, x2, y2 [, color])` - Draws a line from the pixel (integer) coordinates `(x1, y1)` to `(x2, y2)`.
+- `draw.poly(x, y, radius, n [, color])` - Draws an `n`-sided polygon centered at pixel (integer) coordinates `(x, y)`, with a floating point `radius`, and an optional color.
 - `color.from_rgb(r, g, b)` - Returns a table with fields `r`, `g`, `b`, and `a` that represents a color value.  Arguments should be floating-point values between `0.0` and `1.0`.
 
 ---
@@ -88,6 +91,7 @@ end
 - `noise.ridge(x, y, z [, lacunarity, gain, offset, octaves])` - Returns a floating-point value.  Refer to `stb_perlin.h` for more information.
 - `noise.fbm(x, y, z [, lacunarity, gain, octaves])` - Returns a floating-point value.  Refer to `stb_perlin.h` for more information.
 - `noise.turbulence(x, y, z [, lacunarity, gain, octaves])` - Returns a floating-point value.  Refer to `stb_perlin.h` for more information.
+- `script.run(contents)` - Returns nothing.  Runs the script value in the global environment.  Use caution when executing arbitrary code.
 - `log.info(contents)`
 - `log.error(contents)`
 - `log.warn(contents)`
