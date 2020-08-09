@@ -1,3 +1,4 @@
+#include <lauxlib.h>
 #include <log.h>
 #include <lua.h>
 #include <string.h>
@@ -11,6 +12,7 @@
 
 #define TBL_LOG "log"
 #define TBL_NOISE "noise"
+#define TBL_SCRIPT "script"
 
 #define FUNC_LOG_INFO "info"
 #define FUNC_LOG_ERROR "error"
@@ -20,6 +22,7 @@
 #define FUNC_NOISE_RIDGE "ridge"
 #define FUNC_NOISE_FBM "fbm"
 #define FUNC_NOISE_TURBULENCE "turbulence"
+#define FUNC_SCRIPT_RUN "run"
 
 #define DEFAULT_LACUNARITY 2.0F
 #define DEFAULT_GAIN 0.5F
@@ -56,24 +59,6 @@ static int write_log_debug(lua_State* L) {
   }
 
   return 0;
-}
-
-static void add_logging(lua_State* L) {
-  lua_newtable(L);
-
-  lua_pushcfunction(L, write_log_info);
-  lua_setfield(L, -2, FUNC_LOG_INFO);
-
-  lua_pushcfunction(L, write_log_error);
-  lua_setfield(L, -2, FUNC_LOG_ERROR);
-
-  lua_pushcfunction(L, write_log_warn);
-  lua_setfield(L, -2, FUNC_LOG_WARN);
-
-  lua_pushcfunction(L, write_log_debug);
-  lua_setfield(L, -2, FUNC_LOG_DEBUG);
-
-  lua_setglobal(L, TBL_LOG);
 }
 
 static int noise_perlin(lua_State* L) {
@@ -158,6 +143,30 @@ static int noise_turbulence(lua_State* L) {
   return 1;
 }
 
+static int run_script(lua_State* L) {
+  luaL_dostring(L, lua_tostring(L, 1));
+
+  return 0;
+}
+
+static void add_logging(lua_State* L) {
+  lua_newtable(L);
+
+  lua_pushcfunction(L, write_log_info);
+  lua_setfield(L, -2, FUNC_LOG_INFO);
+
+  lua_pushcfunction(L, write_log_error);
+  lua_setfield(L, -2, FUNC_LOG_ERROR);
+
+  lua_pushcfunction(L, write_log_warn);
+  lua_setfield(L, -2, FUNC_LOG_WARN);
+
+  lua_pushcfunction(L, write_log_debug);
+  lua_setfield(L, -2, FUNC_LOG_DEBUG);
+
+  lua_setglobal(L, TBL_LOG);
+}
+
 static void add_noise(lua_State* L) {
   lua_newtable(L);
 
@@ -176,7 +185,17 @@ static void add_noise(lua_State* L) {
   lua_setglobal(L, TBL_NOISE);
 }
 
+static void add_script(lua_State* L) {
+  lua_newtable(L);
+
+  lua_pushcfunction(L, run_script);
+  lua_setfield(L, -2, FUNC_SCRIPT_RUN);
+
+  lua_setglobal(L, TBL_SCRIPT);
+}
+
 void add_utilities(lua_State* L) {
   add_logging(L);
   add_noise(L);
+  add_script(L);
 }
