@@ -9,6 +9,9 @@
 #include <string.h>
 
 #include "shader.h"
+#include "shader/glyph.h"
+#include "shader/rect.h"
+#include "shader/line.h"
 #include "drawing.h"
 #include "keys.h"
 #include "state.h"
@@ -18,6 +21,7 @@ typedef procy_window_bounds_t window_bounds_t;
 typedef procy_draw_op_t draw_op_t;
 typedef procy_draw_op_buffer_t draw_op_buffer_t;
 typedef procy_glyph_shader_program_t glyph_shader_program_t;
+typedef procy_rect_shader_program_t rect_shader_program_t;
 typedef procy_key_info_t key_info_t;
 typedef procy_color_t color_t;
 typedef procy_state_t state_t;
@@ -232,16 +236,16 @@ void procy_destroy_window(window_t* window) {
 void procy_append_draw_op(window_t* window, draw_op_t* draw_op) {
   draw_op_buffer_t* draw_ops = &window->draw_ops;
   draw_ops->length++;
-  size_t new_index = draw_ops->length - 1;
   if (draw_ops->length >= draw_ops->capacity) {
     expand_draw_ops_buffer(draw_ops);
   }
-  draw_ops->buffer[new_index] = *draw_op;
+  draw_ops->buffer[draw_ops->length - 1] = *draw_op;
 }
 
 void procy_begin_loop(window_t* window) {
-  // set up shader used for drawing text
+  // set up shaders
   glyph_shader_program_t glyph_shader = procy_create_glyph_shader(window);
+  rect_shader_program_t rect_shader = procy_create_rect_shader();
 
   // this can be overridden later, but black is a good default
   glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
@@ -261,9 +265,17 @@ void procy_begin_loop(window_t* window) {
       state->on_draw(state);
     }
 
-    if (window->draw_ops.length > 0 && glyph_shader.program.valid) {
-      procy_draw_glyph_shader(&glyph_shader, window, window->draw_ops.buffer,
-                              window->draw_ops.length);
+    if (window->draw_ops.length > 0) {
+      if (glyph_shader.program.valid) {
+        procy_draw_glyph_shader(&glyph_shader, window, window->draw_ops.buffer,
+                                window->draw_ops.length);
+      }
+
+      if (rect_shader.program.valid) {
+        procy_draw_rect_shader(&rect_shader, window, window->draw_ops.buffer,
+                               window->draw_ops.length);
+      }
+
       reset_draw_ops_buffer(&window->draw_ops);
     }
 
@@ -275,6 +287,7 @@ void procy_begin_loop(window_t* window) {
   }
 
   procy_destroy_glyph_shader_program(&glyph_shader);
+  procy_destroy_rect_shader_program(&rect_shader);
 }
 
 void procy_set_clear_color(color_t c) { glClearColor(c.r, c.g, c.b, 1.0F); }
