@@ -198,16 +198,20 @@ window_t* procy_create_window(int width, int height, const char* title,
 
   set_default_window_bounds(window, width, height);
   set_default_glyph_bounds(window);
-  set_gl_window_pointer(window);
-  set_ortho_projection(window);
-  set_event_callbacks(window);
-  init_draw_ops_buffer(&window->draw_ops);
-  init_key_table(window);
+  if (set_gl_window_pointer(window)) {
+    set_ortho_projection(window);
+    set_event_callbacks(window);
+    init_draw_ops_buffer(&window->draw_ops);
+    init_key_table(window);
 
-  window->quitting = false;
-  window->last_bound_texture = UINT32_MAX;
-  window->text_scale = text_scale;
-  window->state = state;
+    window->quitting = false;
+    window->last_bound_texture = UINT32_MAX;
+    window->text_scale = text_scale;
+    window->state = state;
+  } else {
+    free(window);
+    return NULL;
+  }
 
   return window;
 }

@@ -27,20 +27,20 @@ int main(int argc, const char** argv) {
       state.data = script_env;
       if (script_env == NULL) {
         log_error("Failed to create script environment object");
+      } else {
+        // load scripts from disk according to configuration settings
+        if (!load_scripts(script_env, config.script_entry)) {
+          log_error("Failed to load script from %s", config.script_entry);
+        }
+
+        // start display loop
+        procy_begin_loop(window);
+
+        // should we restart?
+        reload = script_env->reload;
+
+        destroy_script_env(script_env);
       }
-
-      // load scripts from disk according to configuration settings
-      if (!load_scripts(script_env, config.script_entry)) {
-        log_error("Failed to load script from %s", config.script_entry);
-      }
-
-      // start display loop
-      procy_begin_loop(window);
-
-      // should we restart?
-      reload = script_env->reload;
-
-      destroy_script_env(script_env);
     }
 
     procy_destroy_window(window);

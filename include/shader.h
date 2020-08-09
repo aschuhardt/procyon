@@ -15,7 +15,7 @@ typedef struct procy_shader_program_t {
 
 void procy_destroy_shader_program(procy_shader_program_t* shader);
 
-void procy_destroy_shader_program(procy_shader_program_t* shader);
+
 
 bool procy_compile_frag_shader(const char* data, unsigned int* index);
 
