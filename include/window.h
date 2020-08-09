@@ -47,7 +47,7 @@ void procy_destroy_window(procy_window_t* window);
 void procy_begin_loop(procy_window_t* window);
 
 void procy_append_draw_op(procy_window_t* window,
-                          struct procy_draw_op_t* const draw_op);
+                          struct procy_draw_op_t* draw_op);
 
 void procy_set_clear_color(procy_color_t c);
 

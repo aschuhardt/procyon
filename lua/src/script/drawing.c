@@ -93,15 +93,17 @@ static int draw_polygon(lua_State* L) {
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
   procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
 
-  float interval = (2.0F * M_PI) / (float)n;
+  float interval = (2.0F * (float)M_PI) / (float)n;
   for (float theta = 0.0F; theta < 2.0F * M_PI; theta += interval) {
-    float adjust = n % 2 == 0 ? 0 : M_PI_2;
+    float adjust = n % 2 == 0 ? 0 : (float)M_PI_2;
     float x1 = cosf(theta - adjust) * radius + (float)x;
     float y1 = sinf(theta - adjust) * radius + (float)y;
     float x2 = cosf(theta - adjust + interval) * radius + (float)x;
     float y2 = sinf(theta - adjust + interval) * radius + (float)y;
 
-    procy_draw_op_t op = procy_create_draw_op_line(x1, y1, x2, y2, color);
+    procy_draw_op_t op =
+        procy_create_draw_op_line((int)roundf(x1), (int)roundf(y1),
+                                  (int)roundf(x2), (int)roundf(y2), color);
     procy_append_draw_op(window, &op);
   }
 

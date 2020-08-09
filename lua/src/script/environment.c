@@ -13,7 +13,9 @@ procy_color_t get_color(lua_State* L, int index) {
     return procy_create_color(1.0F, 1.0F, 1.0F);
   }
 
-  float r, g, b;
+  float r;
+  float g;
+  float b;
 
   lua_getfield(L, index, FLD_COLOR_R);
   r = lua_tonumber(L, -1);
