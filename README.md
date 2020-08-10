@@ -17,6 +17,6 @@ TODO:
 - [ ] More flexible non-cmake asset pipeline
 - [x] Bitmap font rendering
 - [x] Colored text
-- [ ] Graphics primitives
+- [x] Graphics primitives
 - [x] (Lua only) API calls for generating continuous 3D noise (via stb_perlin.h)
 
