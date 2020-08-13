@@ -19,7 +19,12 @@ set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(SU_LIBRARY procyon)
 
-add_library(${SU_LIBRARY} ${SU_SOURCE})
+if(SU_SHARED)
+  add_library(${SU_LIBRARY} SHARED ${SU_SOURCE})
+else()
+  add_library(${SU_LIBRARY} ${SU_SOURCE})
+endif()
+
 target_include_directories(${SU_LIBRARY}
   PUBLIC
   ${SU_INCLUDE}
