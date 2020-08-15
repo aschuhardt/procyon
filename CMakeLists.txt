@@ -21,6 +21,7 @@ set(SU_LIBRARY procyon)
 
 if(SU_SHARED)
   add_library(${SU_LIBRARY} SHARED ${SU_SOURCE})
+  # target_link_options(${SU_LIBRARY} PUBLIC -fPIC)
 else()
   add_library(${SU_LIBRARY} ${SU_SOURCE})
 endif()
