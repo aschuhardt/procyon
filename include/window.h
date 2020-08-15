@@ -51,4 +51,6 @@ void procy_append_draw_op(procy_window_t* window,
 
 void procy_set_clear_color(procy_color_t c);
 
+void procy_close_window(procy_window_t* window);
+
 #endif
