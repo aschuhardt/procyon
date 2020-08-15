@@ -18,6 +18,7 @@ if(LUA_FOUND)
   target_include_directories(procyon-lua
     PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
     ${LUA_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${LOG_INCLUDE_DIR} ${SU_INCLUDE}) 
+  set_property(TARGET procyon-lua PROPERTY EXCLUDE_FROM_ALL TRUE)
   
   add_custom_target(script_test
     COMMAND procyon-lua --debug -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/test.lua"
