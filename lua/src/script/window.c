@@ -24,7 +24,7 @@ static int close_window(lua_State* L) {
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
   procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
-  window->quitting = true;
+  procy_close_window(window);
   return 0;
 }
 
