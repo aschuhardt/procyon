@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17.2)
+cmake_minimum_required(VERSION 3.17.0)
 
 project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 
