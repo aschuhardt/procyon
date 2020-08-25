@@ -72,6 +72,9 @@ list(APPEND EMBED_TARGETS
   embed_line_vert
   embed_line_frag)
 
+# creat the output directory for generated files
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/gen/")
+
 # Convert each embedded resource into a C header file
 foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARGETS)
   set(header "${CMAKE_CURRENT_SOURCE_DIR}/include/gen/${header}")
