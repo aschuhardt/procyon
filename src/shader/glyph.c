@@ -182,6 +182,7 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
   glyph_vertex_t* vertices = (glyph_vertex_t*)shader->vertex_buffer;
   GLushort* indices = (GLushort*)shader->index_buffer;
 
+  size_t glyph_index = 0;
   for (size_t i = 0; i < window->draw_ops.length; ++i) {
     draw_op_t* op = &ops_buffer[i];
     if (op->type != DRAW_OP_TEXT) {
@@ -215,8 +216,9 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
                                    tx + glyph_tw,       ty + glyph_th,
                                    op->forecolor,       op->backcolor};
 
-    size_t vert_ix = i * VERTICES_PER_GLYPH;
-    size_t index_ix = i * INDICES_PER_GLYPH;
+    size_t vert_ix = glyph_index * VERTICES_PER_GLYPH;
+    size_t index_ix = glyph_index * INDICES_PER_GLYPH;
+    ++glyph_index;
 
     vertices[vert_ix] = top_left;
     vertices[vert_ix + 1] = top_right;
