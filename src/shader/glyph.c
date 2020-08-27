@@ -178,7 +178,7 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
   float glyph_tw = glyph_w / (float)shader->texture_w;
   float glyph_th = glyph_h / (float)shader->texture_h;
 
-  // alias data buffers to
+  // alias data buffers to improve readability
   glyph_vertex_t* vertices = (glyph_vertex_t*)shader->vertex_buffer;
   GLushort* indices = (GLushort*)shader->index_buffer;
 
