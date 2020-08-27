@@ -54,7 +54,7 @@ line_shader_program_t procy_create_line_shader() {
   line_shader_program_t line_shader;
 
   line_shader.line_count = 0;
-  line_shader.vertex_buffer = malloc(0);
+  line_shader.vertex_buffer = NULL;
 
   shader_program_t* prog = &line_shader.program;
   if ((prog->valid =

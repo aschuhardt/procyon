@@ -57,8 +57,8 @@ static void update_buffer_sizes(rect_shader_program_t* shader,
 rect_shader_program_t procy_create_rect_shader() {
   rect_shader_program_t rect_shader;
 
-  rect_shader.index_buffer = malloc(0);
-  rect_shader.vertex_buffer = malloc(0);
+  rect_shader.index_buffer = NULL;
+  rect_shader.vertex_buffer = NULL;
   rect_shader.rect_count = 0;
 
   shader_program_t* prog = &rect_shader.program;
