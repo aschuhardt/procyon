@@ -6,6 +6,8 @@
 typedef struct procy_rect_shader_program_t {
   unsigned int u_ortho;
   procy_shader_program_t program;
+  void *vertex_buffer, *index_buffer;
+  size_t rect_count;
 } procy_rect_shader_program_t;
 
 procy_rect_shader_program_t procy_create_rect_shader();
