@@ -17,10 +17,13 @@ set(SU_SOURCE
   src/shader/line.c)
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
-set(SU_INCLUDE
-  "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
 set(SU_LIBRARY procyon)
-set(SU_LIBRARY procyon PARENT_SCOPE)
+
+get_directory_property(parentDir PARENT_DIRECTORY)
+if(parentDir)
+  set(SU_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
+  set(SU_LIBRARY procyon PARENT_SCOPE)
+endif()
 
 if(SU_SHARED)
   add_library(${SU_LIBRARY} SHARED ${SU_SOURCE})
