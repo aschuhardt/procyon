@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17.0)
+cmake_minimum_required(VERSION 3.17.2)
 
 project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 
@@ -17,7 +17,10 @@ set(SU_SOURCE
   src/shader/line.c)
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(SU_INCLUDE
+  "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
 set(SU_LIBRARY procyon)
+set(SU_LIBRARY procyon PARENT_SCOPE)
 
 if(SU_SHARED)
   add_library(${SU_LIBRARY} SHARED ${SU_SOURCE})
@@ -72,7 +75,7 @@ list(APPEND EMBED_TARGETS
   embed_line_vert
   embed_line_frag)
 
-# creat the output directory for generated files
+# create a directory for generated files to be placed into
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/gen/")
 
 # Convert each embedded resource into a C header file
