@@ -126,8 +126,8 @@ glyph_shader_program_t procy_create_glyph_shader(window_t* window) {
   glyph_shader.texture_w = -1;
   glyph_shader.texture_h = -1;
   glyph_shader.scale = window->text_scale;
-  glyph_shader.index_buffer = malloc(0);
-  glyph_shader.vertex_buffer = malloc(0);
+  glyph_shader.index_buffer = NULL;
+  glyph_shader.vertex_buffer = NULL;
   glyph_shader.glyph_count = 0;
 
   shader_program_t* prog = &glyph_shader.program;
