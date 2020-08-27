@@ -40,6 +40,9 @@ static const size_t ATTR_GLYPH_BACKCOLOR = 3;
 static const size_t GLYPH_WIDTH_COUNT = 16;
 static const size_t GLYPH_HEIGHT_COUNT = 16;
 
+static const size_t VERTICES_PER_GLYPH = 4;
+static const size_t INDICES_PER_GLYPH = 6;
+
 static void bind_texture(window_t* window, unsigned int texture) {
   if (window->last_bound_texture != texture) {
     glActiveTexture(GL_TEXTURE0);
@@ -98,6 +101,19 @@ static size_t count_glyphs_in_ops_buffer(draw_op_t* ops, size_t n) {
   return glyph_count;
 }
 
+static void update_buffer_sizes(glyph_shader_program_t* shader,
+                                size_t glyph_count) {
+  if (glyph_count != shader->glyph_count) {
+    shader->index_buffer =
+        realloc(shader->index_buffer,
+                sizeof(GLushort) * INDICES_PER_GLYPH * glyph_count);
+    shader->vertex_buffer =
+        realloc(shader->vertex_buffer,
+                sizeof(glyph_vertex_t) * VERTICES_PER_GLYPH * glyph_count);
+    shader->glyph_count = glyph_count;
+  }
+}
+
 /* --------------------------- */
 /* Public interface definition */
 /* --------------------------- */
@@ -110,6 +126,9 @@ glyph_shader_program_t procy_create_glyph_shader(window_t* window) {
   glyph_shader.texture_w = -1;
   glyph_shader.texture_h = -1;
   glyph_shader.scale = window->text_scale;
+  glyph_shader.index_buffer = malloc(0);
+  glyph_shader.vertex_buffer = malloc(0);
+  glyph_shader.glyph_count = 0;
 
   shader_program_t* prog = &glyph_shader.program;
   if ((prog->valid =
@@ -142,16 +161,16 @@ glyph_shader_program_t procy_create_glyph_shader(window_t* window) {
 }
 
 void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
-  size_t ops_count = window->draw_ops.length;
   draw_op_t* ops_buffer = window->draw_ops.buffer;
-  size_t glyph_count = count_glyphs_in_ops_buffer(ops_buffer, ops_count);
+  size_t glyph_count =
+      count_glyphs_in_ops_buffer(ops_buffer, window->draw_ops.length);
 
   if (glyph_count == 0) {
     return;
   }
 
-  glyph_vertex_t vertices[glyph_count * 4];
-  GLushort indices[glyph_count * 6];
+  // resize buffers if needed
+  update_buffer_sizes(shader, glyph_count);
 
   float scale = shader->scale;
   float glyph_w = (float)shader->texture_w / GLYPH_WIDTH_COUNT;
@@ -159,15 +178,16 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
   float glyph_tw = glyph_w / (float)shader->texture_w;
   float glyph_th = glyph_h / (float)shader->texture_h;
 
-  size_t glyph_index = 0;
-  for (size_t i = 0; i < ops_count; ++i) {
+  // alias data buffers to
+  glyph_vertex_t* vertices = (glyph_vertex_t*)shader->vertex_buffer;
+  GLushort* indices = (GLushort*)shader->index_buffer;
+
+  for (size_t i = 0; i < window->draw_ops.length; ++i) {
     draw_op_t* op = &ops_buffer[i];
     if (op->type != DRAW_OP_TEXT) {
       continue;
     }
 
-    size_t vert_ix = glyph_index * 4;
-    size_t index_ix = glyph_index * 6;
     unsigned char c = op->data.text.character;
 
     // screen coordinates
@@ -195,24 +215,20 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
                                    tx + glyph_tw,       ty + glyph_th,
                                    op->forecolor,       op->backcolor};
 
+    size_t vert_ix = i * VERTICES_PER_GLYPH;
+    size_t index_ix = i * INDICES_PER_GLYPH;
+
     vertices[vert_ix] = top_left;
     vertices[vert_ix + 1] = top_right;
     vertices[vert_ix + 2] = bottom_left;
     vertices[vert_ix + 3] = bottom_right;
 
-    // indices
-    //
-    // first triangle
     indices[index_ix] = vert_ix;
     indices[index_ix + 1] = vert_ix + 1;
     indices[index_ix + 2] = vert_ix + 2;
-
-    // second triangle
     indices[index_ix + 3] = vert_ix + 1;
     indices[index_ix + 4] = vert_ix + 3;
     indices[index_ix + 5] = vert_ix + 2;
-
-    ++glyph_index;
   }
 
   shader_program_t* prog = &shader->program;
@@ -228,7 +244,9 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
 
   // copy vertex data to video memory
   glBindBuffer(GL_ARRAY_BUFFER, prog->vbo[VBO_GLYPH_POSITION]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER,
+               glyph_count * VERTICES_PER_GLYPH * sizeof(glyph_vertex_t),
+               vertices, GL_STATIC_DRAW);
 
   // associate the vertex data with the correct shader attribute
   glEnableVertexAttribArray(ATTR_GLYPH_POSITION);
@@ -249,12 +267,13 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
 
   // copy indices
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prog->vbo[VBO_GLYPH_INDICES]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+               glyph_count * INDICES_PER_GLYPH * sizeof(GLushort), indices,
                GL_STATIC_DRAW);
 
   glPolygonMode(GL_FRONT, GL_FILL);
 
-  glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]),
+  glDrawElements(GL_TRIANGLES, shader->glyph_count * INDICES_PER_GLYPH,
                  GL_UNSIGNED_SHORT, 0);
 
   glDisableVertexAttribArray(ATTR_GLYPH_POSITION);
@@ -267,6 +286,14 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
 void procy_destroy_glyph_shader(glyph_shader_program_t* shader) {
   if (shader != NULL) {
     procy_destroy_shader_program(&shader->program);
+
+    if (shader->index_buffer != NULL) {
+      free(shader->index_buffer);
+    }
+
+    if (shader->vertex_buffer != NULL) {
+      free(shader->vertex_buffer);
+    }
 
     // delete font texture
     if (glIsTexture(shader->font_texture)) {

@@ -9,6 +9,8 @@ typedef struct procy_glyph_shader_program_t {
   float scale;
   struct procy_window_t* window;
   procy_shader_program_t program;
+  void *index_buffer, *vertex_buffer;
+  size_t glyph_count;
 } procy_glyph_shader_program_t;
 
 /*
