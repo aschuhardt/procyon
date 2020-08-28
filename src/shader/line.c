@@ -50,6 +50,10 @@ static void update_buffer_size(line_shader_program_t* shader,
   }
 }
 
+/* --------------------------- */
+/* Public interface definition */
+/* --------------------------- */
+
 line_shader_program_t procy_create_line_shader() {
   line_shader_program_t line_shader;
 

@@ -4,6 +4,8 @@ project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Os")
+
 add_subdirectory(lib)
 
 set(SU_SOURCE
