@@ -54,6 +54,10 @@ static void update_buffer_sizes(rect_shader_program_t* shader,
   }
 }
 
+/* --------------------------- */
+/* Public interface definition */
+/* --------------------------- */
+
 rect_shader_program_t procy_create_rect_shader() {
   rect_shader_program_t rect_shader;
 

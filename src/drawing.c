@@ -1,7 +1,5 @@
 #include "drawing.h"
 
-#include <string.h>
-
 #include "window.h"
 
 typedef procy_draw_op_t draw_op_t;
