@@ -53,4 +53,12 @@ int main(int argc, const char** argv) {
 
   fclose(in_file);
   fclose(out_file);
+
+  // report results
+  printf(
+      "GenHexer input: %s,\n"
+      "         output: %s,\n"
+      "         name: %s\n"
+      "         size: %zu bytes\n",
+      in_path, out_path, name, in_size);
 }
