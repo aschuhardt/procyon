@@ -8,7 +8,7 @@ struct procy_key_info_t;
 
 typedef void (*procy_on_load_callback_t)(struct procy_state_t*);
 typedef void (*procy_on_unload_callback_t)(struct procy_state_t*);
-typedef void (*procy_on_draw_callback_t)(struct procy_state_t*);
+typedef void (*procy_on_draw_callback_t)(struct procy_state_t*, double);
 typedef void (*procy_on_resize_callback_t)(struct procy_state_t*, int, int);
 typedef void (*procy_on_key_pressed_callback_t)(struct procy_state_t*,
                                                 struct procy_key_info_t, bool,
