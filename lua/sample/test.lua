@@ -12,6 +12,8 @@ local input_text = "\x04\x02\x03 >"
 
 local line_height = 0
 
+local high_fps = false
+
 local function on_key_pressed(key, shift, ctrl, alt) 
   local n = delta
   if shift then
@@ -20,6 +22,11 @@ local function on_key_pressed(key, shift, ctrl, alt)
 
   if key == keys.KEY_F2 then
     window.reload()
+  end
+
+  if key == keys.KEY_F3 then
+    high_fps = not high_fps
+    window.set_high_fps(high_fps)
   end
   
   if key == keys.KEY_ESCAPE then
@@ -44,7 +51,11 @@ local function on_char_entered(c)
   input_text = input_text..c
 end
 
-local function on_draw()
+local function on_draw(seconds)
+  w, h = window.size()
+  gw, gh = window.glyph_size()
+  draw.string(0, h - gh, string.format("FPS: %f", 1.0 / seconds))
+
   draw.string(x, y, input_text, color.from_rgb(0.3, 0.2, 0.78), color.from_rgb(0.8, 0.7, 0.1))
   draw.string(x, y + line_height, input_text)
   draw.rect(100, 100, 64, 64, color.from_rgb(0.6, 0.4, 0.0))

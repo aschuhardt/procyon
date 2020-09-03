@@ -208,6 +208,7 @@ window_t* procy_create_window(int width, int height, const char* title,
     init_key_table(window);
 
     window->quitting = false;
+    window->high_fps = false;
     window->last_bound_texture = UINT32_MAX;
     window->text_scale = text_scale;
     window->state = state;
@@ -271,13 +272,15 @@ void procy_begin_loop(window_t* window) {
   double last_frame_time = glfwGetTime();
   GLFWwindow* w = (GLFWwindow*)window->glfw_win;
   while (!glfwWindowShouldClose(w) && !window->quitting) {
-    if (!window->high_fps) {
-      glfwWaitEventsTimeout(2.0F);
-    }
-
     double current_time = glfwGetTime();
     double frame_duration = current_time - last_frame_time;
     last_frame_time = current_time;
+
+    if (window->high_fps) {
+      glfwPollEvents();
+    } else {
+      glfwWaitEventsTimeout(2.0F);
+    }
 
     glClear(GL_COLOR_BUFFER_BIT);
 
