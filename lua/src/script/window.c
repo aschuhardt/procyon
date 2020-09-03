@@ -16,6 +16,7 @@
 #define FUNC_ON_LOAD "on_load"
 #define FUNC_ON_UNLOAD "on_unload"
 #define FUNC_SET_COLOR "set_color"
+#define FUNC_SET_HIGH_FPS "set_high_fps"
 
 static int close_window(lua_State* L) {
   if (!verify_arg_count(L, 0, __func__)) {
@@ -38,6 +39,17 @@ static int window_size(lua_State* L) {
   lua_pushinteger(L, window->bounds.width);
   lua_pushinteger(L, window->bounds.height);
   return 2;
+}
+
+static int set_window_high_fps(lua_State* L) {
+  if (!verify_arg_count(L, 1, __func__)) {
+    return 0;
+  }
+
+  bool enabled = lua_toboolean(L, -1);
+  lua_getglobal(L, GLOBAL_WINDOW_PTR);
+  ((procy_window_t*)lua_touserdata(L, -1))->high_fps = enabled;
+  return 0;
 }
 
 static int window_glyph_size(lua_State* L) {
@@ -63,13 +75,14 @@ static int window_reload(lua_State* L) {
 }
 
 // called from the main window loop by way of script_env_t.on_draw
-static void perform_draw(procy_state_t* const state) {
+static void perform_draw(procy_state_t* const state, double seconds) {
   lua_State* L = ((script_env_t*)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
 
   lua_getfield(L, -1, FUNC_ON_DRAW);
   if (lua_isfunction(L, -1)) {
-    if (lua_pcall(L, 0, 0, 0) == LUA_ERRRUN) {
+    lua_pushnumber(L, seconds);
+    if (lua_pcall(L, 1, 0, 0) == LUA_ERRRUN) {
       log_error("Error calling %s.%s: %s", TBL_WINDOW, FUNC_ON_DRAW,
                 lua_tostring(L, -1));
     }
@@ -151,6 +164,9 @@ void add_window(lua_State* L, script_env_t* env) {
 
   lua_pushcfunction(L, set_window_color);
   lua_setfield(L, -2, FUNC_SET_COLOR);
+
+  lua_pushcfunction(L, set_window_high_fps);
+  lua_setfield(L, -2, FUNC_SET_HIGH_FPS);
 
   lua_setglobal(L, TBL_WINDOW);
 }

@@ -62,6 +62,7 @@ static void set_ortho_projection(window_t* window) {
   memset(&window->ortho[2][0], 0, 4 * sizeof(float));
   memset(&window->ortho[3][0], 0, 4 * sizeof(float));
 
+  // build orthographic projection based on window dimensions
   window->ortho[0][0] = 2.0F / (float)width;
   window->ortho[0][3] = -1.0F;
   window->ortho[1][1] = 2.0F / -(float)height;
@@ -70,6 +71,7 @@ static void set_ortho_projection(window_t* window) {
   window->ortho[2][3] = -1.0F;
   window->ortho[3][3] = 1.0F;
 }
+
 static void window_resized(GLFWwindow* w, int width, int height) {
   log_debug("Window resized to %dx%d", width, height);
 
@@ -145,6 +147,7 @@ static void expand_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
 }
 
 static void reset_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
+  // start writing draw ops at the start of the buffer
   draw_ops->length = 0;
 }
 
@@ -260,14 +263,26 @@ void procy_begin_loop(window_t* window) {
     state->on_load(state);
   }
 
+  // initialize the running-timer to 0.0 seconds so that we can later judge how
+  // long the main loop has been running for (for no other reason than as a
+  // convenient benchmarking tool)
+  glfwSetTime(0.0);
+
+  double last_frame_time = glfwGetTime();
   GLFWwindow* w = (GLFWwindow*)window->glfw_win;
   while (!glfwWindowShouldClose(w) && !window->quitting) {
-    glfwWaitEventsTimeout(2.0F);
+    if (!window->high_fps) {
+      glfwWaitEventsTimeout(2.0F);
+    }
+
+    double current_time = glfwGetTime();
+    double frame_duration = current_time - last_frame_time;
+    last_frame_time = current_time;
 
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (state->on_draw != NULL) {
-      state->on_draw(state);
+      state->on_draw(state, frame_duration);
     }
 
     if (window->draw_ops.length > 0) {
