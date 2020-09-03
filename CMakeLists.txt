@@ -90,7 +90,8 @@ foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARG
   add_custom_command(
     DEPENDS genhexer ${filename}
     OUTPUT ${header}
-    COMMAND genhexer ${filename} ${header} ${target})
+    COMMAND genhexer ${filename} ${header} ${target}
+    USES_TERMINAL)
   set_source_files_properties(${header} PROPERTIES GENERATED 1)
   add_custom_target(${target} DEPENDS ${header})
   add_dependencies(${SU_LIBRARY} ${target})
