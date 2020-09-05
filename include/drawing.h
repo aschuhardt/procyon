@@ -1,6 +1,7 @@
 #ifndef DRAWING_H
 #define DRAWING_H
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "color.h"
@@ -34,17 +35,16 @@ typedef struct procy_draw_op_t {
  * Returns a new text drawing operation for the character at the provided index
  * in a string whose first character's position is the given pixel position
  */
-procy_draw_op_t procy_create_draw_op_string(int x, int y, int width,
-                                            const char* contents, size_t index);
+procy_draw_op_t procy_create_draw_op_string(int x, int y, int size,
+                                            const char* contents, size_t index,
+                                            bool vertical);
 /*
  * Returns a new text drawing operation bearing the provided foreground color,
  * at the provided pixel coordinates
  */
-procy_draw_op_t procy_create_draw_op_string_colored(int x, int y, int width,
-                                                    procy_color_t forecolor,
-                                                    procy_color_t backcolor,
-                                                    const char* contents,
-                                                    size_t index);
+procy_draw_op_t procy_create_draw_op_string_colored(
+    int x, int y, int size, procy_color_t forecolor, procy_color_t backcolor,
+    const char* contents, size_t index, bool vertical);
 
 procy_draw_op_t procy_create_draw_op_char(int x, int y, char c);
 
