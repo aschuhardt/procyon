@@ -6,9 +6,6 @@
 #include "script/environment.h"
 
 #define TBL_INPUT "input"
-#define TBL_KEYS "keys"
-#define FLD_KEY_NAME "name"
-#define FLD_KEY_VALUE "value"
 
 #define FUNC_EVENTS_KEYPRESS "on_key_pressed"
 #define FUNC_EVENTS_KEYRELEASE "on_key_released"
@@ -83,8 +80,6 @@ static void add_event_handler_table(lua_State* L) {
 }
 
 static void add_keys(lua_State* L) {
-  lua_newtable(L);
-
   size_t keys_count = 0;
   procy_key_info_t* keys = NULL;
   procy_get_keys(&keys, &keys_count);
@@ -93,16 +88,13 @@ static void add_keys(lua_State* L) {
   for (int i = 0; i < keys_count; ++i) {
     procy_key_info_t key = keys[i];
 
-    // [name] = value
     lua_pushinteger(L, key.value);
-    lua_setfield(L, -2, key.name);
+    lua_setglobal(L, key.name);
 
     log_trace("Adding key value (%s, %d)", key.name, key.value);
   }
 
   free(keys);
-
-  lua_setglobal(L, TBL_KEYS);
 }
 
 void add_input(lua_State* L, script_env_t* env) {

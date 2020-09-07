@@ -71,11 +71,11 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 ### Input
 
 #### Fields
-- `input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed.  It has four arguments: `key`, which is one of the `keys.KEY_...` fields, followed by and  three boolean values indicating whether the `shift`, `control`, or `alt` mods are in effect.  See the example implementation provided below:
+- `input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed.  It has four arguments: `key`, which is one of the `KEY_...` global values, followed by and  three boolean values indicating whether the `shift`, `control`, or `alt` mods are in effect.  See the example implementation provided below:
 
 ```lua
 input.on_key_pressed = function(key, shift, ctrl, alt)
-  if key == keys.KEY_ESCAPE then
+  if key == KEY_ESCAPE then
     window.close()
   end
 end
@@ -83,7 +83,7 @@ end
 
 - `input.on_key_released` - Same as `on_key_pressed` above, but called when a key is released.
 - `input.on_char_entered` - If assigned, `on_char_entered` is called when the user enters text via the keyboard.
-- `keys.KEY_A ...` - Named key objects.  See `script/keys.h` for a complete list.
+- `KEY_A ...` - Named key objects.  See `script/keys.h` for a complete list.
 - `keys[k].name`, `keys[k].value` - In addition to named objects, data pertaining to each key is stored in the `keys` table indexed by the key values themselves.
 
 ---

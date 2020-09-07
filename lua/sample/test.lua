@@ -1,86 +1,34 @@
-other = require("other")
+local current_text = "Enter some text: "
 
-local y = 0
-local x = 0
+window.on_draw = function(seconds)
+  local gw, gh = window.glyph_size()
+  local w, h = window.size()
 
-local width = 0
-local height = 0
+  draw.string(4, 4, "Press F2 to reload, or Escape to exit")
+  draw.string(4, 4 + gh, string.format("Window size: %dx%d", w, h))
 
-local delta = 5
+  draw.string(100, 100, current_text, color.from_rgb(0.7, 0.8, 0.4))
+  draw.line(100, 100 + gh, 100 + #current_text * gw, 100 + gh)
 
-local input_text = "\x04\x02\x03 >"
+  draw.rect(200, 130, 60, 40, color.from_rgb(0, 0, 1))
+  draw.rect(200, 130, 30, 20, color.from_rgb(1, 0, 0))
+  draw.rect(230, 150, 30, 20, color.from_rgb(1, 0, 0))
 
-local line_height = 0
+  draw.poly(200, 170, 20, 7) 
 
-local high_fps = false
+  -- add a sixth argument to indicate whether text is drawn vertically
+  draw.string(100, 100 + gh * 2, "This text is vertical!",
+    color.from_rgb(0.5, 0.1, 1.0), color.from_rgb(0, 0, 0), true)
+end
 
-local function on_key_pressed(key, shift, ctrl, alt) 
-  local n = delta
-  if shift then
-    n = n + (delta * 2)
-  end
+input.on_char_entered = function(c)
+  current_text = current_text..c
+end
 
-  if key == keys.KEY_F2 then
+input.on_key_pressed = function(key, shift, ctrl, alt) 
+  if key == KEY_F2 then
     window.reload()
-  end
-
-  if key == keys.KEY_F3 then
-    high_fps = not high_fps
-    window.set_high_fps(high_fps)
-  end
-  
-  if key == keys.KEY_ESCAPE then
+  elseif key == KEY_ESCAPE then
     window.close()
-  elseif key == keys.KEY_R then
-    other.do_thing()
-  elseif key == keys.KEY_J then
-    script.run("log.info(\"asdf\")")
-  elseif key == keys.KEY_UP then
-    y = y - n 
-  elseif key == keys.KEY_DOWN then
-    y = y + n 
-  elseif key == keys.KEY_LEFT then 
-    x = x - n 
-  elseif key == keys.KEY_RIGHT then
-    x = x + n
-  end
-
-end
-
-local function on_char_entered(c)
-  input_text = input_text..c
-end
-
-local function on_draw(seconds)
-  w, h = window.size()
-  gw, gh = window.glyph_size()
-  draw.string(0, h - gh, string.format("FPS: %f", 1.0 / seconds))
-
-  draw.string(x, y, input_text, color.from_rgb(0.3, 0.2, 0.78), color.from_rgb(0.8, 0.7, 0.1))
-  draw.string(x, y + line_height, input_text)
-  draw.rect(100, 100, 64, 64, color.from_rgb(0.6, 0.4, 0.0))
-  draw.line(400, 400, 100, 100, color.from_rgb(1.0, 1.0, 0.0))
-  
-  for n = 3, 8 do
-    draw.poly(200, 320, 90.2, n)
   end
 end
-
-local function on_load()
-  local w, h = window.glyph_size()
-  line_height = h
-  log.info(string.format("Glyph size: %dx%d", w, h))
-  window.set_color(color.from_rgb(0.01, 0.3, 0.45));
-end
-
-local function on_unload()
-  log.info("Goodbye!")
-end
-
-input.on_key_released = nil
-input.on_key_pressed = on_key_pressed 
-input.on_char_entered = on_char_entered
-
-window.on_draw = on_draw
-window.on_load = on_load
-window.on_unload = on_unload
