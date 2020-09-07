@@ -79,8 +79,7 @@ static void perform_draw(procy_state_t* const state, double seconds) {
   lua_State* L = ((script_env_t*)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
 
-  lua_getfield(L, -1, FUNC_ON_DRAW);
-  if (lua_isfunction(L, -1)) {
+  if (lua_getfield(L, -1, FUNC_ON_DRAW) != LUA_TNONE && lua_isfunction(L, -1)) {
     lua_pushnumber(L, seconds);
     if (lua_pcall(L, 1, 0, 0) == LUA_ERRRUN) {
       log_error("Error calling %s.%s: %s", TBL_WINDOW, FUNC_ON_DRAW,
@@ -92,7 +91,6 @@ static void perform_draw(procy_state_t* const state, double seconds) {
 static void handle_window_resized(procy_state_t* const state, int w, int h) {
   lua_State* L = ((script_env_t*)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
-
   lua_getfield(L, -1, FUNC_ON_RESIZE);
   if (lua_isfunction(L, -1)) {
     lua_pushinteger(L, w);
