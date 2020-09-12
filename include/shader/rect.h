@@ -10,7 +10,7 @@ typedef struct procy_rect_shader_program_t {
   size_t rect_count;
 } procy_rect_shader_program_t;
 
-procy_rect_shader_program_t procy_create_rect_shader();
+procy_rect_shader_program_t* procy_create_rect_shader();
 
 void procy_destroy_rect_shader(procy_rect_shader_program_t* shader);
 

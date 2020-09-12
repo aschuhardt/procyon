@@ -58,14 +58,14 @@ static void update_buffer_sizes(rect_shader_program_t* shader,
 /* Public interface definition */
 /* --------------------------- */
 
-rect_shader_program_t procy_create_rect_shader() {
-  rect_shader_program_t rect_shader;
+rect_shader_program_t* procy_create_rect_shader() {
+  rect_shader_program_t* rect_shader = malloc(sizeof(rect_shader_program_t));
 
-  rect_shader.index_buffer = NULL;
-  rect_shader.vertex_buffer = NULL;
-  rect_shader.rect_count = 0;
+  rect_shader->index_buffer = NULL;
+  rect_shader->vertex_buffer = NULL;
+  rect_shader->rect_count = 0;
 
-  shader_program_t* prog = &rect_shader.program;
+  shader_program_t* prog = &rect_shader->program;
   if ((prog->valid =
            procy_compile_vert_shader((char*)embed_rect_vert, &prog->vertex) &&
            procy_compile_frag_shader((char*)embed_rect_frag,
@@ -81,7 +81,7 @@ rect_shader_program_t procy_create_rect_shader() {
         procy_link_shader_program(prog->vertex, prog->fragment, &prog->program);
 
     if (prog->valid) {
-      rect_shader.u_ortho = glGetUniformLocation(prog->program, "u_Ortho");
+      rect_shader->u_ortho = glGetUniformLocation(prog->program, "u_Ortho");
     }
   }
 
@@ -99,6 +99,8 @@ void procy_destroy_rect_shader(rect_shader_program_t* shader) {
     if (shader->index_buffer != NULL) {
       free(shader->index_buffer);
     }
+
+    free(shader);
   }
 }
 

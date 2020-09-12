@@ -15,11 +15,11 @@ typedef struct procy_glyph_shader_program_t {
 
 /*
  * Builds and compiles a shader program with information for rendering text
- * glyphs from a bitmap font. Note that this does not allocate its object on the
- * heap.
+ * glyphs from a bitmap font.  A NULL value for `path` falls back on the
+ * embedded default bitmap font.
  */
-procy_glyph_shader_program_t procy_create_glyph_shader(
-    struct procy_window_t* window);
+procy_glyph_shader_program_t* procy_create_glyph_shader(
+    struct procy_window_t* window, const char* path);
 
 /*
  * Builds and executes a draw call on the GPU, consisting of vertex data built

@@ -10,7 +10,7 @@ typedef struct procy_line_shader_program_t {
   size_t line_count;
 } procy_line_shader_program_t;
 
-procy_line_shader_program_t procy_create_line_shader();
+procy_line_shader_program_t* procy_create_line_shader();
 
 void procy_destroy_line_shader(procy_line_shader_program_t* shader);
 
