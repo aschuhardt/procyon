@@ -4,6 +4,7 @@
 
 #define STBI_ONLY_PNG
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_FAILURE_USERMSG
 #include "stb_image.h"
 
 // clang-format off
@@ -51,15 +52,35 @@ static void bind_texture(window_t* window, unsigned int texture) {
     window->last_bound_texture = texture;
   }
 }
-static void load_glyph_font(glyph_shader_program_t* shader, const float* size) {
+static void load_glyph_font(glyph_shader_program_t* shader, const char* path) {
   if (glIsTexture(shader->font_texture)) {
     glDeleteTextures(1, &shader->font_texture);
   }
 
   int components;
-  unsigned char* bitmap = stbi_load_from_memory(
-      embed_tileset, sizeof(embed_tileset) / sizeof(unsigned char),
-      &shader->texture_w, &shader->texture_h, &components, 0);
+  unsigned char* bitmap = NULL;
+  if (path == NULL) {
+    // if no path is provided, load from embedded font
+    bitmap = stbi_load_from_memory(
+        embed_tileset, sizeof(embed_tileset) / sizeof(unsigned char),
+        &shader->texture_w, &shader->texture_h, &components, 0);
+  } else {
+    // otherwise, load from disk
+    bitmap =
+        stbi_load(path, &shader->texture_w, &shader->texture_h, &components, 0);
+    if (bitmap == NULL) {
+      // failed to load from disk, log an error message and fallback to the
+      // embedded font
+      const char* msg = stbi_failure_reason();
+      log_error(
+          "Failed to load bitmap font from file \"%s\", using embedded font "
+          "instead.  Reason: %s",
+          path, msg);
+      bitmap = stbi_load_from_memory(
+          embed_tileset, sizeof(embed_tileset) / sizeof(unsigned char),
+          &shader->texture_w, &shader->texture_h, &components, 0);
+    }
+  }
 
   if (shader->texture_w < 0 || shader->texture_h < 0) {
     log_error("Failed to read glyph texture");
@@ -119,25 +140,26 @@ static void update_buffer_sizes(glyph_shader_program_t* shader,
 /* Public interface definition */
 /* --------------------------- */
 
-glyph_shader_program_t procy_create_glyph_shader(window_t* window) {
-  glyph_shader_program_t glyph_shader;
+glyph_shader_program_t* procy_create_glyph_shader(window_t* window,
+                                                  const char* path) {
+  glyph_shader_program_t* glyph_shader = malloc(sizeof(glyph_shader_program_t));
 
-  glyph_shader.window = window;
-  glyph_shader.font_texture = 0;
-  glyph_shader.texture_w = -1;
-  glyph_shader.texture_h = -1;
-  glyph_shader.scale = window->text_scale;
-  glyph_shader.index_buffer = NULL;
-  glyph_shader.vertex_buffer = NULL;
-  glyph_shader.glyph_count = 0;
+  glyph_shader->window = window;
+  glyph_shader->font_texture = 0;
+  glyph_shader->texture_w = -1;
+  glyph_shader->texture_h = -1;
+  glyph_shader->scale = window->text_scale;
+  glyph_shader->index_buffer = NULL;
+  glyph_shader->vertex_buffer = NULL;
+  glyph_shader->glyph_count = 0;
 
-  shader_program_t* prog = &glyph_shader.program;
+  shader_program_t* prog = &glyph_shader->program;
   if ((prog->valid =
            procy_compile_vert_shader((char*)embed_glyph_vert, &prog->vertex) &&
            procy_compile_frag_shader((char*)embed_glyph_frag,
                                      &prog->fragment))) {
     // load font texture and codepoints
-    load_glyph_font(&glyph_shader, NULL);
+    load_glyph_font(glyph_shader, path);
 
     // create vertex array
     glGenVertexArrays(1, &prog->vao);
@@ -152,8 +174,8 @@ glyph_shader_program_t procy_create_glyph_shader(window_t* window) {
         procy_link_shader_program(prog->vertex, prog->fragment, &prog->program);
 
     if (prog->valid) {
-      glyph_shader.u_ortho = glGetUniformLocation(prog->program, "u_Ortho");
-      glyph_shader.u_sampler =
+      glyph_shader->u_ortho = glGetUniformLocation(prog->program, "u_Ortho");
+      glyph_shader->u_sampler =
           glGetUniformLocation(prog->program, "u_GlyphTexture");
     }
   }
@@ -302,5 +324,7 @@ void procy_destroy_glyph_shader(glyph_shader_program_t* shader) {
     if (glIsTexture(shader->font_texture)) {
       glDeleteTextures(1, &shader->font_texture);
     }
+
+    free(shader);
   }
 }

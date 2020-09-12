@@ -54,13 +54,13 @@ static void update_buffer_size(line_shader_program_t* shader,
 /* Public interface definition */
 /* --------------------------- */
 
-line_shader_program_t procy_create_line_shader() {
-  line_shader_program_t line_shader;
+line_shader_program_t* procy_create_line_shader() {
+  line_shader_program_t* line_shader = malloc(sizeof(line_shader_program_t));
 
-  line_shader.line_count = 0;
-  line_shader.vertex_buffer = NULL;
+  line_shader->line_count = 0;
+  line_shader->vertex_buffer = NULL;
 
-  shader_program_t* prog = &line_shader.program;
+  shader_program_t* prog = &line_shader->program;
   if ((prog->valid =
            procy_compile_vert_shader((char*)embed_line_vert, &prog->vertex) &&
            procy_compile_frag_shader((char*)embed_line_frag,
@@ -76,7 +76,7 @@ line_shader_program_t procy_create_line_shader() {
         procy_link_shader_program(prog->vertex, prog->fragment, &prog->program);
 
     if (prog->valid) {
-      line_shader.u_ortho = glGetUniformLocation(prog->program, "u_Ortho");
+      line_shader->u_ortho = glGetUniformLocation(prog->program, "u_Ortho");
     }
   }
 
@@ -90,6 +90,8 @@ void procy_destroy_line_shader(line_shader_program_t* shader) {
     if (shader->vertex_buffer != NULL) {
       free(shader->vertex_buffer);
     }
+
+    free(shader);
   }
 }
 
