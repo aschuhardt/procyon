@@ -35,7 +35,7 @@ typedef struct procy_window_t {
   struct procy_key_info_t* key_table;
   float ortho[4][4], text_scale;
   struct GLFWwindow* glfw_win;
-  bool quitting;
+  bool quitting, high_fps;
 } procy_window_t;
 
 procy_window_t* procy_create_window(int width, int height, const char* title,

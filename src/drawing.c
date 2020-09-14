@@ -1,7 +1,5 @@
 #include "drawing.h"
 
-#include <string.h>
-
 #include "window.h"
 
 typedef procy_draw_op_t draw_op_t;
@@ -14,19 +12,27 @@ typedef procy_color_t color_t;
 /* Public interface definition */
 /* --------------------------- */
 
-draw_op_t procy_create_draw_op_string(int x, int y, int width,
-                                      const char* contents, size_t index) {
-  return procy_create_draw_op_char(x + (int)index * width, y,
-                                   (char)contents[index]);
+draw_op_t procy_create_draw_op_string(int x, int y, int size,
+                                      const char* contents, size_t index,
+                                      bool vertical) {
+  return vertical ? procy_create_draw_op_char(x, y + (int)index * size,
+                                              (char)contents[index])
+                  : procy_create_draw_op_char(x + (int)index * size, y,
+                                              (char)contents[index]);
 }
 
-draw_op_t procy_create_draw_op_string_colored(int x, int y, int width,
+draw_op_t procy_create_draw_op_string_colored(int x, int y, int size,
                                               color_t forecolor,
                                               color_t backcolor,
                                               const char* contents,
-                                              size_t index) {
-  return procy_create_draw_op_char_colored(x + (int)index * width, y, forecolor,
-                                           backcolor, (char)contents[index]);
+                                              size_t index, bool vertical) {
+  return vertical ? procy_create_draw_op_char_colored(x, y + (int)index * size,
+                                                      forecolor, backcolor,
+                                                      (char)contents[index])
+
+                  : procy_create_draw_op_char_colored(x + (int)index * size, y,
+                                                      forecolor, backcolor,
+                                                      (char)contents[index]);
 }
 
 draw_op_t procy_create_draw_op_char(int x, int y, char c) {

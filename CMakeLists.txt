@@ -4,6 +4,8 @@ project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Os")
+
 add_subdirectory(lib)
 
 set(SU_SOURCE
@@ -18,6 +20,12 @@ set(SU_SOURCE
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(SU_LIBRARY procyon)
+
+get_directory_property(parentDir PARENT_DIRECTORY)
+if(parentDir)
+  set(SU_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
+  set(SU_LIBRARY procyon PARENT_SCOPE)
+endif()
 
 if(SU_SHARED)
   add_library(${SU_LIBRARY} SHARED ${SU_SOURCE})
@@ -72,6 +80,9 @@ list(APPEND EMBED_TARGETS
   embed_line_vert
   embed_line_frag)
 
+# create a directory for generated files to be placed into
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/gen/")
+
 # Convert each embedded resource into a C header file
 foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARGETS)
   set(header "${CMAKE_CURRENT_SOURCE_DIR}/include/gen/${header}")
@@ -79,7 +90,8 @@ foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARG
   add_custom_command(
     DEPENDS genhexer ${filename}
     OUTPUT ${header}
-    COMMAND genhexer ${filename} ${header} ${target})
+    COMMAND genhexer ${filename} ${header} ${target}
+    USES_TERMINAL)
   set_source_files_properties(${header} PROPERTIES GENERATED 1)
   add_custom_target(${target} DEPENDS ${header})
   add_dependencies(${SU_LIBRARY} ${target})

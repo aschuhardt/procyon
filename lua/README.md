@@ -44,9 +44,13 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 - `window.glyph_size()` - Returns two integers (width and height), representing the *scaled* dimensions of text glyphs.
 - `window.reload()` - Returns nothing.  Causes the window and script environment to be disposed-of and reloaded (functionally "restarts" the app).
 - `window.set_color(color)` - Returns nothing.  Sets the "clear" color used for the window background.
+- `window.set_high_fps(enabled)` - Returns nothing.  Enables or enables so-called "high-fps mode", in which the window will attempt to update
+  with a frequency that matches the display refresh rate.  Otherwise, when high-fps mode is disabled, the window only updates every two seconds
+  or when input events are triggered.
 
 #### Fields
-- `window.on_draw` - If assigned, `on_draw` is called before each new frame is drawn.  Perform any drawing routines here.  No arguments are passed to `on_draw`.
+- `window.on_draw` - If assigned, `on_draw` is called before each new frame is drawn.  Perform any drawing routines here.
+  A single floating-point argument `seconds` is passed to `on_draw`.  It represents the amount of time, in fractional seconds, since the last frame was drawn.
 - `window.on_resize` - If assigned, `on_resize` is called when the window is resized.  Two arguments, `width` and `height`, are passed to the function. 
 - `window.on_load` - If assigned, `on_load` is called prior to the beginning of the main game loop.  Perform any initialization here.  No arguments are passed to `on_load`.
 - `window.on_unload` - If assigned, `on_unload` is called after the main game loop has terminated.  Perform any cleanup logic here.  No arguments are passed to `on_unload`.
@@ -67,11 +71,11 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 ### Input
 
 #### Fields
-- `input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed.  It has four arguments: `key`, which is one of the `keys.KEY_...` fields, followed by and  three boolean values indicating whether the `shift`, `control`, or `alt` mods are in effect.  See the example implementation provided below:
+- `input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed.  It has four arguments: `key`, which is one of the `KEY_...` global values, followed by and  three boolean values indicating whether the `shift`, `control`, or `alt` mods are in effect.  See the example implementation provided below:
 
 ```lua
 input.on_key_pressed = function(key, shift, ctrl, alt)
-  if key == keys.KEY_ESCAPE then
+  if key == KEY_ESCAPE then
     window.close()
   end
 end
@@ -79,7 +83,7 @@ end
 
 - `input.on_key_released` - Same as `on_key_pressed` above, but called when a key is released.
 - `input.on_char_entered` - If assigned, `on_char_entered` is called when the user enters text via the keyboard.
-- `keys.KEY_A ...` - Named key objects.  See `script/keys.h` for a complete list.
+- `KEY_A ...` - Named key objects.  See `script/keys.h` for a complete list.
 - `keys[k].name`, `keys[k].value` - In addition to named objects, data pertaining to each key is stored in the `keys` table indexed by the key values themselves.
 
 ---

@@ -18,24 +18,28 @@
 #define WHITE (procy_create_color(1.0F, 1.0F, 1.0F))
 #define BLACK (procy_create_color(0.0F, 0.0F, 0.0F))
 
+#define MAX_DRAW_STRING_LENGTH 1024
+
 static int draw_string(lua_State* L) {
   int x = lua_tointeger(L, 1);
   int y = lua_tointeger(L, 2);
   const char* contents = lua_tostring(L, 3);
-
   procy_color_t forecolor = lua_gettop(L) >= 4 ? get_color(L, 4) : WHITE;
   procy_color_t backcolor = lua_gettop(L) >= 5 ? get_color(L, 5) : BLACK;
+
+  bool vertical = lua_gettop(L) >= 6 ? lua_toboolean(L, 6) : false;
 
   lua_pop(L, lua_gettop(L));
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
   procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
 
-  size_t length = strlen(contents);
+  size_t length = strnlen(contents, MAX_DRAW_STRING_LENGTH);
+  int size = vertical ? window->glyph.height : window->glyph.width;
   procy_draw_op_t op;
   for (size_t i = 0; i < length; i++) {
-    op = procy_create_draw_op_string_colored(x, y, window->glyph.width,
-                                             forecolor, backcolor, contents, i);
+    op = procy_create_draw_op_string_colored(x, y, size, forecolor, backcolor,
+                                             contents, i, vertical);
     procy_append_draw_op(window, &op);
   }
 
