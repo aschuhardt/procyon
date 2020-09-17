@@ -12,9 +12,11 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
+#include "shader/error.h"
 #include "drawing.h"
 #include "window.h"
 #include "gen/tileset.h"
+#include "gen/tileset_bold.h"
 #include "gen/glyph_frag.h"
 #include "gen/glyph_vert.h"
 
@@ -28,6 +30,7 @@ typedef procy_color_t color_t;
 typedef struct glyph_vertex_t {
   float x, y, u, v;
   color_t forecolor, backcolor;
+  float bold;
 } glyph_vertex_t;
 #pragma pack(1)
 
@@ -37,6 +40,7 @@ static const size_t ATTR_GLYPH_POSITION = 0;
 static const size_t ATTR_GLYPH_TEXCOORDS = 1;
 static const size_t ATTR_GLYPH_FORECOLOR = 2;
 static const size_t ATTR_GLYPH_BACKCOLOR = 3;
+static const size_t ATTR_GLYPH_BOLD = 4;
 
 // size of the glyph texture in terms of number of glyphs per side
 static const size_t GLYPH_WIDTH_COUNT = 16;
@@ -45,46 +49,37 @@ static const size_t GLYPH_HEIGHT_COUNT = 16;
 static const size_t VERTICES_PER_GLYPH = 4;
 static const size_t INDICES_PER_GLYPH = 6;
 
-static void bind_texture(window_t* window, unsigned int texture) {
-  if (window->last_bound_texture != texture) {
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    window->last_bound_texture = texture;
-  }
-}
-static void load_glyph_font(glyph_shader_program_t* shader, const char* path) {
+static void load_glyph_font(glyph_shader_program_t* shader) {
   if (glIsTexture(shader->font_texture)) {
-    glDeleteTextures(1, &shader->font_texture);
+    GL_CHECK(glDeleteTextures(1, &shader->font_texture));
   }
 
   int components;
-  unsigned char* bitmap = NULL;
-  if (path == NULL) {
-    // if no path is provided, load from embedded font
-    bitmap = stbi_load_from_memory(
-        embed_tileset, sizeof(embed_tileset) / sizeof(unsigned char),
-        &shader->texture_w, &shader->texture_h, &components, 0);
-  } else {
-    // otherwise, load from disk
-    bitmap =
-        stbi_load(path, &shader->texture_w, &shader->texture_h, &components, 0);
-    if (bitmap == NULL) {
-      // failed to load from disk, log an error message and fallback to the
-      // embedded font
-      const char* msg = stbi_failure_reason();
-      log_error(
-          "Failed to load bitmap font from file \"%s\", using embedded font "
-          "instead.  Reason: %s",
-          path, msg);
-      bitmap = stbi_load_from_memory(
-          embed_tileset, sizeof(embed_tileset) / sizeof(unsigned char),
-          &shader->texture_w, &shader->texture_h, &components, 0);
-    }
-  }
+  unsigned char* bitmap_thin = stbi_load_from_memory(
+      embed_tileset, sizeof(embed_tileset) / sizeof(unsigned char),
+      &shader->texture_w, &shader->texture_h, &components, 1);
+  unsigned char* bitmap_bold = stbi_load_from_memory(
+      embed_tileset_bold, sizeof(embed_tileset_bold) / sizeof(unsigned char),
+      &shader->texture_w, &shader->texture_h, &components, 1);
 
-  if (shader->texture_w < 0 || shader->texture_h < 0) {
+  if (bitmap_thin == NULL || bitmap_bold == NULL || shader->texture_w < 0 ||
+      shader->texture_h < 0) {
     log_error("Failed to read glyph texture");
+    const char* msg = stbi_failure_reason();
+    if (msg != NULL) {
+      log_error("STBI failure message: %s", msg);
+    }
   } else {
+    // copy both bitmap buffers into a single location
+    size_t bitmap_size = shader->texture_w * shader->texture_h;
+    unsigned char* combined_buffer =
+        malloc(sizeof(unsigned char) * bitmap_size * 2);
+    memcpy(combined_buffer, bitmap_thin, bitmap_size);
+    memcpy(&combined_buffer[bitmap_size], bitmap_bold, bitmap_size);
+
+    stbi_image_free(bitmap_thin);
+    stbi_image_free(bitmap_bold);
+
     // set glyph size on window so that it's accessible to the script
     // environment
     shader->window->glyph.width = (int)floorf(
@@ -92,19 +87,33 @@ static void load_glyph_font(glyph_shader_program_t* shader, const char* path) {
     shader->window->glyph.height = (int)floorf(
         (float)shader->texture_h / GLYPH_HEIGHT_COUNT * shader->scale);
 
-    // create font texture from bitmap
-    glGenTextures(1, &shader->font_texture);
-    bind_texture(shader->window, shader->font_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, shader->texture_w, shader->texture_h,
-                 0, GL_RED, GL_UNSIGNED_BYTE, bitmap);
+    // create font texture array from bitmaps
+    GL_CHECK(glGenTextures(1, &shader->font_texture));
 
-    // set font texture filtering style
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    GL_CHECK(glActiveTexture(GL_TEXTURE0));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D_ARRAY, shader->font_texture));
+
+    GL_CHECK(glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RED, shader->texture_w,
+                          shader->texture_h, 2, 0, GL_RED, GL_UNSIGNED_BYTE,
+                          combined_buffer));
+
+    free(combined_buffer);
+
+    /*
+    GL_CHECK(glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_R8, shader->texture_w,
+                            shader->texture_h, 4));
+    GL_CHECK(glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, shader->texture_w,
+                             shader->texture_h, 2, GL_RED, GL_UNSIGNED_BYTE,
+                             bitmap_thin));
+    GL_CHECK(glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, shader->texture_w,
+                             shader->texture_h, 2, GL_RED, GL_UNSIGNED_BYTE,
+                             bitmap_bold));
+                             */
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER,
+                             GL_NEAREST));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER,
+                             GL_NEAREST));
   }
-
-  // cleanup bitmap data
-  stbi_image_free(bitmap);
 }
 
 static size_t count_glyphs_in_ops_buffer(draw_op_t* ops, size_t n) {
@@ -140,8 +149,7 @@ static void update_buffer_sizes(glyph_shader_program_t* shader,
 /* Public interface definition */
 /* --------------------------- */
 
-glyph_shader_program_t* procy_create_glyph_shader(window_t* window,
-                                                  const char* path) {
+glyph_shader_program_t* procy_create_glyph_shader(window_t* window) {
   glyph_shader_program_t* glyph_shader = malloc(sizeof(glyph_shader_program_t));
 
   glyph_shader->window = window;
@@ -159,24 +167,23 @@ glyph_shader_program_t* procy_create_glyph_shader(window_t* window,
            procy_compile_frag_shader((char*)embed_glyph_frag,
                                      &prog->fragment))) {
     // load font texture and codepoints
-    load_glyph_font(glyph_shader, path);
+    load_glyph_font(glyph_shader);
 
     // create vertex array
-    glGenVertexArrays(1, &prog->vao);
-    glBindVertexArray(prog->vao);
+    GL_CHECK(glGenVertexArrays(1, &prog->vao));
+    GL_CHECK(glBindVertexArray(prog->vao));
 
     // create vertex buffers
     prog->vbo_count = 2;
     prog->vbo = malloc(sizeof(GLuint) * prog->vbo_count);
-    glGenBuffers(prog->vbo_count, prog->vbo);
+    GL_CHECK(glGenBuffers(prog->vbo_count, prog->vbo));
 
     prog->valid &=
         procy_link_shader_program(prog->vertex, prog->fragment, &prog->program);
 
     if (prog->valid) {
-      glyph_shader->u_ortho = glGetUniformLocation(prog->program, "u_Ortho");
-      glyph_shader->u_sampler =
-          glGetUniformLocation(prog->program, "u_GlyphTexture");
+      glyph_shader->u_ortho =
+          GL_CHECK(glGetUniformLocation(prog->program, "u_Ortho"));
     }
   }
 
@@ -224,20 +231,24 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
     float ty = floorf((float)c / GLYPH_HEIGHT_COUNT) * glyph_h /
                (float)shader->texture_h;
 
+    float bold = op->data.text.bold ? 1.0 : 0.0;
+
     // vertex attributes
-    glyph_vertex_t top_left = {x, y, tx, ty, op->forecolor, op->backcolor};
-    glyph_vertex_t top_right = {x + glyph_w * scale, y,
-                                tx + glyph_tw,       ty,
-                                op->forecolor,       op->backcolor};
+    glyph_vertex_t top_left = {x,   y, tx, ty, op->forecolor, op->backcolor,
+                               bold};
+    glyph_vertex_t top_right = {
+        x + glyph_w * scale, y,   tx + glyph_tw, ty, op->forecolor,
+        op->backcolor,       bold};
     glyph_vertex_t bottom_left = {x,
                                   y + glyph_h * scale,
                                   tx,
                                   ty + glyph_th,
                                   op->forecolor,
-                                  op->backcolor};
-    glyph_vertex_t bottom_right = {x + glyph_w * scale, y + glyph_h * scale,
-                                   tx + glyph_tw,       ty + glyph_th,
-                                   op->forecolor,       op->backcolor};
+                                  op->backcolor,
+                                  bold};
+    glyph_vertex_t bottom_right = {
+        x + glyph_w * scale, y + glyph_h * scale, tx + glyph_tw, ty + glyph_th,
+        op->forecolor,       op->backcolor,       bold};
 
     size_t vert_ix = glyph_index * VERTICES_PER_GLYPH;
     size_t index_ix = glyph_index * INDICES_PER_GLYPH;
@@ -257,54 +268,63 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
   }
 
   shader_program_t* prog = &shader->program;
-  glUseProgram(prog->program);
+  GL_CHECK(glUseProgram(prog->program));
 
-  bind_texture(window, shader->font_texture);
-
-  // set font texture attribute
-  glUniform1i(shader->u_sampler, GL_TEXTURE0);
+  GL_CHECK(glActiveTexture(GL_TEXTURE0));
+  GL_CHECK(glBindTexture(GL_TEXTURE_2D_ARRAY, shader->font_texture));
 
   // set orthographic projection matrix
-  glUniformMatrix4fv(shader->u_ortho, 1, GL_FALSE, &window->ortho[0][0]);
+  GL_CHECK(
+      glUniformMatrix4fv(shader->u_ortho, 1, GL_FALSE, &window->ortho[0][0]));
 
   // copy vertex data to video memory
-  glBindBuffer(GL_ARRAY_BUFFER, prog->vbo[VBO_GLYPH_POSITION]);
-  glBufferData(GL_ARRAY_BUFFER,
-               glyph_count * VERTICES_PER_GLYPH * sizeof(glyph_vertex_t),
-               vertices, GL_STATIC_DRAW);
+  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, prog->vbo[VBO_GLYPH_POSITION]));
+  GL_CHECK(
+      glBufferData(GL_ARRAY_BUFFER,
+                   glyph_count * VERTICES_PER_GLYPH * sizeof(glyph_vertex_t),
+                   vertices, GL_STATIC_DRAW));
 
   // associate the vertex data with the correct shader attribute
-  glEnableVertexAttribArray(ATTR_GLYPH_POSITION);
-  glVertexAttribPointer(ATTR_GLYPH_POSITION, 2, GL_FLOAT, GL_FALSE,
-                        sizeof(glyph_vertex_t), 0);
+  GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_POSITION));
+  GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_POSITION, 2, GL_FLOAT, GL_FALSE,
+                                 sizeof(glyph_vertex_t), 0));
 
-  glEnableVertexAttribArray(ATTR_GLYPH_TEXCOORDS);
-  glVertexAttribPointer(ATTR_GLYPH_TEXCOORDS, 2, GL_FLOAT, GL_FALSE,
-                        sizeof(glyph_vertex_t), (void*)(2 * sizeof(float)));
+  GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_TEXCOORDS));
+  GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_TEXCOORDS, 2, GL_FLOAT, GL_FALSE,
+                                 sizeof(glyph_vertex_t),
+                                 (void*)(2 * sizeof(float))));
 
-  glEnableVertexAttribArray(ATTR_GLYPH_FORECOLOR);
-  glVertexAttribPointer(ATTR_GLYPH_FORECOLOR, 3, GL_FLOAT, GL_FALSE,
-                        sizeof(glyph_vertex_t), (void*)(4 * sizeof(float)));
+  GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_FORECOLOR));
+  GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_FORECOLOR, 3, GL_FLOAT, GL_FALSE,
+                                 sizeof(glyph_vertex_t),
+                                 (void*)(4 * sizeof(float))));
 
-  glEnableVertexAttribArray(ATTR_GLYPH_BACKCOLOR);
-  glVertexAttribPointer(ATTR_GLYPH_BACKCOLOR, 3, GL_FLOAT, GL_FALSE,
-                        sizeof(glyph_vertex_t), (void*)(7 * sizeof(float)));
+  GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_BACKCOLOR));
+  GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_BACKCOLOR, 3, GL_FLOAT, GL_FALSE,
+                                 sizeof(glyph_vertex_t),
+                                 (void*)(7 * sizeof(float))));
+
+  GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_BOLD));
+  GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_BOLD, 1, GL_FLOAT, GL_FALSE,
+                                 sizeof(glyph_vertex_t),
+                                 (void*)(10 * sizeof(float))));
 
   // copy indices
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prog->vbo[VBO_GLYPH_INDICES]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               glyph_count * INDICES_PER_GLYPH * sizeof(GLushort), indices,
-               GL_STATIC_DRAW);
+  GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prog->vbo[VBO_GLYPH_INDICES]));
+  GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                        glyph_count * INDICES_PER_GLYPH * sizeof(GLushort),
+                        indices, GL_STATIC_DRAW));
 
-  glPolygonMode(GL_FRONT, GL_FILL);
+  GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
 
-  glDrawElements(GL_TRIANGLES, shader->glyph_count * INDICES_PER_GLYPH,
-                 GL_UNSIGNED_SHORT, 0);
+  GL_CHECK(glDrawElements(GL_TRIANGLES, shader->glyph_count * INDICES_PER_GLYPH,
+                          GL_UNSIGNED_SHORT, 0));
 
   glDisableVertexAttribArray(ATTR_GLYPH_POSITION);
   glDisableVertexAttribArray(ATTR_GLYPH_TEXCOORDS);
   glDisableVertexAttribArray(ATTR_GLYPH_FORECOLOR);
   glDisableVertexAttribArray(ATTR_GLYPH_BACKCOLOR);
+  glDisableVertexAttribArray(ATTR_GLYPH_BOLD);
   glUseProgram(0);
 }
 

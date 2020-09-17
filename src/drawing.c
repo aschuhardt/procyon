@@ -14,35 +14,36 @@ typedef procy_color_t color_t;
 
 draw_op_t procy_create_draw_op_string(int x, int y, int size,
                                       const char* contents, size_t index,
-                                      bool vertical) {
+                                      bool vertical, bool bold) {
   return vertical ? procy_create_draw_op_char(x, y + (int)index * size,
-                                              (char)contents[index])
+                                              (char)contents[index], bold)
                   : procy_create_draw_op_char(x + (int)index * size, y,
-                                              (char)contents[index]);
+                                              (char)contents[index], bold);
 }
 
-draw_op_t procy_create_draw_op_string_colored(int x, int y, int size,
-                                              color_t forecolor,
-                                              color_t backcolor,
-                                              const char* contents,
-                                              size_t index, bool vertical) {
-  return vertical ? procy_create_draw_op_char_colored(x, y + (int)index * size,
-                                                      forecolor, backcolor,
-                                                      (char)contents[index])
+draw_op_t procy_create_draw_op_string_colored(
+    int x, int y, int size, color_t forecolor, color_t backcolor,
+    const char* contents, size_t index, bool vertical, bool bold) {
+  return vertical
+             ? procy_create_draw_op_char_colored(x, y + (int)index * size,
+                                                 forecolor, backcolor,
+                                                 (char)contents[index], bold)
 
-                  : procy_create_draw_op_char_colored(x + (int)index * size, y,
-                                                      forecolor, backcolor,
-                                                      (char)contents[index]);
+             : procy_create_draw_op_char_colored(x + (int)index * size, y,
+                                                 forecolor, backcolor,
+                                                 (char)contents[index], bold);
 }
 
-draw_op_t procy_create_draw_op_char(int x, int y, char c) {
-  return procy_create_draw_op_char_colored(x, y, WHITE, BLACK, c);
+draw_op_t procy_create_draw_op_char(int x, int y, char c, bool bold) {
+  return procy_create_draw_op_char_colored(x, y, WHITE, BLACK, c, bold);
 }
 
 draw_op_t procy_create_draw_op_char_colored(int x, int y, color_t forecolor,
-                                            color_t backcolor, char c) {
+                                            color_t backcolor, char c,
+                                            bool bold) {
   draw_op_t op = {forecolor, backcolor, DRAW_OP_TEXT, x, y};
   op.data.text.character = (unsigned char)c;
+  op.data.text.bold = bold;
   return op;
 }
 

@@ -29,8 +29,6 @@ typedef struct procy_window_t {
   procy_draw_op_buffer_t draw_ops;
   procy_window_bounds_t bounds;
   procy_glyph_bounds_t glyph;
-  unsigned int last_bound_texture;  // used to avoid re-binding textures
-                                    // that are already bound
   struct procy_state_t* state;
   struct procy_key_info_t* key_table;
   float ortho[4][4], text_scale;
