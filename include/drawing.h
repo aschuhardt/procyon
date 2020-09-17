@@ -21,6 +21,7 @@ typedef struct procy_draw_op_t {
   union {
     struct {
       unsigned char character;
+      bool bold;
     } text;
     struct {
       int width, height;
@@ -37,21 +38,21 @@ typedef struct procy_draw_op_t {
  */
 procy_draw_op_t procy_create_draw_op_string(int x, int y, int size,
                                             const char* contents, size_t index,
-                                            bool vertical);
+                                            bool vertical, bool bold);
 /*
  * Returns a new text drawing operation bearing the provided foreground color,
  * at the provided pixel coordinates
  */
 procy_draw_op_t procy_create_draw_op_string_colored(
     int x, int y, int size, procy_color_t forecolor, procy_color_t backcolor,
-    const char* contents, size_t index, bool vertical);
+    const char* contents, size_t index, bool vertical, bool bold);
 
-procy_draw_op_t procy_create_draw_op_char(int x, int y, char c);
+procy_draw_op_t procy_create_draw_op_char(int x, int y, char c, bool bold);
 
 procy_draw_op_t procy_create_draw_op_char_colored(int x, int y,
                                                   procy_color_t forecolor,
                                                   procy_color_t backcolor,
-                                                  char c);
+                                                  char c, bool bold);
 
 procy_draw_op_t procy_create_draw_op_rect(int x, int y, int width, int height,
                                           procy_color_t color);

@@ -9,6 +9,7 @@
 #include "window.h"
 #include "gen/rect_frag.h"
 #include "gen/rect_vert.h"
+#include "shader/error.h"
 
 typedef procy_rect_shader_program_t rect_shader_program_t;
 typedef procy_window_t window_t;
@@ -70,12 +71,12 @@ rect_shader_program_t* procy_create_rect_shader() {
            procy_compile_vert_shader((char*)embed_rect_vert, &prog->vertex) &&
            procy_compile_frag_shader((char*)embed_rect_frag,
                                      &prog->fragment))) {
-    glGenVertexArrays(1, &prog->vao);
-    glBindVertexArray(prog->vao);
+    GL_CHECK(glGenVertexArrays(1, &prog->vao));
+    GL_CHECK(glBindVertexArray(prog->vao));
 
     prog->vbo_count = 2;
     prog->vbo = malloc(sizeof(GLuint) * prog->vbo_count);
-    glGenBuffers(prog->vbo_count, prog->vbo);
+    GL_CHECK(glGenBuffers(prog->vbo_count, prog->vbo));
 
     prog->valid &=
         procy_link_shader_program(prog->vertex, prog->fragment, &prog->program);
@@ -154,32 +155,34 @@ void procy_draw_rect_shader(rect_shader_program_t* shader,
   }
 
   shader_program_t* prog = &shader->program;
-  glUseProgram(prog->program);
+  GL_CHECK(glUseProgram(prog->program));
 
-  glUniformMatrix4fv(shader->u_ortho, 1, GL_FALSE, &window->ortho[0][0]);
+  GL_CHECK(
+      glUniformMatrix4fv(shader->u_ortho, 1, GL_FALSE, &window->ortho[0][0]));
 
-  glBindBuffer(GL_ARRAY_BUFFER, prog->vbo[VBO_RECT_POSITION]);
-  glBufferData(GL_ARRAY_BUFFER,
-               rect_count * VERTICES_PER_RECT * sizeof(rect_vertex_t), vertices,
-               GL_STATIC_DRAW);
+  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, prog->vbo[VBO_RECT_POSITION]));
+  GL_CHECK(glBufferData(GL_ARRAY_BUFFER,
+                        rect_count * VERTICES_PER_RECT * sizeof(rect_vertex_t),
+                        vertices, GL_STATIC_DRAW));
 
-  glEnableVertexAttribArray(ATTR_RECT_POSITION);
-  glVertexAttribPointer(ATTR_RECT_POSITION, 2, GL_FLOAT, GL_FALSE,
-                        sizeof(rect_vertex_t), 0);
+  GL_CHECK(glEnableVertexAttribArray(ATTR_RECT_POSITION));
+  GL_CHECK(glVertexAttribPointer(ATTR_RECT_POSITION, 2, GL_FLOAT, GL_FALSE,
+                                 sizeof(rect_vertex_t), 0));
 
-  glEnableVertexAttribArray(ATTR_RECT_COLOR);
-  glVertexAttribPointer(ATTR_RECT_COLOR, 3, GL_FLOAT, GL_FALSE,
-                        sizeof(rect_vertex_t), (void*)(2 * sizeof(float)));
+  GL_CHECK(glEnableVertexAttribArray(ATTR_RECT_COLOR));
+  GL_CHECK(glVertexAttribPointer(ATTR_RECT_COLOR, 3, GL_FLOAT, GL_FALSE,
+                                 sizeof(rect_vertex_t),
+                                 (void*)(2 * sizeof(float))));
 
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prog->vbo[VBO_RECT_INDICES]);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-               rect_count * INDICES_PER_RECT * sizeof(GLushort), indices,
-               GL_STATIC_DRAW);
+  GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, prog->vbo[VBO_RECT_INDICES]));
+  GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                        rect_count * INDICES_PER_RECT * sizeof(GLushort),
+                        indices, GL_STATIC_DRAW));
 
-  glPolygonMode(GL_FRONT, GL_FILL);
+  GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
 
-  glDrawElements(GL_TRIANGLES, rect_count * INDICES_PER_RECT, GL_UNSIGNED_SHORT,
-                 0);
+  GL_CHECK(glDrawElements(GL_TRIANGLES, rect_count * INDICES_PER_RECT,
+                          GL_UNSIGNED_SHORT, 0));
 
   glDisableVertexAttribArray(ATTR_RECT_POSITION);
   glDisableVertexAttribArray(ATTR_RECT_COLOR);

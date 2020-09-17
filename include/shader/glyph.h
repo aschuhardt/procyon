@@ -19,7 +19,7 @@ typedef struct procy_glyph_shader_program_t {
  * embedded default bitmap font.
  */
 procy_glyph_shader_program_t* procy_create_glyph_shader(
-    struct procy_window_t* window, const char* path);
+    struct procy_window_t* window);
 
 /*
  * Builds and executes a draw call on the GPU, consisting of vertex data built

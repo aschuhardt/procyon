@@ -4,8 +4,9 @@ window.on_draw = function(seconds)
   local gw, gh = window.glyph_size()
   local w, h = window.size()
 
-  draw.string(4, 4, "Press F2 to reload, or Escape to exit")
-  draw.string(4, 4 + gh, string.format("Window size: %dx%d", w, h))
+  draw.string(4, 4, "Press %b%iF2%i%b to %breload%b, or %b%iEscape%i%b to exit")
+  draw.string(4, 4 + gh, "Here is an escaped percent-sign: %%")
+  draw.string(4, 4 + gh * 2, string.format("Window size: %dx%d", w, h))
 
   draw.string(100, 100, current_text, color.from_rgb(0.7, 0.8, 0.4))
   draw.line(100, 100 + gh, 100 + #current_text * gw, 100 + gh)
