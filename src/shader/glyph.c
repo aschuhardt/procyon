@@ -77,9 +77,6 @@ static void load_glyph_font(glyph_shader_program_t* shader) {
     memcpy(combined_buffer, bitmap_thin, bitmap_size);
     memcpy(&combined_buffer[bitmap_size], bitmap_bold, bitmap_size);
 
-    stbi_image_free(bitmap_thin);
-    stbi_image_free(bitmap_bold);
-
     // set glyph size on window so that it's accessible to the script
     // environment
     shader->window->glyph.width = (int)floorf(
@@ -113,6 +110,14 @@ static void load_glyph_font(glyph_shader_program_t* shader) {
                              GL_NEAREST));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER,
                              GL_NEAREST));
+  }
+
+  if (bitmap_thin != NULL) {
+    stbi_image_free(bitmap_thin);
+  }
+
+  if (bitmap_bold != NULL) {
+    stbi_image_free(bitmap_bold);
   }
 }
 
