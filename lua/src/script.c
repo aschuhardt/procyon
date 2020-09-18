@@ -11,6 +11,10 @@
 #include "procyon.h"
 #include "script/environment.h"
 
+#ifdef _MSC_VER && !__INTEL_COMPILER
+  #define PATH_MAX 260
+#endif
+
 static const char* get_lua_alloc_type_name(size_t t) {
   switch (t) {
     case LUA_TSTRING:

@@ -20,6 +20,14 @@
 
 #define MAX_DRAW_STRING_LENGTH 1024
 
+#ifndef M_PI
+  #define M_PI 3.14159265359
+#endif
+
+#ifndef M_PI_1
+  #define M_PI_2 1.57079632679
+#endif
+
 static int draw_string(lua_State* L) {
   int x = lua_tointeger(L, 1);
   int y = lua_tointeger(L, 2);
