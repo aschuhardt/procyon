@@ -21,7 +21,7 @@ if(LUA_FOUND)
   set_property(TARGET procyon-lua PROPERTY EXCLUDE_FROM_ALL TRUE)
   
   add_custom_target(script_test
-    COMMAND procyon-lua --debug -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/test.lua"
+    COMMAND procyon-lua -s 2 --debug -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/test.lua"
     DEPENDS procyon-lua
     USES_TERMINAL)
 endif()

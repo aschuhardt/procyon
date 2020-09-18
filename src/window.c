@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "shader.h"
+#include "shader/error.h"
 #include "shader/glyph.h"
 #include "shader/rect.h"
 #include "shader/line.h"
@@ -75,7 +76,7 @@ static void set_ortho_projection(window_t* window) {
 static void window_resized(GLFWwindow* w, int width, int height) {
   log_debug("Window resized to %dx%d", width, height);
 
-  glViewport(0, 0, width, height);
+  GL_CHECK(glViewport(0, 0, width, height));
 
   window_t* window = (window_t*)glfwGetWindowUserPointer(w);
   window->bounds.width = width;
@@ -209,7 +210,6 @@ window_t* procy_create_window(int width, int height, const char* title,
 
     window->quitting = false;
     window->high_fps = false;
-    window->last_bound_texture = UINT32_MAX;
     window->text_scale = text_scale;
     window->state = state;
   } else {
@@ -252,13 +252,12 @@ void procy_append_draw_op(window_t* window, draw_op_t* draw_op) {
 
 void procy_begin_loop(window_t* window) {
   // set up shaders
-  glyph_shader_program_t* glyph_shader =
-      procy_create_glyph_shader(window, NULL);
+  glyph_shader_program_t* glyph_shader = procy_create_glyph_shader(window);
   rect_shader_program_t* rect_shader = procy_create_rect_shader();
   line_shader_program_t* line_shader = procy_create_line_shader();
 
   // this can be overridden later, but black is a good default
-  glClearColor(0.0F, 0.0F, 0.0F, 1.0F);
+  GL_CHECK(glClearColor(0.0F, 0.0F, 0.0F, 1.0F));
 
   state_t* state = window->state;
   if (state->on_load != NULL) {
@@ -283,7 +282,7 @@ void procy_begin_loop(window_t* window) {
       glfwWaitEventsTimeout(2.0F);
     }
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
 
     if (state->on_draw != NULL) {
       state->on_draw(state, frame_duration);

@@ -16,7 +16,8 @@ set(SU_SOURCE
   src/color.c
   src/shader/glyph.c
   src/shader/rect.c
-  src/shader/line.c)
+  src/shader/line.c
+  src/shader/error.c)
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(SU_LIBRARY procyon)
@@ -55,6 +56,7 @@ list(APPEND EMBED_FILES
   glyph.vert
   glyph.frag
   cp437.png
+  cp437_bold.png
   rect.vert
   rect.frag
   line.vert
@@ -65,6 +67,7 @@ list(APPEND EMBED_HEADERS
   glyph_vert.h
   glyph_frag.h
   tileset.h
+  tileset_bold.h
   rect_vert.h
   rect_frag.h
   line_vert.h
@@ -75,6 +78,7 @@ list(APPEND EMBED_TARGETS
   embed_glyph_vert
   embed_glyph_frag
   embed_tileset
+  embed_tileset_bold
   embed_rect_vert
   embed_rect_frag
   embed_line_vert

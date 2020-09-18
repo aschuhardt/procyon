@@ -36,10 +36,51 @@ static int draw_string(lua_State* L) {
 
   size_t length = strnlen(contents, MAX_DRAW_STRING_LENGTH);
   int size = vertical ? window->glyph.height : window->glyph.width;
+  bool bold = false;
   procy_draw_op_t op;
   for (size_t i = 0; i < length; i++) {
+    // check for inline modifiers such as %b or %i
+    if (contents[i] == '%' && i < length - 1) {
+      // define the number of characters that will be skipped
+      // note: this is used both for incrementing the character index (i +=
+      // offset - 1), as well as for shifting text following the modifiers to
+      // the by (offset * glyph width) in order to compensate for non-drawn
+      // modifier characters
+      int offset = 2;
+
+      switch (contents[i + 1]) {
+        case 'b':
+          bold = !bold;
+          break;
+        case 'i': {
+          procy_color_t tmp = forecolor;
+          forecolor = backcolor;
+          backcolor = tmp;
+        } break;
+        case '%':
+          // escape the following '%' by skipping only the current one
+          offset = 1;
+          break;
+        default:
+          goto no_mod;
+      }
+
+      // offset the position in order to compensate for the
+      // characters that are not being drawn
+      if (vertical) {
+        y -= window->glyph.height * offset;
+      } else {
+        x -= window->glyph.width * offset;
+      }
+
+      // skip the modifier char which follows '%'
+      i += offset - 1;
+      continue;
+    }
+
+  no_mod:
     op = procy_create_draw_op_string_colored(x, y, size, forecolor, backcolor,
-                                             contents, i, vertical);
+                                             contents, i, vertical, bold);
     procy_append_draw_op(window, &op);
   }
 
