@@ -3,7 +3,6 @@
 
 #include "shader.h"
 
-<<<<<<< HEAD
 typedef struct procy_glyph_bounds_t procy_glyph_bounds_t;
 
 typedef struct procy_glyph_shader_program_t {
@@ -13,31 +12,13 @@ typedef struct procy_glyph_shader_program_t {
   size_t glyph_count;
   float glyph_scale;
   void *index_buffer, *vertex_buffer;
-=======
-typedef struct procy_glyph_shader_program_t {
-  unsigned int u_ortho, u_sampler, font_texture;
-  int texture_w, texture_h;
-  float scale;
-  struct procy_window_t* window;
-  procy_shader_program_t program;
-  void *index_buffer, *vertex_buffer;
-  size_t glyph_count;
->>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
 } procy_glyph_shader_program_t;
 
 /*
  * Builds and compiles a shader program with information for rendering text
-<<<<<<< HEAD
  * glyphs from a bitmap font.
  */
 procy_glyph_shader_program_t* procy_create_glyph_shader(float scale);
-=======
- * glyphs from a bitmap font.  A NULL value for `path` falls back on the
- * embedded default bitmap font.
- */
-procy_glyph_shader_program_t* procy_create_glyph_shader(
-    struct procy_window_t* window);
->>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
 
 /*
  * Builds and executes a draw call on the GPU, consisting of vertex data built

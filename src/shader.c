@@ -48,15 +48,12 @@ bool procy_link_shader_program(unsigned int vert, unsigned int frag,
   GL_CHECK(glAttachShader(*index, vert));
   GL_CHECK(glAttachShader(*index, frag));
   GL_CHECK(glLinkProgram(*index));
-<<<<<<< HEAD
 
   // clear shader resources
   glDetachShader(*index, vert);
   glDeleteShader(vert);
   glDetachShader(*index, frag);
   glDeleteShader(frag);
-=======
->>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
 
   // check that no errors occured during linking
   GLint linked;
@@ -82,22 +79,11 @@ bool procy_compile_frag_shader(const char* data, unsigned int* index) {
 }
 
 void procy_destroy_shader_program(shader_program_t* shader) {
-<<<<<<< HEAD
   if (shader == NULL) {
     return;
   }
 
   if (glIsProgram(shader->program)) {
-=======
-  // detach shaders from program and delete program
-  if (glIsProgram(shader->program) == GL_TRUE) {
-    if (glIsShader(shader->fragment) == GL_TRUE) {
-      glDetachShader(shader->program, shader->fragment);
-    }
-    if (glIsShader(shader->vertex) == GL_TRUE) {
-      glDetachShader(shader->program, shader->vertex);
-    }
->>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
     glDeleteProgram(shader->program);
   }
 

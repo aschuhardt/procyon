@@ -196,26 +196,15 @@ window_t* procy_create_window(int width, int height, const char* title,
   glfwSetErrorCallback(glfw_error_callback);
   window_t* window = malloc(sizeof(window_t));
 
-<<<<<<< HEAD
   if (set_gl_window_pointer(window, width, height, title)) {
     init_shaders(window, text_scale);
     set_ortho_projection(window, width, height);
-=======
-  set_default_window_bounds(window, width, height);
-  set_default_glyph_bounds(window);
-  if (set_gl_window_pointer(window)) {
-    set_ortho_projection(window);
->>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
     set_event_callbacks(window);
     init_draw_ops_buffer(&window->draw_ops);
     init_key_table(window);
 
     window->quitting = false;
     window->high_fps = false;
-<<<<<<< HEAD
-=======
-    window->text_scale = text_scale;
->>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
     window->state = state;
   } else {
     free(window);
@@ -257,7 +246,6 @@ void procy_append_draw_op(window_t* window, draw_op_t* draw_op) {
   draw_ops->buffer[draw_ops->length - 1] = *draw_op;
 }
 
-<<<<<<< HEAD
 void procy_get_window_size(window_t* window, int* width, int* height) {
   glfwGetWindowSize(window->glfw_win, width, height);
 }
@@ -271,14 +259,6 @@ void procy_set_glyph_scale(procy_window_t* window, float scale) {
 }
 
 void procy_begin_loop(window_t* window) {
-=======
-void procy_begin_loop(window_t* window) {
-  // set up shaders
-  glyph_shader_program_t* glyph_shader = procy_create_glyph_shader(window);
-  rect_shader_program_t* rect_shader = procy_create_rect_shader();
-  line_shader_program_t* line_shader = procy_create_line_shader();
-
->>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   // this can be overridden later, but black is a good default
   GL_CHECK(glClearColor(0.0F, 0.0F, 0.0F, 1.0F));
 
@@ -305,11 +285,7 @@ void procy_begin_loop(window_t* window) {
     if (window->high_fps) {
       glfwPollEvents();
     } else {
-<<<<<<< HEAD
       glfwWaitEventsTimeout(1.0F);
-=======
-      glfwWaitEventsTimeout(2.0F);
->>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
     }
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
@@ -319,11 +295,7 @@ void procy_begin_loop(window_t* window) {
     }
 
     if (window->draw_ops.length > 0) {
-<<<<<<< HEAD
-      if (window->shaders.glyph->program.valid) {
-=======
       if (glyph_shader->program.valid) {
->>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
         procy_draw_glyph_shader(glyph_shader, window);
       }
 
@@ -344,13 +316,6 @@ void procy_begin_loop(window_t* window) {
   if (state->on_unload != NULL) {
     state->on_unload(state);
   }
-<<<<<<< HEAD
-=======
-
-  procy_destroy_glyph_shader(glyph_shader);
-  procy_destroy_rect_shader(rect_shader);
-  procy_destroy_line_shader(line_shader);
->>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
 }
 
 void procy_set_clear_color(color_t c) { glClearColor(c.r, c.g, c.b, 1.0F); }
