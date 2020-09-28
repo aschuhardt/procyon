@@ -89,6 +89,7 @@ static void perform_draw(procy_state_t* const state, double seconds) {
       log_error("Error calling %s.%s: %s", TBL_WINDOW, FUNC_ON_DRAW,
                 lua_tostring(L, -1));
     }
+<<<<<<< HEAD
 
     // check whether the window is in "high fps" mode and, if it is NOT, run the
     // Lua garbage collector
@@ -97,6 +98,8 @@ static void perform_draw(procy_state_t* const state, double seconds) {
     if (!window->high_fps) {
       lua_gc(L, LUA_GCCOLLECT);
     }
+=======
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   }
 }
 
@@ -142,12 +145,21 @@ static void handle_window_unloaded(procy_state_t* const state) {
     lua_gc(L, LUA_GCCOLLECT);
   }
 }
+<<<<<<< HEAD
 
 static int set_window_color(lua_State* L) {
   if (!verify_arg_count(L, 1, __func__)) {
     return 0;
   }
 
+=======
+
+static int set_window_color(lua_State* L) {
+  if (!verify_arg_count(L, 1, __func__)) {
+    return 0;
+  }
+
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   procy_set_clear_color(get_color(L, 1));
   lua_pop(L, lua_gettop(L));
   return 0;

@@ -31,4 +31,13 @@ void gl_print_errors(int line, const char* file) {
   }
 }
 
+<<<<<<< HEAD
+=======
+#else
+
+const char* gl_error_string(int err) {}
+
+void gl_print_errors() {}
+
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
 #endif

@@ -11,6 +11,10 @@
 #include "procyon.h"
 #include "script/environment.h"
 
+#ifdef _MSC_VER && !__INTEL_COMPILER
+  #define PATH_MAX 260
+#endif
+
 static const char* get_lua_alloc_type_name(size_t t) {
   switch (t) {
     case LUA_TSTRING:
@@ -91,6 +95,7 @@ bool load_scripts(script_env_t* env, char* path) {
     log_error("Error loading file %s: %s", path, lua_tostring(L, -1));
     return false;
   }
+<<<<<<< HEAD
 
   add_package_path_from_entry(L, path);
 
@@ -100,6 +105,17 @@ bool load_scripts(script_env_t* env, char* path) {
   add_window(L, env);
   add_drawing(L, env);
 
+=======
+
+  add_package_path_from_entry(L, path);
+
+  add_globals(L, env);
+  add_utilities(L);
+  add_input(L, env);
+  add_window(L, env);
+  add_drawing(L, env);
+
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   if (lua_pcall(L, 0, LUA_MULTRET, 0) != LUA_OK) {
     log_error("Error running file %s: %s", path, lua_tostring(L, -1));
     return false;

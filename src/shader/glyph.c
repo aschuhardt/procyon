@@ -22,7 +22,10 @@
 
 typedef procy_draw_op_t draw_op_t;
 typedef procy_window_t window_t;
+<<<<<<< HEAD
 typedef procy_glyph_bounds_t glyph_bounds_t;
+=======
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
 typedef procy_shader_program_t shader_program_t;
 typedef procy_glyph_shader_program_t glyph_shader_program_t;
 typedef procy_color_t color_t;
@@ -78,6 +81,16 @@ static void load_glyph_font(glyph_shader_program_t* shader) {
     memcpy(combined_buffer, bitmap_thin, bitmap_size);
     memcpy(&combined_buffer[bitmap_size], bitmap_bold, bitmap_size);
 
+<<<<<<< HEAD
+=======
+    // set glyph size on window so that it's accessible to the script
+    // environment
+    shader->window->glyph.width = (int)floorf(
+        (float)shader->texture_w / GLYPH_WIDTH_COUNT * shader->scale);
+    shader->window->glyph.height = (int)floorf(
+        (float)shader->texture_h / GLYPH_HEIGHT_COUNT * shader->scale);
+
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
     // create font texture array from bitmaps
     GL_CHECK(glGenTextures(1, &shader->font_texture));
 
@@ -90,6 +103,19 @@ static void load_glyph_font(glyph_shader_program_t* shader) {
 
     free(combined_buffer);
 
+<<<<<<< HEAD
+=======
+    /*
+    GL_CHECK(glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_R8, shader->texture_w,
+                            shader->texture_h, 4));
+    GL_CHECK(glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, shader->texture_w,
+                             shader->texture_h, 2, GL_RED, GL_UNSIGNED_BYTE,
+                             bitmap_thin));
+    GL_CHECK(glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 1, shader->texture_w,
+                             shader->texture_h, 2, GL_RED, GL_UNSIGNED_BYTE,
+                             bitmap_bold));
+                             */
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER,
                              GL_NEAREST));
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER,
@@ -138,6 +164,7 @@ static void update_buffer_sizes(glyph_shader_program_t* shader,
 /* Public interface definition */
 /* --------------------------- */
 
+<<<<<<< HEAD
 glyph_shader_program_t* procy_create_glyph_shader(float scale) {
   glyph_shader_program_t* glyph_shader = malloc(sizeof(glyph_shader_program_t));
 
@@ -145,6 +172,16 @@ glyph_shader_program_t* procy_create_glyph_shader(float scale) {
   glyph_shader->texture_w = -1;
   glyph_shader->texture_h = -1;
   glyph_shader->glyph_scale = scale;
+=======
+glyph_shader_program_t* procy_create_glyph_shader(window_t* window) {
+  glyph_shader_program_t* glyph_shader = malloc(sizeof(glyph_shader_program_t));
+
+  glyph_shader->window = window;
+  glyph_shader->font_texture = 0;
+  glyph_shader->texture_w = -1;
+  glyph_shader->texture_h = -1;
+  glyph_shader->scale = window->text_scale;
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   glyph_shader->index_buffer = NULL;
   glyph_shader->vertex_buffer = NULL;
   glyph_shader->glyph_count = 0;
@@ -190,7 +227,11 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
   // resize buffers if needed
   update_buffer_sizes(shader, glyph_count);
 
+<<<<<<< HEAD
   float scale = shader->glyph_scale;
+=======
+  float scale = shader->scale;
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   float glyph_w = (float)shader->texture_w / GLYPH_WIDTH_COUNT;
   float glyph_h = (float)shader->texture_h / GLYPH_HEIGHT_COUNT;
   float glyph_tw = glyph_w / (float)shader->texture_w;
@@ -239,20 +280,32 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
         op->forecolor,       op->backcolor,       bold};
 
     size_t vert_ix = glyph_index * VERTICES_PER_GLYPH;
+<<<<<<< HEAD
+=======
+    size_t index_ix = glyph_index * INDICES_PER_GLYPH;
+    ++glyph_index;
+
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
     vertices[vert_ix] = top_left;
     vertices[vert_ix + 1] = top_right;
     vertices[vert_ix + 2] = bottom_left;
     vertices[vert_ix + 3] = bottom_right;
 
+<<<<<<< HEAD
     size_t index_ix = glyph_index * INDICES_PER_GLYPH;
+=======
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
     indices[index_ix] = vert_ix;
     indices[index_ix + 1] = vert_ix + 1;
     indices[index_ix + 2] = vert_ix + 2;
     indices[index_ix + 3] = vert_ix + 1;
     indices[index_ix + 4] = vert_ix + 3;
     indices[index_ix + 5] = vert_ix + 2;
+<<<<<<< HEAD
 
     ++glyph_index;
+=======
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   }
 
   shader_program_t* prog = &shader->program;
@@ -316,12 +369,15 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
   glUseProgram(0);
 }
 
+<<<<<<< HEAD
 void procy_get_glyph_bounds(glyph_shader_program_t* shader, int* width,
                             int* height) {
   *width = (float)shader->texture_w / GLYPH_WIDTH_COUNT * shader->glyph_scale;
   *height = (float)shader->texture_h / GLYPH_HEIGHT_COUNT * shader->glyph_scale;
 }
 
+=======
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
 void procy_destroy_glyph_shader(glyph_shader_program_t* shader) {
   if (shader != NULL) {
     procy_destroy_shader_program(&shader->program);

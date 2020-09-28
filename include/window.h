@@ -28,12 +28,21 @@ typedef struct procy_shaders_t {
 
 typedef struct procy_window_t {
   procy_draw_op_buffer_t draw_ops;
+<<<<<<< HEAD
   procy_shaders_t shaders;
   float ortho[4][4];
   bool quitting, high_fps;
+=======
+  procy_window_bounds_t bounds;
+  procy_glyph_bounds_t glyph;
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   struct procy_state_t* state;
   struct procy_key_info_t* key_table;
   struct GLFWwindow* glfw_win;
+<<<<<<< HEAD
+=======
+  bool quitting, high_fps;
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
 } procy_window_t;
 
 procy_window_t* procy_create_window(int width, int height, const char* title,
@@ -47,6 +56,7 @@ void procy_begin_loop(procy_window_t* window);
 void procy_append_draw_op(procy_window_t* window,
                           struct procy_draw_op_t* draw_op);
 
+<<<<<<< HEAD
 void procy_get_window_size(procy_window_t* window, int* width, int* height);
 
 void procy_get_glyph_size(procy_window_t* window, int* width, int* height);
@@ -55,6 +65,10 @@ void procy_set_clear_color(procy_color_t c);
 
 void procy_set_glyph_scale(procy_window_t* window, float scale);
 
+=======
+void procy_set_clear_color(procy_color_t c);
+
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
 void procy_close_window(procy_window_t* window);
 
 #endif

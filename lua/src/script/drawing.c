@@ -14,6 +14,7 @@
 #define FUNC_DRAWLINE "line"
 #define FUNC_DRAWPOLY "poly"
 #define FUNC_FROMRGB "from_rgb"
+<<<<<<< HEAD
 #define FUNC_SET_SCALE "set_scale"
 
 #define WHITE (procy_create_color(1.0F, 1.0F, 1.0F))
@@ -45,14 +46,44 @@ static int draw_string(lua_State* L) {
 
   bool vertical = lua_gettop(L) >= 6 ? lua_toboolean(L, 6) : false;
 
+=======
+
+#define WHITE (procy_create_color(1.0F, 1.0F, 1.0F))
+#define BLACK (procy_create_color(0.0F, 0.0F, 0.0F))
+
+#define MAX_DRAW_STRING_LENGTH 1024
+
+#ifndef M_PI
+  #define M_PI 3.14159265359
+#endif
+
+#ifndef M_PI_1
+  #define M_PI_2 1.57079632679
+#endif
+
+static int draw_string(lua_State* L) {
+  int x = lua_tointeger(L, 1);
+  int y = lua_tointeger(L, 2);
+  const char* contents = lua_tostring(L, 3);
+  procy_color_t forecolor = lua_gettop(L) >= 4 ? get_color(L, 4) : WHITE;
+  procy_color_t backcolor = lua_gettop(L) >= 5 ? get_color(L, 5) : BLACK;
+
+  bool vertical = lua_gettop(L) >= 6 ? lua_toboolean(L, 6) : false;
+
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   lua_pop(L, lua_gettop(L));
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
   procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
 
+<<<<<<< HEAD
   int glyph_w = 0, glyph_h = 0;
   procy_get_glyph_size(window, &glyph_w, &glyph_h);
   int size = vertical ? glyph_h : glyph_w;
+=======
+  size_t length = strnlen(contents, MAX_DRAW_STRING_LENGTH);
+  int size = vertical ? window->glyph.height : window->glyph.width;
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   bool bold = false;
   procy_draw_op_t op;
   for (size_t i = 0; i < length; i++) {
@@ -85,9 +116,15 @@ static int draw_string(lua_State* L) {
       // offset the position in order to compensate for the
       // characters that are not being drawn
       if (vertical) {
+<<<<<<< HEAD
         y -= glyph_h * offset;
       } else {
         x -= glyph_w * offset;
+=======
+        y -= window->glyph.height * offset;
+      } else {
+        x -= window->glyph.width * offset;
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
       }
 
       // skip the modifier char which follows '%'
@@ -201,9 +238,12 @@ static void add_draw_ops_table(lua_State* L) {
   lua_pushcfunction(L, draw_polygon);
   lua_setfield(L, -2, FUNC_DRAWPOLY);
 
+<<<<<<< HEAD
   lua_pushcfunction(L, set_scale);
   lua_setfield(L, -2, FUNC_SET_SCALE);
 
+=======
+>>>>>>> 5a47373a6b26524ae1a6b8c48f72e9a3f7a16059
   lua_setglobal(L, TBL_DRAWING);
 }
 
