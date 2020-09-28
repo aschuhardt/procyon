@@ -18,7 +18,7 @@
 #include "state.h"
 
 typedef procy_window_t window_t;
-typedef procy_window_bounds_t window_bounds_t;
+typedef procy_shaders_t shaders_t;
 typedef procy_draw_op_t draw_op_t;
 typedef procy_draw_op_buffer_t draw_op_buffer_t;
 typedef procy_glyph_shader_program_t glyph_shader_program_t;
@@ -53,10 +53,7 @@ static int setup_gl_context(GLFWwindow* w) {
   return true;
 }
 
-static void set_ortho_projection(window_t* window) {
-  int width = window->bounds.width;
-  int height = window->bounds.height;
-
+static void set_ortho_projection(window_t* window, int width, int height) {
   // zero-out matrix
   memset(&window->ortho[0][0], 0, 4 * sizeof(float));
   memset(&window->ortho[1][0], 0, 4 * sizeof(float));
@@ -79,10 +76,8 @@ static void window_resized(GLFWwindow* w, int width, int height) {
   GL_CHECK(glViewport(0, 0, width, height));
 
   window_t* window = (window_t*)glfwGetWindowUserPointer(w);
-  window->bounds.width = width;
-  window->bounds.height = height;
 
-  set_ortho_projection(window);
+  set_ortho_projection(window, width, height);
 
   if (window->state->on_resize != NULL) {
     window->state->on_resize(window->state, width, height);
@@ -93,29 +88,24 @@ static void set_window_callbacks(GLFWwindow* w) {
   glfwSetFramebufferSizeCallback(w, window_resized);
 }
 
-static void set_default_window_bounds(window_t* w, int width, int height) {
-  w->bounds.width = width;
-  w->bounds.height = height;
-}
-
-static void set_default_glyph_bounds(window_t* w) {
-  w->glyph.width = -1;
-  w->glyph.height = -1;
+static void destroy_shaders(shaders_t* shaders) {
+  procy_destroy_glyph_shader(shaders->glyph);
+  procy_destroy_rect_shader(shaders->rect);
+  procy_destroy_line_shader(shaders->line);
 }
 
 /*
  * Returns false upon failing to initialize a GLFW window
  */
-static bool set_gl_window_pointer(window_t* w) {
+static bool set_gl_window_pointer(window_t* w, int width, int height,
+                                  const char* title) {
   if (!glfwInit()) {
     return false;
   }
 
   set_gl_hints();
 
-  window_bounds_t bounds = w->bounds;
-  w->glfw_win =
-      glfwCreateWindow(bounds.width, bounds.height, "Surulia", NULL, NULL);
+  w->glfw_win = glfwCreateWindow(width, height, title, NULL, NULL);
   if (w->glfw_win == NULL || !setup_gl_context(w->glfw_win)) {
     glfwTerminate();
     return false;
@@ -124,7 +114,7 @@ static bool set_gl_window_pointer(window_t* w) {
   glfwSetWindowUserPointer(w->glfw_win, w);
   set_window_callbacks(w->glfw_win);
 
-  glViewport(0, 0, bounds.width, bounds.height);
+  glViewport(0, 0, width, height);
 
   return true;
 }
@@ -191,6 +181,12 @@ static void init_key_table(window_t* w) {
   free(keys);
 }
 
+static void init_shaders(window_t* window, float text_scale) {
+  window->shaders.glyph = procy_create_glyph_shader(text_scale);
+  window->shaders.rect = procy_create_rect_shader();
+  window->shaders.line = procy_create_line_shader();
+}
+
 /* --------------------------- */
 /* Public interface definition */
 /* --------------------------- */
@@ -200,17 +196,15 @@ window_t* procy_create_window(int width, int height, const char* title,
   glfwSetErrorCallback(glfw_error_callback);
   window_t* window = malloc(sizeof(window_t));
 
-  set_default_window_bounds(window, width, height);
-  set_default_glyph_bounds(window);
-  if (set_gl_window_pointer(window)) {
-    set_ortho_projection(window);
+  if (set_gl_window_pointer(window, width, height, title)) {
+    init_shaders(window, text_scale);
+    set_ortho_projection(window, width, height);
     set_event_callbacks(window);
     init_draw_ops_buffer(&window->draw_ops);
     init_key_table(window);
 
     window->quitting = false;
     window->high_fps = false;
-    window->text_scale = text_scale;
     window->state = state;
   } else {
     free(window);
@@ -224,6 +218,8 @@ void procy_destroy_window(window_t* window) {
   if (window == NULL) {
     return;
   }
+
+  destroy_shaders(&window->shaders);
 
   if (window->glfw_win != NULL) {
     glfwDestroyWindow(window->glfw_win);
@@ -250,12 +246,19 @@ void procy_append_draw_op(window_t* window, draw_op_t* draw_op) {
   draw_ops->buffer[draw_ops->length - 1] = *draw_op;
 }
 
-void procy_begin_loop(window_t* window) {
-  // set up shaders
-  glyph_shader_program_t* glyph_shader = procy_create_glyph_shader(window);
-  rect_shader_program_t* rect_shader = procy_create_rect_shader();
-  line_shader_program_t* line_shader = procy_create_line_shader();
+void procy_get_window_size(window_t* window, int* width, int* height) {
+  glfwGetWindowSize(window->glfw_win, width, height);
+}
 
+void procy_get_glyph_size(procy_window_t* window, int* width, int* height) {
+  procy_get_glyph_bounds(window->shaders.glyph, width, height);
+}
+
+void procy_set_glyph_scale(procy_window_t* window, float scale) {
+  window->shaders.glyph->glyph_scale = scale;
+}
+
+void procy_begin_loop(window_t* window) {
   // this can be overridden later, but black is a good default
   GL_CHECK(glClearColor(0.0F, 0.0F, 0.0F, 1.0F));
 
@@ -271,6 +274,9 @@ void procy_begin_loop(window_t* window) {
 
   double last_frame_time = glfwGetTime();
   GLFWwindow* w = (GLFWwindow*)window->glfw_win;
+  procy_glyph_shader_program_t* glyph_shader = window->shaders.glyph;
+  procy_rect_shader_program_t* rect_shader = window->shaders.rect;
+  procy_line_shader_program_t* line_shader = window->shaders.line;
   while (!glfwWindowShouldClose(w) && !window->quitting) {
     double current_time = glfwGetTime();
     double frame_duration = current_time - last_frame_time;
@@ -279,7 +285,7 @@ void procy_begin_loop(window_t* window) {
     if (window->high_fps) {
       glfwPollEvents();
     } else {
-      glfwWaitEventsTimeout(2.0F);
+      glfwWaitEventsTimeout(1.0F);
     }
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
@@ -289,7 +295,7 @@ void procy_begin_loop(window_t* window) {
     }
 
     if (window->draw_ops.length > 0) {
-      if (glyph_shader->program.valid) {
+      if (window->shaders.glyph->program.valid) {
         procy_draw_glyph_shader(glyph_shader, window);
       }
 
@@ -310,10 +316,6 @@ void procy_begin_loop(window_t* window) {
   if (state->on_unload != NULL) {
     state->on_unload(state);
   }
-
-  procy_destroy_glyph_shader(glyph_shader);
-  procy_destroy_rect_shader(rect_shader);
-  procy_destroy_line_shader(line_shader);
 }
 
 void procy_set_clear_color(color_t c) { glClearColor(c.r, c.g, c.b, 1.0F); }

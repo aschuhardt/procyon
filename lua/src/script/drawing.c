@@ -14,16 +14,32 @@
 #define FUNC_DRAWLINE "line"
 #define FUNC_DRAWPOLY "poly"
 #define FUNC_FROMRGB "from_rgb"
+#define FUNC_SET_SCALE "set_scale"
 
 #define WHITE (procy_create_color(1.0F, 1.0F, 1.0F))
 #define BLACK (procy_create_color(0.0F, 0.0F, 0.0F))
 
-#define MAX_DRAW_STRING_LENGTH 1024
+static int set_scale(lua_State* L) {
+  if (!verify_arg_count(L, 1, __func__)) {
+    return 0;
+  }
+
+  lua_getglobal(L, GLOBAL_WINDOW_PTR);
+  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+  lua_pop(L, 1);
+
+  if (lua_isnumber(L, -1)) {
+    procy_set_glyph_scale(window, lua_tonumber(L, -1));
+  }
+
+  return 0;
+}
 
 static int draw_string(lua_State* L) {
+  size_t length = 0;
   int x = lua_tointeger(L, 1);
   int y = lua_tointeger(L, 2);
-  const char* contents = lua_tostring(L, 3);
+  const char* contents = lua_tolstring(L, 3, &length);
   procy_color_t forecolor = lua_gettop(L) >= 4 ? get_color(L, 4) : WHITE;
   procy_color_t backcolor = lua_gettop(L) >= 5 ? get_color(L, 5) : BLACK;
 
@@ -34,8 +50,9 @@ static int draw_string(lua_State* L) {
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
   procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
 
-  size_t length = strnlen(contents, MAX_DRAW_STRING_LENGTH);
-  int size = vertical ? window->glyph.height : window->glyph.width;
+  int glyph_w = 0, glyph_h = 0;
+  procy_get_glyph_size(window, &glyph_w, &glyph_h);
+  int size = vertical ? glyph_h : glyph_w;
   bool bold = false;
   procy_draw_op_t op;
   for (size_t i = 0; i < length; i++) {
@@ -68,9 +85,9 @@ static int draw_string(lua_State* L) {
       // offset the position in order to compensate for the
       // characters that are not being drawn
       if (vertical) {
-        y -= window->glyph.height * offset;
+        y -= glyph_h * offset;
       } else {
-        x -= window->glyph.width * offset;
+        x -= glyph_w * offset;
       }
 
       // skip the modifier char which follows '%'
@@ -183,6 +200,9 @@ static void add_draw_ops_table(lua_State* L) {
 
   lua_pushcfunction(L, draw_polygon);
   lua_setfield(L, -2, FUNC_DRAWPOLY);
+
+  lua_pushcfunction(L, set_scale);
+  lua_setfield(L, -2, FUNC_SET_SCALE);
 
   lua_setglobal(L, TBL_DRAWING);
 }

@@ -36,8 +36,10 @@ static int window_size(lua_State* L) {
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
   procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
-  lua_pushinteger(L, window->bounds.width);
-  lua_pushinteger(L, window->bounds.height);
+  int width = 0, height = 0;
+  procy_get_window_size(window, &width, &height);
+  lua_pushinteger(L, width);
+  lua_pushinteger(L, height);
   return 2;
 }
 
@@ -59,8 +61,10 @@ static int window_glyph_size(lua_State* L) {
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
   procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
-  lua_pushinteger(L, window->glyph.width);
-  lua_pushinteger(L, window->glyph.height);
+  int width = 0, height = 0;
+  procy_get_glyph_size(window, &width, &height);
+  lua_pushinteger(L, width);
+  lua_pushinteger(L, height);
   return 2;
 }
 
@@ -85,6 +89,14 @@ static void perform_draw(procy_state_t* const state, double seconds) {
       log_error("Error calling %s.%s: %s", TBL_WINDOW, FUNC_ON_DRAW,
                 lua_tostring(L, -1));
     }
+
+    // check whether the window is in "high fps" mode and, if it is NOT, run the
+    // Lua garbage collector
+    lua_getglobal(L, GLOBAL_WINDOW_PTR);
+    procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+    if (!window->high_fps) {
+      lua_gc(L, LUA_GCCOLLECT);
+    }
   }
 }
 
@@ -99,6 +111,7 @@ static void handle_window_resized(procy_state_t* const state, int w, int h) {
       log_error("Error calling %s.%s: %s", TBL_WINDOW, FUNC_ON_RESIZE,
                 lua_tostring(L, -1));
     }
+    lua_gc(L, LUA_GCCOLLECT);
   }
 }
 
@@ -112,6 +125,7 @@ static void handle_window_loaded(procy_state_t* const state) {
       log_error("Error calling %s.%s: %s", TBL_WINDOW, FUNC_ON_LOAD,
                 lua_tostring(L, -1));
     }
+    lua_gc(L, LUA_GCCOLLECT);
   }
 }
 
@@ -125,6 +139,7 @@ static void handle_window_unloaded(procy_state_t* const state) {
       log_error("Error calling %s.%s: %s", TBL_WINDOW, FUNC_ON_UNLOAD,
                 lua_tostring(L, -1));
     }
+    lua_gc(L, LUA_GCCOLLECT);
   }
 }
 

@@ -31,10 +31,4 @@ void gl_print_errors(int line, const char* file) {
   }
 }
 
-#else
-
-const char* gl_error_string(int err) {}
-
-void gl_print_errors() {}
-
 #endif
