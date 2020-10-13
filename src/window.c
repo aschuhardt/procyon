@@ -295,16 +295,16 @@ void procy_begin_loop(window_t* window) {
     }
 
     if (window->draw_ops.length > 0) {
-      if (glyph_shader->program.valid) {
-        procy_draw_glyph_shader(glyph_shader, window);
-      }
-
       if (rect_shader->program.valid) {
         procy_draw_rect_shader(rect_shader, window);
       }
 
       if (line_shader->program.valid) {
         procy_draw_line_shader(line_shader, window);
+      }
+
+      if (glyph_shader->program.valid) {
+        procy_draw_glyph_shader(glyph_shader, window);
       }
 
       reset_draw_ops_buffer(&window->draw_ops);
