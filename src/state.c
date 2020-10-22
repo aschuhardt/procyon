@@ -1,0 +1,38 @@
+#include "state.h"
+
+#include <log.h>
+#include <stdlib.h>
+
+procy_state_t* procy_create_callback_state(
+    procy_on_load_callback_t on_load, procy_on_unload_callback_t on_unload,
+    procy_on_draw_callback_t on_draw, procy_on_resize_callback_t on_resize,
+    procy_on_key_pressed_callback_t on_key_pressed,
+    procy_on_key_released_callback_t on_key_released,
+    procy_on_char_entered_callback_t on_char_entered) {
+  procy_state_t* state = malloc(sizeof(procy_state_t));
+  state->data = NULL;
+  state->on_load = on_load;
+  state->on_unload = on_unload;
+  state->on_draw = on_draw;
+  state->on_resize = on_resize;
+  state->on_key_pressed = on_key_pressed;
+  state->on_key_released = on_key_released;
+  state->on_char_entered = on_char_entered;
+  return state;
+}
+
+void procy_destroy_callback_state(procy_state_t* state) {
+  if (state == NULL) {
+    return;
+  }
+
+  if (state->data != NULL) {
+    log_warn(
+        "An attempt was made to destroy a callback-only state object that was "
+        "not created as such.  This is most likely unintentional.");
+    free(state->data);
+    return;
+  }
+
+  free(state);
+}

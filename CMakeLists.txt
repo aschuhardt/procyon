@@ -11,6 +11,7 @@ add_subdirectory(lib)
 set(SU_SOURCE
   src/drawing.c
   src/window.c
+  src/state.c
   src/shader.c
   src/keys.c
   src/color.c
