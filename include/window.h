@@ -47,6 +47,9 @@ void procy_begin_loop(procy_window_t* window);
 void procy_append_draw_op(procy_window_t* window,
                           struct procy_draw_op_t* draw_op);
 
+void procy_append_draw_ops(procy_window_t* window,
+                           struct procy_draw_op_t* draw_ops, size_t n);
+
 void procy_get_window_size(procy_window_t* window, int* width, int* height);
 
 void procy_get_glyph_size(procy_window_t* window, int* width, int* height);

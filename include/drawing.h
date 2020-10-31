@@ -6,8 +6,6 @@
 
 #include "color.h"
 
-#define PROCY_DRAW_OP_STRING_BUFFER_SIZE 64
-
 typedef enum procy_draw_op_type_t {
   DRAW_OP_TEXT,
   DRAW_OP_RECT,

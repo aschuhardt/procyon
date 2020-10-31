@@ -238,12 +238,24 @@ void procy_destroy_window(window_t* window) {
 }
 
 void procy_append_draw_op(window_t* window, draw_op_t* draw_op) {
-  draw_op_buffer_t* draw_ops = &window->draw_ops;
-  draw_ops->length++;
-  if (draw_ops->length >= draw_ops->capacity) {
-    expand_draw_ops_buffer(draw_ops);
+  draw_op_buffer_t* buffer = &window->draw_ops;
+  buffer->length++;
+  if (buffer->length >= buffer->capacity) {
+    expand_draw_ops_buffer(buffer);
   }
-  draw_ops->buffer[draw_ops->length - 1] = *draw_op;
+  buffer->buffer[buffer->length - 1] = *draw_op;
+}
+
+void procy_append_draw_ops(procy_window_t* window, draw_op_t* draw_ops,
+                           size_t n) {
+  // TODO: test this
+  draw_op_buffer_t* buffer = &window->draw_ops;
+  size_t dest_offset = buffer->length - 1;
+  buffer->length += n;
+  if (buffer->length >= buffer->capacity) {
+    expand_draw_ops_buffer(buffer);
+  }
+  memcpy(&buffer->buffer[dest_offset], draw_ops, n * sizeof(draw_op_t));
 }
 
 void procy_get_window_size(window_t* window, int* width, int* height) {
