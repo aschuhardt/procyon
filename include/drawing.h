@@ -6,6 +6,8 @@
 
 #include "color.h"
 
+struct procy_window_t;
+
 typedef enum procy_draw_op_type_t {
   DRAW_OP_TEXT,
   DRAW_OP_RECT,
@@ -30,9 +32,26 @@ typedef struct procy_draw_op_t {
   } data;
 } procy_draw_op_t;
 
+void procy_draw_string(struct procy_window_t* window, int x, int y,
+                       procy_color_t forecolor, procy_color_t backcolor,
+                       const char* contents);
+
+void procy_draw_string_bold(struct procy_window_t* window, int x, int y,
+                            procy_color_t forecolor, procy_color_t backcolor,
+                            const char* contents);
+
+void procy_draw_string_vertical(struct procy_window_t* window, int x, int y,
+                                procy_color_t forecolor,
+                                procy_color_t backcolor, const char* contents);
+
+void procy_draw_string_vertical_bold(struct procy_window_t* window, int x,
+                                     int y, procy_color_t forecolor,
+                                     procy_color_t backcolor,
+                                     const char* contents);
 /*
- * Returns a new text drawing operation for the character at the provided index
- * in a string whose first character's position is the given pixel position
+ * Returns a new text drawing operation for the character at the provided
+ * index in a string whose first character's position is the given pixel
+ * position
  */
 procy_draw_op_t procy_create_draw_op_string(int x, int y, int size,
                                             const char* contents, size_t index,

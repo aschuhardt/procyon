@@ -317,8 +317,13 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
 
 void procy_get_glyph_bounds(glyph_shader_program_t* shader, int* width,
                             int* height) {
-  *width = (float)shader->texture_w / GLYPH_WIDTH_COUNT * shader->glyph_scale;
-  *height = (float)shader->texture_h / GLYPH_HEIGHT_COUNT * shader->glyph_scale;
+  if (width != NULL) {
+    *width = (float)shader->texture_w / GLYPH_WIDTH_COUNT * shader->glyph_scale;
+  }
+  if (height != NULL) {
+    *height =
+        (float)shader->texture_h / GLYPH_HEIGHT_COUNT * shader->glyph_scale;
+  }
 }
 
 void procy_destroy_glyph_shader(glyph_shader_program_t* shader) {
