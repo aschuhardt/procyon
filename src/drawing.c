@@ -27,7 +27,7 @@ static void draw_string_chars(window_t* window, int x, int y, bool bold,
   draw_op_t draw_op;
   for (int i = 0; i < length; ++i) {
     draw_op = procy_create_draw_op_string_colored(x, y, glyph_size, fg, bg,
-                                                  contents, i, bold, vertical);
+                                                  contents, i, vertical, bold);
     procy_append_draw_op(window, &draw_op);
   }
 }
@@ -36,28 +36,38 @@ static void draw_string_chars(window_t* window, int x, int y, bool bold,
 /* Public interface definition */
 /* --------------------------- */
 
-void procy_draw_string(window_t* window, int x, int y, procy_color_t forecolor,
-                       procy_color_t backcolor, const char* contents) {
+void procy_draw_string(window_t* window, int x, int y, color_t forecolor,
+                       color_t backcolor, const char* contents) {
   draw_string_chars(window, x, y, false, false, forecolor, backcolor, contents);
 }
 
-void procy_draw_string_bold(window_t* window, int x, int y,
-                            procy_color_t forecolor, procy_color_t backcolor,
-                            const char* contents) {
+void procy_draw_string_bold(window_t* window, int x, int y, color_t forecolor,
+                            color_t backcolor, const char* contents) {
   draw_string_chars(window, x, y, true, false, forecolor, backcolor, contents);
 }
 
 void procy_draw_string_vertical(window_t* window, int x, int y,
-                                procy_color_t forecolor,
-                                procy_color_t backcolor, const char* contents) {
+                                color_t forecolor, color_t backcolor,
+                                const char* contents) {
   draw_string_chars(window, x, y, false, true, forecolor, backcolor, contents);
 }
 
 void procy_draw_string_vertical_bold(window_t* window, int x, int y,
-                                     procy_color_t forecolor,
-                                     procy_color_t backcolor,
+                                     color_t forecolor, color_t backcolor,
                                      const char* contents) {
   draw_string_chars(window, x, y, true, true, forecolor, backcolor, contents);
+}
+
+void procy_draw_rect(window_t* window, int x, int y, int width, int height,
+                     color_t color) {
+  draw_op_t op = procy_create_draw_op_rect(x, y, width, height, color);
+  procy_append_draw_op(window, &op);
+}
+
+void procy_draw_line(window_t* window, int x1, int y1, int x2, int y2,
+                     color_t color) {
+  draw_op_t op = procy_create_draw_op_line(x1, y1, x2, y2, color);
+  procy_append_draw_op(window, &op);
 }
 
 draw_op_t procy_create_draw_op_string(int x, int y, int size,
@@ -96,7 +106,7 @@ draw_op_t procy_create_draw_op_char_colored(int x, int y, color_t forecolor,
 }
 
 procy_draw_op_t procy_create_draw_op_rect(int x, int y, int width, int height,
-                                          procy_color_t color) {
+                                          color_t color) {
   draw_op_t op = {color, color, DRAW_OP_RECT, x, y};
   op.data.rect.width = width;
   op.data.rect.height = height;
@@ -104,7 +114,7 @@ procy_draw_op_t procy_create_draw_op_rect(int x, int y, int width, int height,
 }
 
 procy_draw_op_t procy_create_draw_op_line(int x1, int y1, int x2, int y2,
-                                          procy_color_t color) {
+                                          color_t color) {
   draw_op_t op = {color, color, DRAW_OP_LINE, x1, y1};
   op.data.line.x2 = x2;
   op.data.line.y2 = y2;

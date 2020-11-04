@@ -48,6 +48,12 @@ void procy_draw_string_vertical_bold(struct procy_window_t* window, int x,
                                      int y, procy_color_t forecolor,
                                      procy_color_t backcolor,
                                      const char* contents);
+
+void procy_draw_rect(struct procy_window_t* window, int x, int y, int width,
+                     int height, procy_color_t color);
+
+void procy_draw_line(struct procy_window_t* window, int x1, int y1, int x2,
+                     int y2, procy_color_t color);
 /*
  * Returns a new text drawing operation for the character at the provided
  * index in a string whose first character's position is the given pixel
