@@ -11,6 +11,8 @@ int main(int argc, const char** argv) {
   }
 
   procy_state_t state;
+  state.children = NULL;
+  state.child_count = 0;
   state.data = NULL;
 
   bool reload = false;

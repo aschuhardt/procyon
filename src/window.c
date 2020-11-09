@@ -70,6 +70,72 @@ static void set_ortho_projection(window_t* window, int width, int height) {
   window->ortho[3][3] = 1.0F;
 }
 
+static void trigger_state_on_load(state_t* state) {
+  for (int i = 0; i < state->child_count; ++i) {
+    trigger_state_on_load(state->children[i]);
+  }
+  if (state->on_load != NULL) {
+    state->on_load(state);
+  }
+}
+
+static void trigger_state_on_unload(state_t* state) {
+  for (int i = 0; i < state->child_count; ++i) {
+    trigger_state_on_unload(state->children[i]);
+  }
+  if (state->on_unload != NULL) {
+    state->on_unload(state);
+  }
+}
+
+static void trigger_state_on_draw(state_t* state, double time) {
+  for (int i = 0; i < state->child_count; ++i) {
+    trigger_state_on_draw(state->children[i], time);
+  }
+  if (state->on_draw != NULL) {
+    state->on_draw(state, time);
+  }
+}
+
+static void trigger_state_on_resized(state_t* state, int width, int height) {
+  for (int i = 0; i < state->child_count; ++i) {
+    trigger_state_on_resized(state->children[i], width, height);
+  }
+  if (state->on_resize != NULL) {
+    state->on_resize(state, width, height);
+  }
+}
+
+static void trigger_state_on_key_pressed(state_t* state, key_info_t key,
+                                         bool shift, bool ctrl, bool alt) {
+  for (int i = 0; i < state->child_count; ++i) {
+    trigger_state_on_key_pressed(state->children[i], key, shift, ctrl, alt);
+  }
+  if (state->on_key_pressed != NULL) {
+    state->on_key_pressed(state, key, shift, ctrl, alt);
+  }
+}
+
+static void trigger_state_on_key_released(state_t* state, key_info_t key,
+                                          bool shift, bool ctrl, bool alt) {
+  for (int i = 0; i < state->child_count; ++i) {
+    trigger_state_on_key_released(state->children[i], key, shift, ctrl, alt);
+  }
+  if (state->on_key_released != NULL) {
+    state->on_key_released(state, key, shift, ctrl, alt);
+  }
+}
+
+static void trigger_state_on_char_entered(state_t* state,
+                                          unsigned int character) {
+  for (int i = 0; i < state->child_count; ++i) {
+    trigger_state_on_char_entered(state->children[i], character);
+  }
+  if (state->on_char_entered != NULL) {
+    state->on_char_entered(state, character);
+  }
+}
+
 static void window_resized(GLFWwindow* w, int width, int height) {
   log_debug("Window resized to %dx%d", width, height);
 
@@ -78,10 +144,7 @@ static void window_resized(GLFWwindow* w, int width, int height) {
   window_t* window = (window_t*)glfwGetWindowUserPointer(w);
 
   set_ortho_projection(window, width, height);
-
-  if (window->state->on_resize != NULL) {
-    window->state->on_resize(window->state, width, height);
-  }
+  trigger_state_on_resized(window->state, width, height);
 }
 
 static void set_window_callbacks(GLFWwindow* w) {
@@ -148,20 +211,18 @@ static void handle_key_entered(GLFWwindow* w, int key, int scancode, int action,
   bool shift = (mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT;
   bool ctrl = (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL;
   bool alt = (mods & GLFW_MOD_ALT) == GLFW_MOD_ALT;
-  if (action == GLFW_PRESS && window->state->on_key_pressed != NULL) {
-    window->state->on_key_pressed(window->state, window->key_table[key], shift,
+  if (action == GLFW_PRESS) {
+    trigger_state_on_key_pressed(window->state, window->key_table[key], shift,
+                                 ctrl, alt);
+  } else if (action == GLFW_RELEASE) {
+    trigger_state_on_key_released(window->state, window->key_table[key], shift,
                                   ctrl, alt);
-  } else if (action == GLFW_RELEASE && window->state->on_key_released != NULL) {
-    window->state->on_key_released(window->state, window->key_table[key], shift,
-                                   ctrl, alt);
   }
 }
 
 static void handle_char_entered(GLFWwindow* w, unsigned int codepoint) {
   window_t* window = glfwGetWindowUserPointer(w);
-  if (window->state->on_char_entered != NULL) {
-    window->state->on_char_entered(window->state, codepoint);
-  }
+  trigger_state_on_char_entered(window->state, codepoint);
 }
 
 static void set_event_callbacks(window_t* w) {
@@ -275,9 +336,7 @@ void procy_begin_loop(window_t* window) {
   GL_CHECK(glClearColor(0.0F, 0.0F, 0.0F, 1.0F));
 
   state_t* state = window->state;
-  if (state->on_load != NULL) {
-    state->on_load(state);
-  }
+  trigger_state_on_load(state);
 
   // initialize the running-timer to 0.0 seconds so that we can later judge how
   // long the main loop has been running for (for no other reason than as a
@@ -302,9 +361,7 @@ void procy_begin_loop(window_t* window) {
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
 
-    if (state->on_draw != NULL) {
-      state->on_draw(state, frame_duration);
-    }
+    trigger_state_on_draw(state, frame_duration);
 
     if (window->draw_ops.length > 0) {
       if (rect_shader->program.valid) {
@@ -325,9 +382,7 @@ void procy_begin_loop(window_t* window) {
     glfwSwapBuffers(w);
   }
 
-  if (state->on_unload != NULL) {
-    state->on_unload(state);
-  }
+  trigger_state_on_unload(state);
 }
 
 void procy_set_clear_color(color_t c) { glClearColor(c.r, c.g, c.b, 1.0F); }
