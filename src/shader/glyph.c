@@ -218,7 +218,7 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
     float ty = floorf((float)c / GLYPH_HEIGHT_COUNT) * glyph_h /
                (float)shader->texture_h;
 
-    float bold = op->data.text.bold ? 1.0 : 0.0;
+    float bold = op->data.text.bold ? 1.0F : 0.0F;
 
     // vertex attributes
     glyph_vertex_t top_left = {x,   y, tx, ty, op->forecolor, op->backcolor,
@@ -318,11 +318,12 @@ void procy_draw_glyph_shader(glyph_shader_program_t* shader, window_t* window) {
 void procy_get_glyph_bounds(glyph_shader_program_t* shader, int* width,
                             int* height) {
   if (width != NULL) {
-    *width = (float)shader->texture_w / GLYPH_WIDTH_COUNT * shader->glyph_scale;
+    *width = (int)((float)shader->texture_w / GLYPH_WIDTH_COUNT *
+                   shader->glyph_scale);
   }
   if (height != NULL) {
-    *height =
-        (float)shader->texture_h / GLYPH_HEIGHT_COUNT * shader->glyph_scale;
+    *height = (int)((float)shader->texture_h / GLYPH_HEIGHT_COUNT *
+                    shader->glyph_scale);
   }
 }
 
