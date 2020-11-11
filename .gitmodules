@@ -10,3 +10,6 @@
 [submodule "lib/stb"]
 	path = lib/stb
 	url = https://github.com/nothings/stb.git
+[submodule "procyon-ui"]
+	path = procyon-ui
+	url = git@github.com:aschuhardt/procyon-ui.git
