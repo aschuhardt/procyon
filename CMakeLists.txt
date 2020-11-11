@@ -105,3 +105,5 @@ endforeach()
 # build an implementation of a Lua wrapper for lib${SU_LIBRARY}
 add_subdirectory(lua)
 
+# build UI toolkit
+add_subdirectory(procyon-ui)
