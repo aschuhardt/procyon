@@ -22,6 +22,7 @@ typedef void (*procy_on_char_entered_callback_t)(struct procy_state_t*,
 
 typedef struct procy_state_t {
   void* data;
+  struct procy_state_t* parent;
   struct procy_state_t** children;
   size_t child_count;
   procy_on_load_callback_t on_load;

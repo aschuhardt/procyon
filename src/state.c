@@ -1,6 +1,5 @@
 #include "state.h"
 
-#include <log.h>
 #include <stdlib.h>
 
 procy_state_t* procy_create_callback_state(
@@ -11,6 +10,7 @@ procy_state_t* procy_create_callback_state(
     procy_on_char_entered_callback_t on_char_entered) {
   procy_state_t* state = malloc(sizeof(procy_state_t));
   state->data = NULL;
+  state->parent = NULL;
   state->children = NULL;
   state->child_count = 0;
   state->on_load = on_load;
@@ -27,10 +27,17 @@ void procy_append_child_state(procy_state_t* parent, procy_state_t* child) {
   parent->children =
       realloc(parent->children, sizeof(procy_state_t*) * ++parent->child_count);
   parent->children[parent->child_count - 1] = child;
+  child->parent = parent;
 }
 
 void procy_destroy_callback_state(procy_state_t* state) {
-  if (state != NULL) {
-    free(state);
+  if (state == NULL) {
+    return;
   }
+
+  if (state->children != NULL) {
+    free(state->children);
+  }
+
+  free(state);
 }
