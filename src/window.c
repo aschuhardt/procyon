@@ -80,8 +80,10 @@ static void trigger_state_on_load(state_t* state) {
 }
 
 static void trigger_state_on_unload(state_t* state) {
-  for (int i = 0; i < state->child_count; ++i) {
-    trigger_state_on_unload(state->children[i]);
+  if (state->child_count > 0) {
+    for (int i = 0; i < state->child_count; ++i) {
+      trigger_state_on_unload(state->children[i]);
+    }
   }
   if (state->on_unload != NULL) {
     state->on_unload(state);
@@ -89,8 +91,10 @@ static void trigger_state_on_unload(state_t* state) {
 }
 
 static void trigger_state_on_draw(state_t* state, double time) {
-  for (int i = 0; i < state->child_count; ++i) {
-    trigger_state_on_draw(state->children[i], time);
+  if (state->child_count > 0) {
+    for (int i = 0; i < state->child_count; ++i) {
+      trigger_state_on_draw(state->children[i], time);
+    }
   }
   if (state->on_draw != NULL) {
     state->on_draw(state, time);
@@ -98,8 +102,10 @@ static void trigger_state_on_draw(state_t* state, double time) {
 }
 
 static void trigger_state_on_resized(state_t* state, int width, int height) {
-  for (int i = 0; i < state->child_count; ++i) {
-    trigger_state_on_resized(state->children[i], width, height);
+  if (state->child_count > 0) {
+    for (int i = 0; i < state->child_count; ++i) {
+      trigger_state_on_resized(state->children[i], width, height);
+    }
   }
   if (state->on_resize != NULL) {
     state->on_resize(state, width, height);
@@ -108,8 +114,10 @@ static void trigger_state_on_resized(state_t* state, int width, int height) {
 
 static void trigger_state_on_key_pressed(state_t* state, key_info_t key,
                                          bool shift, bool ctrl, bool alt) {
-  for (int i = 0; i < state->child_count; ++i) {
-    trigger_state_on_key_pressed(state->children[i], key, shift, ctrl, alt);
+  if (state->child_count > 0) {
+    for (int i = 0; i < state->child_count; ++i) {
+      trigger_state_on_key_pressed(state->children[i], key, shift, ctrl, alt);
+    }
   }
   if (state->on_key_pressed != NULL) {
     state->on_key_pressed(state, key, shift, ctrl, alt);
@@ -118,8 +126,10 @@ static void trigger_state_on_key_pressed(state_t* state, key_info_t key,
 
 static void trigger_state_on_key_released(state_t* state, key_info_t key,
                                           bool shift, bool ctrl, bool alt) {
-  for (int i = 0; i < state->child_count; ++i) {
-    trigger_state_on_key_released(state->children[i], key, shift, ctrl, alt);
+  if (state->child_count > 0) {
+    for (int i = 0; i < state->child_count; ++i) {
+      trigger_state_on_key_released(state->children[i], key, shift, ctrl, alt);
+    }
   }
   if (state->on_key_released != NULL) {
     state->on_key_released(state, key, shift, ctrl, alt);
@@ -128,8 +138,10 @@ static void trigger_state_on_key_released(state_t* state, key_info_t key,
 
 static void trigger_state_on_char_entered(state_t* state,
                                           unsigned int character) {
-  for (int i = 0; i < state->child_count; ++i) {
-    trigger_state_on_char_entered(state->children[i], character);
+  if (state->child_count > 0) {
+    for (int i = 0; i < state->child_count; ++i) {
+      trigger_state_on_char_entered(state->children[i], character);
+    }
   }
   if (state->on_char_entered != NULL) {
     state->on_char_entered(state, character);
