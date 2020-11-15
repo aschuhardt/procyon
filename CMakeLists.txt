@@ -102,8 +102,8 @@ foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARG
   add_dependencies(${SU_LIBRARY} ${target})
 endforeach()
 
-# build an implementation of a Lua wrapper for lib${SU_LIBRARY}
+# build an implementation of a Lua wrapper for lib
 add_subdirectory(lua)
 
 # build UI toolkit
-add_subdirectory(procyon-ui)
+# add_subdirectory(procyon-ui)
