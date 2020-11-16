@@ -107,3 +107,6 @@ add_subdirectory(lua)
 
 # build UI toolkit
 # add_subdirectory(procyon-ui)
+
+# add benchmark tools
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/bench")
