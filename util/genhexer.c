@@ -5,18 +5,18 @@
 
 #include <stdio.h>
 
-int main(int argc, const char** argv) {
+int main(int argc, const char **argv) {
   if (argc < 4) {
     fputs("Usage: genhexer <infile> <outfile> <name>\n", stderr);
     return -1;
   }
 
-  const char* in_path = argv[1];
-  const char* out_path = argv[2];
-  const char* name = argv[3];
+  const char *in_path = argv[1];
+  const char *out_path = argv[2];
+  const char *name = argv[3];
 
-  FILE* in_file = fopen(in_path, "rb");
-  FILE* out_file = fopen(out_path, "wb+");
+  FILE *in_file = fopen(in_path, "rb");
+  FILE *out_file = fopen(out_path, "wb+");
 
   // get input file size
   fseek(in_file, 0, SEEK_END);
@@ -55,10 +55,9 @@ int main(int argc, const char** argv) {
   fclose(out_file);
 
   // report results
-  printf(
-      "GenHexer input: %s,\n"
-      "         output: %s,\n"
-      "         name: %s\n"
-      "         size: %lu bytes\n",
-      in_path, out_path, name, in_size);
+  printf("GenHexer input: %s,\n"
+         "         output: %s,\n"
+         "         name: %s\n"
+         "         size: %lu bytes\n",
+         in_path, out_path, name, in_size);
 }

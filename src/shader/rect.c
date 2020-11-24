@@ -41,22 +41,24 @@ static const size_t ATTR_RECT_COLOR = 1;
 /* Public interface definition */
 /* --------------------------- */
 
-rect_shader_program_t* procy_create_rect_shader() {
-  rect_shader_program_t* rect_shader = malloc(sizeof(rect_shader_program_t));
+rect_shader_program_t *procy_create_rect_shader() {
+  rect_shader_program_t *rect_shader = malloc(sizeof(rect_shader_program_t));
 
   if (rect_shader == NULL) {
     log_error("Failed to allocate memory for the rect shader");
     return NULL;
   }
 
-  rect_shader->index_batch_buffer = malloc(sizeof(GLushort) * DRAW_BATCH_SIZE * INDICES_PER_RECT);
-  rect_shader->vertex_batch_buffer = malloc(sizeof(rect_vertex_t) * DRAW_BATCH_SIZE * VERTICES_PER_RECT);
+  rect_shader->index_batch_buffer =
+      malloc(sizeof(GLushort) * DRAW_BATCH_SIZE * INDICES_PER_RECT);
+  rect_shader->vertex_batch_buffer =
+      malloc(sizeof(rect_vertex_t) * DRAW_BATCH_SIZE * VERTICES_PER_RECT);
 
-  shader_program_t* program = &rect_shader->program;
-  if ((program->valid =
-           procy_compile_vert_shader((char*)embed_rect_vert, &program->vertex) &&
-           procy_compile_frag_shader((char*)embed_rect_frag,
-                                     &program->fragment))) {
+  shader_program_t *program = &rect_shader->program;
+  if ((program->valid = procy_compile_vert_shader((char *)embed_rect_vert,
+                                                  &program->vertex) &&
+                        procy_compile_frag_shader((char *)embed_rect_frag,
+                                                  &program->fragment))) {
     GL_CHECK(glGenVertexArrays(1, &program->vao));
     GL_CHECK(glBindVertexArray(program->vao));
 
@@ -64,8 +66,8 @@ rect_shader_program_t* procy_create_rect_shader() {
     program->vbo = malloc(sizeof(GLuint) * program->vbo_count);
     GL_CHECK(glGenBuffers((int)program->vbo_count, program->vbo));
 
-    program->valid &=
-        procy_link_shader_program(program->vertex, program->fragment, &program->program);
+    program->valid &= procy_link_shader_program(
+        program->vertex, program->fragment, &program->program);
 
     if (program->valid) {
       rect_shader->u_ortho = glGetUniformLocation(program->program, "u_Ortho");
@@ -75,7 +77,7 @@ rect_shader_program_t* procy_create_rect_shader() {
   return rect_shader;
 }
 
-void procy_destroy_rect_shader(rect_shader_program_t* shader) {
+void procy_destroy_rect_shader(rect_shader_program_t *shader) {
   if (shader != NULL) {
     procy_destroy_shader_program(&shader->program);
 
@@ -91,7 +93,8 @@ void procy_destroy_rect_shader(rect_shader_program_t* shader) {
   }
 }
 
-static void compute_rect_vertices(rect_shader_program_t* shader, draw_op_t* op, rect_vertex_t* vertices) {
+static void compute_rect_vertices(rect_shader_program_t *shader, draw_op_t *op,
+                                  rect_vertex_t *vertices) {
   float x = (float)op->x;
   float y = (float)op->y;
   float w = (float)op->data.rect.width;
@@ -106,30 +109,38 @@ static void compute_rect_vertices(rect_shader_program_t* shader, draw_op_t* op, 
   }
 }
 
-static void draw_rect_batch(shader_program_t* const program, rect_vertex_t* const vertices, GLushort* const indices, long rect_count) {
+static void draw_rect_batch(shader_program_t *const program,
+                            rect_vertex_t *const vertices,
+                            GLushort *const indices, long rect_count) {
   int buffer_size;
 
   // copy vertex data to video memory
-  const int vertex_buffer_size = rect_count * VERTICES_PER_RECT * sizeof(rect_vertex_t);
+  const int vertex_buffer_size =
+      rect_count * VERTICES_PER_RECT * sizeof(rect_vertex_t);
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_RECT_POSITION]));
-  GL_CHECK(glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size));
+  GL_CHECK(
+      glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size));
   if (buffer_size == vertex_buffer_size) {
     GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, vertex_buffer_size, vertices));
   } else {
-    GL_CHECK(glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size,
-        vertices, GL_STATIC_DRAW));
+    GL_CHECK(glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size, vertices,
+                          GL_STATIC_DRAW));
   }
 
   // copy indices
-  const int index_buffer_size = rect_count * INDICES_PER_RECT * sizeof(GLushort);
-  GL_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, program->vbo[VBO_RECT_INDICES]));
-  GL_CHECK(glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size));
+  const int index_buffer_size =
+      rect_count * INDICES_PER_RECT * sizeof(GLushort);
+  GL_CHECK(
+      glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, program->vbo[VBO_RECT_INDICES]));
+  GL_CHECK(glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE,
+                                  &buffer_size));
   if (buffer_size == index_buffer_size) {
-    GL_CHECK(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, index_buffer_size, indices));
+    GL_CHECK(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, index_buffer_size,
+                             indices));
   } else {
     GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-        rect_count * INDICES_PER_RECT * sizeof(GLushort),
-        indices, GL_STATIC_DRAW));
+                          rect_count * INDICES_PER_RECT * sizeof(GLushort),
+                          indices, GL_STATIC_DRAW));
   }
 
   // make draw call
@@ -138,7 +149,7 @@ static void draw_rect_batch(shader_program_t* const program, rect_vertex_t* cons
                           GL_UNSIGNED_SHORT, 0));
 }
 
-static void enable_shader_attributes(shader_program_t* const program) {
+static void enable_shader_attributes(shader_program_t *const program) {
   GL_CHECK(glBindVertexArray(program->vao));
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_RECT_POSITION]));
 
@@ -149,16 +160,15 @@ static void enable_shader_attributes(shader_program_t* const program) {
   GL_CHECK(glEnableVertexAttribArray(ATTR_RECT_COLOR));
   GL_CHECK(glVertexAttribPointer(ATTR_RECT_COLOR, 3, GL_FLOAT, GL_FALSE,
                                  sizeof(rect_vertex_t),
-                                 (void*)(2 * sizeof(float))));
-
+                                 (void *)(2 * sizeof(float))));
 }
 
-void procy_draw_rect_shader(rect_shader_program_t* shader, window_t* window) {
-  draw_op_t* ops_buffer = window->draw_ops.buffer;
-  rect_vertex_t* vertex_batch = shader->vertex_batch_buffer;
-  GLushort* index_batch = (GLushort*)shader->index_batch_buffer;
+void procy_draw_rect_shader(rect_shader_program_t *shader, window_t *window) {
+  draw_op_t *ops_buffer = window->draw_ops.buffer;
+  rect_vertex_t *vertex_batch = shader->vertex_batch_buffer;
+  GLushort *index_batch = (GLushort *)shader->index_batch_buffer;
 
-  shader_program_t* program = &shader->program;
+  shader_program_t *program = &shader->program;
   GL_CHECK(glUseProgram(program->program));
 
   // set orthographic projection matrix
@@ -169,7 +179,7 @@ void procy_draw_rect_shader(rect_shader_program_t* shader, window_t* window) {
 
   long batch_index = -1;
   for (size_t i = 0; i < window->draw_ops.length; ++i) {
-    draw_op_t* op = &ops_buffer[i];
+    draw_op_t *op = &ops_buffer[i];
     if (op->type != DRAW_OP_RECT) {
       continue;
     }
@@ -181,10 +191,14 @@ void procy_draw_rect_shader(rect_shader_program_t* shader, window_t* window) {
     rect_vertex_t temp_vertex_buffer[VERTICES_PER_RECT];
     compute_rect_vertices(shader, op, &temp_vertex_buffer[0]);
 
-    const GLushort temp_index_buffer[] = { vert_index, vert_index + 1, vert_index + 2, vert_index + 1, vert_index + 3, vert_index + 2 };
+    const GLushort temp_index_buffer[] = {vert_index,     vert_index + 1,
+                                          vert_index + 2, vert_index + 1,
+                                          vert_index + 3, vert_index + 2};
 
-    memcpy(&vertex_batch[vert_index], temp_vertex_buffer, sizeof(temp_vertex_buffer));
-    memcpy(&index_batch[batch_index * INDICES_PER_RECT], temp_index_buffer, sizeof(temp_index_buffer));
+    memcpy(&vertex_batch[vert_index], temp_vertex_buffer,
+           sizeof(temp_vertex_buffer));
+    memcpy(&index_batch[batch_index * INDICES_PER_RECT], temp_index_buffer,
+           sizeof(temp_index_buffer));
 
     if (batch_index == DRAW_BATCH_SIZE - 1) {
       draw_rect_batch(program, vertex_batch, index_batch, batch_index + 1);
@@ -200,4 +214,3 @@ void procy_draw_rect_shader(rect_shader_program_t* shader, window_t* window) {
   glDisableVertexAttribArray(ATTR_RECT_COLOR);
   glUseProgram(0);
 }
-

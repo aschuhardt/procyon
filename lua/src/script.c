@@ -17,25 +17,25 @@
 #endif
 #endif
 
-static const char* get_lua_alloc_type_name(size_t t) {
+static const char *get_lua_alloc_type_name(size_t t) {
   switch (t) {
-    case LUA_TSTRING:
-      return "String";
-    case LUA_TTABLE:
-      return "Table";
-    case LUA_TFUNCTION:
-      return "Function";
-    case LUA_TUSERDATA:
-      return "UserData";
-    case LUA_TTHREAD:
-      return "Thread";
-    default:
-      return "Other";
+  case LUA_TSTRING:
+    return "String";
+  case LUA_TTABLE:
+    return "Table";
+  case LUA_TFUNCTION:
+    return "Function";
+  case LUA_TUSERDATA:
+    return "UserData";
+  case LUA_TTHREAD:
+    return "Thread";
+  default:
+    return "Other";
   }
 }
 
-static size_t get_file_dir_length(char* path) {
-  char* last_segment = strrchr(path, '/');
+static size_t get_file_dir_length(char *path) {
+  char *last_segment = strrchr(path, '/');
 
   if (last_segment == NULL) {
     return strnlen(path, PATH_MAX);
@@ -44,7 +44,7 @@ static size_t get_file_dir_length(char* path) {
   return last_segment - path;
 }
 
-static void add_package_path_from_entry(lua_State* L, char* path) {
+static void add_package_path_from_entry(lua_State *L, char *path) {
   // get the "package" table
   lua_getglobal(L, "package");
 
@@ -66,13 +66,13 @@ static void add_package_path_from_entry(lua_State* L, char* path) {
   lua_pop(L, 1);
 }
 
-static void script_log_warning(void* ud, const char* msg, int tocont) {
+static void script_log_warning(void *ud, const char *msg, int tocont) {
   (void)ud;
   log_warn("%s", msg);
 }
 
-script_env_t* create_script_env(procy_window_t* window, procy_state_t* state) {
-  script_env_t* env = malloc(sizeof(script_env_t));
+script_env_t *create_script_env(procy_window_t *window, procy_state_t *state) {
+  script_env_t *env = malloc(sizeof(script_env_t));
   env->L = luaL_newstate();
   env->window = window;
   env->state = state;
@@ -80,16 +80,16 @@ script_env_t* create_script_env(procy_window_t* window, procy_state_t* state) {
   return env;
 }
 
-void destroy_script_env(script_env_t* env) {
+void destroy_script_env(script_env_t *env) {
   if (env != NULL && env->L != NULL) {
-    lua_close((lua_State*)env->L);
+    lua_close((lua_State *)env->L);
   }
 
   free(env);
 }
 
-bool load_scripts(script_env_t* env, char* path) {
-  lua_State* L = (lua_State*)env->L;
+bool load_scripts(script_env_t *env, char *path) {
+  lua_State *L = (lua_State *)env->L;
   lua_setwarnf(L, script_log_warning, NULL);
   luaL_openlibs(L);
 

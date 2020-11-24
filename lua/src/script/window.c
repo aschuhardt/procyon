@@ -18,24 +18,24 @@
 #define FUNC_SET_COLOR "set_color"
 #define FUNC_SET_HIGH_FPS "set_high_fps"
 
-static int close_window(lua_State* L) {
+static int close_window(lua_State *L) {
   if (!verify_arg_count(L, 0, __func__)) {
     return 0;
   }
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
   procy_close_window(window);
   return 0;
 }
 
-static int window_size(lua_State* L) {
+static int window_size(lua_State *L) {
   if (!verify_arg_count(L, 0, __func__)) {
     return 0;
   }
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
   int width = 0, height = 0;
   procy_get_window_size(window, &width, &height);
   lua_pushinteger(L, width);
@@ -43,24 +43,24 @@ static int window_size(lua_State* L) {
   return 2;
 }
 
-static int set_window_high_fps(lua_State* L) {
+static int set_window_high_fps(lua_State *L) {
   if (!verify_arg_count(L, 1, __func__)) {
     return 0;
   }
 
   bool enabled = lua_toboolean(L, -1);
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  ((procy_window_t*)lua_touserdata(L, -1))->high_fps = enabled;
+  ((procy_window_t *)lua_touserdata(L, -1))->high_fps = enabled;
   return 0;
 }
 
-static int window_glyph_size(lua_State* L) {
+static int window_glyph_size(lua_State *L) {
   if (!verify_arg_count(L, 0, __func__)) {
     return 0;
   }
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
   int width = 0, height = 0;
   procy_get_glyph_size(window, &width, &height);
   lua_pushinteger(L, width);
@@ -68,19 +68,19 @@ static int window_glyph_size(lua_State* L) {
   return 2;
 }
 
-static int window_reload(lua_State* L) {
+static int window_reload(lua_State *L) {
   // close the window and set the "reload" flag to true
   close_window(L);
   lua_getglobal(L, GLOBAL_ENV_PTR);
-  script_env_t* env = (script_env_t*)lua_touserdata(L, -1);
+  script_env_t *env = (script_env_t *)lua_touserdata(L, -1);
   env->reload = true;
 
   return 0;
 }
 
 // called from the main window loop by way of script_env_t.on_draw
-static void perform_draw(procy_state_t* const state, double seconds) {
-  lua_State* L = ((script_env_t*)state->data)->L;
+static void perform_draw(procy_state_t *const state, double seconds) {
+  lua_State *L = ((script_env_t *)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
 
   if (lua_getfield(L, -1, FUNC_ON_DRAW) != LUA_TNONE && lua_isfunction(L, -1)) {
@@ -93,15 +93,15 @@ static void perform_draw(procy_state_t* const state, double seconds) {
     // check whether the window is in "high fps" mode and, if it is NOT, run the
     // Lua garbage collector
     lua_getglobal(L, GLOBAL_WINDOW_PTR);
-    procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+    procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
     if (!window->high_fps) {
       lua_gc(L, LUA_GCCOLLECT);
     }
   }
 }
 
-static void handle_window_resized(procy_state_t* const state, int w, int h) {
-  lua_State* L = ((script_env_t*)state->data)->L;
+static void handle_window_resized(procy_state_t *const state, int w, int h) {
+  lua_State *L = ((script_env_t *)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
   lua_getfield(L, -1, FUNC_ON_RESIZE);
   if (lua_isfunction(L, -1)) {
@@ -115,8 +115,8 @@ static void handle_window_resized(procy_state_t* const state, int w, int h) {
   }
 }
 
-static void handle_window_loaded(procy_state_t* const state) {
-  lua_State* L = ((script_env_t*)state->data)->L;
+static void handle_window_loaded(procy_state_t *const state) {
+  lua_State *L = ((script_env_t *)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
 
   lua_getfield(L, -1, FUNC_ON_LOAD);
@@ -129,8 +129,8 @@ static void handle_window_loaded(procy_state_t* const state) {
   }
 }
 
-static void handle_window_unloaded(procy_state_t* const state) {
-  lua_State* L = ((script_env_t*)state->data)->L;
+static void handle_window_unloaded(procy_state_t *const state) {
+  lua_State *L = ((script_env_t *)state->data)->L;
   lua_getglobal(L, TBL_WINDOW);
 
   lua_getfield(L, -1, FUNC_ON_UNLOAD);
@@ -143,7 +143,7 @@ static void handle_window_unloaded(procy_state_t* const state) {
   }
 }
 
-static int set_window_color(lua_State* L) {
+static int set_window_color(lua_State *L) {
   if (!verify_arg_count(L, 1, __func__)) {
     return 0;
   }
@@ -153,7 +153,7 @@ static int set_window_color(lua_State* L) {
   return 0;
 }
 
-void add_window(lua_State* L, script_env_t* env) {
+void add_window(lua_State *L, script_env_t *env) {
   lua_newtable(L);
 
   env->state->on_draw = perform_draw;

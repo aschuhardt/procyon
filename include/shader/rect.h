@@ -9,11 +9,11 @@ typedef struct procy_rect_shader_program_t {
   void *vertex_batch_buffer, *index_batch_buffer;
 } procy_rect_shader_program_t;
 
-procy_rect_shader_program_t* procy_create_rect_shader();
+procy_rect_shader_program_t *procy_create_rect_shader();
 
-void procy_destroy_rect_shader(procy_rect_shader_program_t* shader);
+void procy_destroy_rect_shader(procy_rect_shader_program_t *shader);
 
-void procy_draw_rect_shader(procy_rect_shader_program_t* shader,
-                            struct procy_window_t* window);
+void procy_draw_rect_shader(procy_rect_shader_program_t *shader,
+                            struct procy_window_t *window);
 
 #endif

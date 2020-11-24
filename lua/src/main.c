@@ -4,7 +4,7 @@
 #include "procyon.h"
 #include "script.h"
 
-int main(int argc, const char** argv) {
+int main(int argc, const char **argv) {
   config_t config;
   if (!parse_config_args(argc, argv, &config)) {
     return -1;
@@ -18,14 +18,14 @@ int main(int argc, const char** argv) {
   bool reload = false;
   do {
     // create window object
-    procy_window_t* window =
+    procy_window_t *window =
         procy_create_window(config.window_w, config.window_h, "Procyon Lua",
                             config.glyph_scale, &state);
     if (window == NULL) {
       log_error("Failed to create window");
     } else {
       // create script environment object
-      script_env_t* script_env = create_script_env(window, &state);
+      script_env_t *script_env = create_script_env(window, &state);
       state.data = script_env;
       if (script_env == NULL) {
         log_error("Failed to create script environment object");

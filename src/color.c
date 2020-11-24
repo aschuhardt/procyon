@@ -15,6 +15,7 @@ color_t procy_create_color(float r, float g, float b) {
   return c;
 }
 
-bool procy_colors_equal(procy_color_t* first, procy_color_t* second) {
-    return FLOATS_EQUAL(first->r, second->r) && FLOATS_EQUAL(first->g, second->g) && FLOATS_EQUAL(first->b, second->b);
+bool procy_colors_equal(procy_color_t *first, procy_color_t *second) {
+  return FLOATS_EQUAL(first->r, second->r) &&
+         FLOATS_EQUAL(first->g, second->g) && FLOATS_EQUAL(first->b, second->b);
 }

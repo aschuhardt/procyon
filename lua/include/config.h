@@ -11,6 +11,6 @@ typedef struct config_t {
   float glyph_scale;
 } config_t;
 
-bool parse_config_args(int argc, const char** argv, config_t* cfg);
+bool parse_config_args(int argc, const char **argv, config_t *cfg);
 
 #endif

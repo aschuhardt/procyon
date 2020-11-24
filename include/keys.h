@@ -4,11 +4,11 @@
 #include <stddef.h>
 
 typedef struct procy_key_info_t {
-  const char* name;
+  const char *name;
   int value;
 } procy_key_info_t;
 
-void procy_get_keys(procy_key_info_t** buffer, size_t* len);
+void procy_get_keys(procy_key_info_t **buffer, size_t *len);
 
 #define KEY_SPACE 32
 #define KEY_APOSTROPHE 39

@@ -13,13 +13,13 @@ typedef struct procy_shader_program_t {
   bool valid;
 } procy_shader_program_t;
 
-void procy_destroy_shader_program(procy_shader_program_t* shader);
+void procy_destroy_shader_program(procy_shader_program_t *shader);
 
-bool procy_compile_frag_shader(const char* data, unsigned int* index);
+bool procy_compile_frag_shader(const char *data, unsigned int *index);
 
-bool procy_compile_vert_shader(const char* data, unsigned int* index);
+bool procy_compile_vert_shader(const char *data, unsigned int *index);
 
 bool procy_link_shader_program(unsigned int vert, unsigned int frag,
-                               unsigned int* index);
+                               unsigned int *index);
 
 #endif

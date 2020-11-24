@@ -29,7 +29,7 @@
 #define DEFAULT_OFFSET 1.0F
 #define DEFAULT_OCTAVES 6
 
-static int write_log_info(lua_State* L) {
+static int write_log_info(lua_State *L) {
   if (verify_arg_count(L, 1, __func__)) {
     log_info("%s", lua_tostring(L, 1));
   }
@@ -37,7 +37,7 @@ static int write_log_info(lua_State* L) {
   return 0;
 }
 
-static int write_log_error(lua_State* L) {
+static int write_log_error(lua_State *L) {
   if (verify_arg_count(L, 1, __func__)) {
     log_error("%s", lua_tostring(L, 1));
   }
@@ -45,7 +45,7 @@ static int write_log_error(lua_State* L) {
   return 0;
 }
 
-static int write_log_warn(lua_State* L) {
+static int write_log_warn(lua_State *L) {
   if (verify_arg_count(L, 1, __func__)) {
     log_warn("%s", lua_tostring(L, 1));
   }
@@ -53,7 +53,7 @@ static int write_log_warn(lua_State* L) {
   return 0;
 }
 
-static int write_log_debug(lua_State* L) {
+static int write_log_debug(lua_State *L) {
   if (verify_arg_count(L, 1, __func__)) {
     log_debug("%s", lua_tostring(L, 1));
   }
@@ -61,7 +61,7 @@ static int write_log_debug(lua_State* L) {
   return 0;
 }
 
-static int noise_perlin(lua_State* L) {
+static int noise_perlin(lua_State *L) {
   float value = 0.0F;
 
   // last argument is an optional seed value (note that for the seed, only the
@@ -81,7 +81,7 @@ static int noise_perlin(lua_State* L) {
   return 1;
 }
 
-static int noise_ridge(lua_State* L) {
+static int noise_ridge(lua_State *L) {
   float lacunarity = DEFAULT_LACUNARITY;
   float gain = DEFAULT_GAIN;
   float offset = DEFAULT_OFFSET;
@@ -103,7 +103,7 @@ static int noise_ridge(lua_State* L) {
   return 1;
 }
 
-static int noise_fbm(lua_State* L) {
+static int noise_fbm(lua_State *L) {
   float lacunarity = DEFAULT_LACUNARITY;
   float gain = DEFAULT_GAIN;
   int octaves = DEFAULT_OCTAVES;
@@ -123,7 +123,7 @@ static int noise_fbm(lua_State* L) {
   return 1;
 }
 
-static int noise_turbulence(lua_State* L) {
+static int noise_turbulence(lua_State *L) {
   float lacunarity = DEFAULT_LACUNARITY;
   float gain = DEFAULT_GAIN;
   int octaves = DEFAULT_OCTAVES;
@@ -143,13 +143,13 @@ static int noise_turbulence(lua_State* L) {
   return 1;
 }
 
-static int run_script(lua_State* L) {
+static int run_script(lua_State *L) {
   luaL_dostring(L, lua_tostring(L, 1));
 
   return 0;
 }
 
-static void add_logging(lua_State* L) {
+static void add_logging(lua_State *L) {
   lua_newtable(L);
 
   lua_pushcfunction(L, write_log_info);
@@ -167,7 +167,7 @@ static void add_logging(lua_State* L) {
   lua_setglobal(L, TBL_LOG);
 }
 
-static void add_noise(lua_State* L) {
+static void add_noise(lua_State *L) {
   lua_newtable(L);
 
   lua_pushcfunction(L, noise_perlin);
@@ -185,7 +185,7 @@ static void add_noise(lua_State* L) {
   lua_setglobal(L, TBL_NOISE);
 }
 
-static void add_script(lua_State* L) {
+static void add_script(lua_State *L) {
   lua_newtable(L);
 
   lua_pushcfunction(L, run_script);
@@ -194,7 +194,7 @@ static void add_script(lua_State* L) {
   lua_setglobal(L, TBL_SCRIPT);
 }
 
-void add_utilities(lua_State* L) {
+void add_utilities(lua_State *L) {
   add_logging(L);
   add_noise(L);
   add_script(L);

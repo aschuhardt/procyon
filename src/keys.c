@@ -130,7 +130,7 @@ const key_info_t KEYS[] = {{"KEY_SPACE", KEY_SPACE},
 /* Public interface definition */
 /* --------------------------- */
 
-void procy_get_keys(key_info_t** buffer, size_t* len) {
+void procy_get_keys(key_info_t **buffer, size_t *len) {
   *len = sizeof(KEYS) / sizeof(key_info_t);
   *buffer = malloc(*len * sizeof(key_info_t));
   memcpy(*buffer, KEYS, *len * sizeof(key_info_t));

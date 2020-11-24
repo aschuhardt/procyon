@@ -17,7 +17,6 @@
 #include "keys.h"
 #include "state.h"
 
-
 typedef procy_window_t window_t;
 typedef procy_shaders_t shaders_t;
 typedef procy_draw_op_t draw_op_t;
@@ -31,7 +30,7 @@ typedef procy_state_t state_t;
 
 static const size_t INITIAL_DRAW_OPS_BUFFER_SIZE = 1024;
 
-static void glfw_error_callback(int code, const char* msg) {
+static void glfw_error_callback(int code, const char *msg) {
   log_error("GLFW error %d: %s", code, msg);
 }
 
@@ -45,7 +44,7 @@ static void set_gl_hints() {
 #endif
 }
 
-static int setup_gl_context(GLFWwindow* w) {
+static int setup_gl_context(GLFWwindow *w) {
   glfwMakeContextCurrent(w);
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     log_error("Failed to initialize OpenGL");
@@ -54,7 +53,7 @@ static int setup_gl_context(GLFWwindow* w) {
   return true;
 }
 
-static void set_ortho_projection(window_t* window, int width, int height) {
+static void set_ortho_projection(window_t *window, int width, int height) {
   // zero-out matrix
   memset(&window->ortho[0][0], 0, 4 * sizeof(float));
   memset(&window->ortho[1][0], 0, 4 * sizeof(float));
@@ -71,7 +70,7 @@ static void set_ortho_projection(window_t* window, int width, int height) {
   window->ortho[3][3] = 1.0F;
 }
 
-static void trigger_state_on_load(state_t* state) {
+static void trigger_state_on_load(state_t *state) {
   for (int i = 0; i < state->child_count; ++i) {
     trigger_state_on_load(state->children[i]);
   }
@@ -80,7 +79,7 @@ static void trigger_state_on_load(state_t* state) {
   }
 }
 
-static void trigger_state_on_unload(state_t* state) {
+static void trigger_state_on_unload(state_t *state) {
   if (state->child_count > 0) {
     for (int i = 0; i < state->child_count; ++i) {
       trigger_state_on_unload(state->children[i]);
@@ -91,7 +90,7 @@ static void trigger_state_on_unload(state_t* state) {
   }
 }
 
-static void trigger_state_on_draw(state_t* state, double time) {
+static void trigger_state_on_draw(state_t *state, double time) {
   if (state->child_count > 0) {
     for (int i = 0; i < state->child_count; ++i) {
       trigger_state_on_draw(state->children[i], time);
@@ -102,7 +101,7 @@ static void trigger_state_on_draw(state_t* state, double time) {
   }
 }
 
-static void trigger_state_on_resized(state_t* state, int width, int height) {
+static void trigger_state_on_resized(state_t *state, int width, int height) {
   if (state->child_count > 0) {
     for (int i = 0; i < state->child_count; ++i) {
       trigger_state_on_resized(state->children[i], width, height);
@@ -113,7 +112,7 @@ static void trigger_state_on_resized(state_t* state, int width, int height) {
   }
 }
 
-static void trigger_state_on_key_pressed(state_t* state, key_info_t key,
+static void trigger_state_on_key_pressed(state_t *state, key_info_t key,
                                          bool shift, bool ctrl, bool alt) {
   if (state->child_count > 0) {
     for (int i = 0; i < state->child_count; ++i) {
@@ -125,7 +124,7 @@ static void trigger_state_on_key_pressed(state_t* state, key_info_t key,
   }
 }
 
-static void trigger_state_on_key_released(state_t* state, key_info_t key,
+static void trigger_state_on_key_released(state_t *state, key_info_t key,
                                           bool shift, bool ctrl, bool alt) {
   if (state->child_count > 0) {
     for (int i = 0; i < state->child_count; ++i) {
@@ -137,7 +136,7 @@ static void trigger_state_on_key_released(state_t* state, key_info_t key,
   }
 }
 
-static void trigger_state_on_char_entered(state_t* state,
+static void trigger_state_on_char_entered(state_t *state,
                                           unsigned int character) {
   if (state->child_count > 0) {
     for (int i = 0; i < state->child_count; ++i) {
@@ -149,22 +148,22 @@ static void trigger_state_on_char_entered(state_t* state,
   }
 }
 
-static void window_resized(GLFWwindow* w, int width, int height) {
+static void window_resized(GLFWwindow *w, int width, int height) {
   log_debug("Window resized to %dx%d", width, height);
 
   GL_CHECK(glViewport(0, 0, width, height));
 
-  window_t* window = (window_t*)glfwGetWindowUserPointer(w);
+  window_t *window = (window_t *)glfwGetWindowUserPointer(w);
 
   set_ortho_projection(window, width, height);
   trigger_state_on_resized(window->state, width, height);
 }
 
-static void set_window_callbacks(GLFWwindow* w) {
+static void set_window_callbacks(GLFWwindow *w) {
   glfwSetFramebufferSizeCallback(w, window_resized);
 }
 
-static void destroy_shaders(shaders_t* shaders) {
+static void destroy_shaders(shaders_t *shaders) {
   procy_destroy_glyph_shader(shaders->glyph);
   procy_destroy_rect_shader(shaders->rect);
   procy_destroy_line_shader(shaders->line);
@@ -173,8 +172,8 @@ static void destroy_shaders(shaders_t* shaders) {
 /*
  * Returns false upon failing to initialize a GLFW window
  */
-static bool set_gl_window_pointer(window_t* w, int width, int height,
-                                  const char* title) {
+static bool set_gl_window_pointer(window_t *w, int width, int height,
+                                  const char *title) {
   if (!glfwInit()) {
     return false;
   }
@@ -195,7 +194,7 @@ static bool set_gl_window_pointer(window_t* w, int width, int height,
   return true;
 }
 
-static void init_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
+static void init_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
   draw_ops->length = 0;
   draw_ops->capacity = INITIAL_DRAW_OPS_BUFFER_SIZE;
 
@@ -205,10 +204,10 @@ static void init_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
   log_debug("Initial draw ops buffer size: %zu", buffer_size);
 }
 
-static void expand_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
+static void expand_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
   draw_ops->capacity *= 2;
   size_t buffer_size = draw_ops->capacity * sizeof(draw_op_t);
-  draw_op_t* resized = realloc(draw_ops->buffer, buffer_size);
+  draw_op_t *resized = realloc(draw_ops->buffer, buffer_size);
   if (resized == NULL) {
     free(draw_ops->buffer);
     draw_ops->buffer = malloc(0);
@@ -221,14 +220,14 @@ static void expand_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
   log_trace("Expanded string draw ops buffer size to %zu bytes", buffer_size);
 }
 
-static void reset_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
+static void reset_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
   // start writing draw ops at the start of the buffer
   draw_ops->length = 0;
 }
 
-static void handle_key_entered(GLFWwindow* w, int key, int scancode, int action,
+static void handle_key_entered(GLFWwindow *w, int key, int scancode, int action,
                                int mods) {
-  window_t* window = glfwGetWindowUserPointer(w);
+  window_t *window = glfwGetWindowUserPointer(w);
   bool shift = (mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT;
   bool ctrl = (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL;
   bool alt = (mods & GLFW_MOD_ALT) == GLFW_MOD_ALT;
@@ -241,20 +240,20 @@ static void handle_key_entered(GLFWwindow* w, int key, int scancode, int action,
   }
 }
 
-static void handle_char_entered(GLFWwindow* w, unsigned int codepoint) {
-  window_t* window = glfwGetWindowUserPointer(w);
+static void handle_char_entered(GLFWwindow *w, unsigned int codepoint) {
+  window_t *window = glfwGetWindowUserPointer(w);
   trigger_state_on_char_entered(window->state, codepoint);
 }
 
-static void set_event_callbacks(window_t* w) {
+static void set_event_callbacks(window_t *w) {
   glfwSetKeyCallback(w->glfw_win, handle_key_entered);
   glfwSetCharCallback(w->glfw_win, handle_char_entered);
 }
 
-static void init_key_table(window_t* w) {
+static void init_key_table(window_t *w) {
   // map key values to objects
   size_t keys_count = 0;
-  key_info_t* keys = NULL;
+  key_info_t *keys = NULL;
   procy_get_keys(&keys, &keys_count);
   w->key_table = malloc(keys[keys_count - 1].value * sizeof(key_info_t));
   for (size_t i = 0; i < keys_count - 1; i++) {
@@ -263,7 +262,7 @@ static void init_key_table(window_t* w) {
   free(keys);
 }
 
-static void init_shaders(window_t* window, float text_scale) {
+static void init_shaders(window_t *window, float text_scale) {
   window->shaders.glyph = procy_create_glyph_shader(text_scale);
   window->shaders.rect = procy_create_rect_shader();
   window->shaders.line = procy_create_line_shader();
@@ -279,10 +278,10 @@ static void log_opengl_info() {
 /* Public interface definition */
 /* --------------------------- */
 
-window_t* procy_create_window(int width, int height, const char* title,
-                              float text_scale, state_t* state) {
+window_t *procy_create_window(int width, int height, const char *title,
+                              float text_scale, state_t *state) {
   glfwSetErrorCallback(glfw_error_callback);
-  window_t* window = malloc(sizeof(window_t));
+  window_t *window = malloc(sizeof(window_t));
 
   if (window != NULL && set_gl_window_pointer(window, width, height, title)) {
     log_opengl_info();
@@ -303,7 +302,7 @@ window_t* procy_create_window(int width, int height, const char* title,
   return window;
 }
 
-void procy_destroy_window(window_t* window) {
+void procy_destroy_window(window_t *window) {
   if (window == NULL) {
     return;
   }
@@ -326,8 +325,8 @@ void procy_destroy_window(window_t* window) {
   free(window);
 }
 
-void procy_append_draw_op(window_t* window, draw_op_t* draw_op) {
-  draw_op_buffer_t* buffer = &window->draw_ops;
+void procy_append_draw_op(window_t *window, draw_op_t *draw_op) {
+  draw_op_buffer_t *buffer = &window->draw_ops;
   buffer->length++;
   if (buffer->length >= buffer->capacity) {
     expand_draw_ops_buffer(buffer);
@@ -335,10 +334,10 @@ void procy_append_draw_op(window_t* window, draw_op_t* draw_op) {
   buffer->buffer[buffer->length - 1] = *draw_op;
 }
 
-void procy_append_draw_ops(procy_window_t* window, draw_op_t* draw_ops,
+void procy_append_draw_ops(procy_window_t *window, draw_op_t *draw_ops,
                            size_t n) {
   // TODO: test this
-  draw_op_buffer_t* buffer = &window->draw_ops;
+  draw_op_buffer_t *buffer = &window->draw_ops;
   size_t dest_offset = buffer->length - 1;
   buffer->length += n;
   if (buffer->length >= buffer->capacity) {
@@ -347,23 +346,23 @@ void procy_append_draw_ops(procy_window_t* window, draw_op_t* draw_ops,
   memcpy(&buffer->buffer[dest_offset], draw_ops, n * sizeof(draw_op_t));
 }
 
-void procy_get_window_size(window_t* window, int* width, int* height) {
+void procy_get_window_size(window_t *window, int *width, int *height) {
   glfwGetWindowSize(window->glfw_win, width, height);
 }
 
-void procy_get_glyph_size(procy_window_t* window, int* width, int* height) {
+void procy_get_glyph_size(procy_window_t *window, int *width, int *height) {
   procy_get_glyph_bounds(window->shaders.glyph, width, height);
 }
 
-void procy_set_glyph_scale(procy_window_t* window, float scale) {
+void procy_set_glyph_scale(procy_window_t *window, float scale) {
   window->shaders.glyph->glyph_scale = scale;
 }
 
-void procy_begin_loop(window_t* window) {
+void procy_begin_loop(window_t *window) {
   // this can be overridden later, but black is a good default
   GL_CHECK(glClearColor(0.0F, 0.0F, 0.0F, 1.0F));
 
-  state_t* state = window->state;
+  state_t *state = window->state;
   trigger_state_on_load(state);
 
   // initialize the running-timer to 0.0 seconds so that we can later judge how
@@ -372,10 +371,10 @@ void procy_begin_loop(window_t* window) {
   glfwSetTime(0.0);
 
   double last_frame_time = glfwGetTime();
-  GLFWwindow* w = (GLFWwindow*)window->glfw_win;
-  procy_glyph_shader_program_t* glyph_shader = window->shaders.glyph;
-  procy_rect_shader_program_t* rect_shader = window->shaders.rect;
-  procy_line_shader_program_t* line_shader = window->shaders.line;
+  GLFWwindow *w = (GLFWwindow *)window->glfw_win;
+  procy_glyph_shader_program_t *glyph_shader = window->shaders.glyph;
+  procy_rect_shader_program_t *rect_shader = window->shaders.rect;
+  procy_line_shader_program_t *line_shader = window->shaders.line;
   while (!glfwWindowShouldClose(w) && !window->quitting) {
     double current_time = glfwGetTime();
     double frame_duration = current_time - last_frame_time;
@@ -415,4 +414,4 @@ void procy_begin_loop(window_t* window) {
 
 void procy_set_clear_color(color_t c) { glClearColor(c.r, c.g, c.b, 1.0F); }
 
-void procy_close_window(procy_window_t* window) { window->quitting = true; }
+void procy_close_window(procy_window_t *window) { window->quitting = true; }

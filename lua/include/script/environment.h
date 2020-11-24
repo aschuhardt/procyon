@@ -18,20 +18,20 @@ typedef struct lua_State lua_State;
 typedef struct script_env_t script_env_t;
 typedef struct state_t state_t;
 
-void add_globals(lua_State* L, script_env_t* env);
-void add_input(lua_State* L, script_env_t* env);
-void add_drawing(lua_State* L, script_env_t* env);
-void add_window(lua_State* L, script_env_t* env);
-void add_utilities(lua_State* L);
+void add_globals(lua_State *L, script_env_t *env);
+void add_input(lua_State *L, script_env_t *env);
+void add_drawing(lua_State *L, script_env_t *env);
+void add_window(lua_State *L, script_env_t *env);
+void add_utilities(lua_State *L);
 
 /*
  * Utility methods available to script-setup logic
  */
 
-bool verify_arg_count(lua_State* L, int n, const char* name);
+bool verify_arg_count(lua_State *L, int n, const char *name);
 
-void push_rgb_table(lua_State* L, float r, float g, float b);
+void push_rgb_table(lua_State *L, float r, float g, float b);
 
-procy_color_t get_color(lua_State* L, int index);
+procy_color_t get_color(lua_State *L, int index);
 
 #endif

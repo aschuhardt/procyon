@@ -7,7 +7,8 @@
 
 #ifdef WIN32
 
-// when NVIDIA Optimus is present, we need to indicate that the device should use the discrete GPU for running this
+// when NVIDIA Optimus is present, we need to indicate that the device should
+// use the discrete GPU for running this
 
 #include <windows.h>
 

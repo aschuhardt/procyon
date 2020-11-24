@@ -2,13 +2,13 @@
 
 #include <stdlib.h>
 
-procy_state_t* procy_create_callback_state(
+procy_state_t *procy_create_callback_state(
     procy_on_load_callback_t on_load, procy_on_unload_callback_t on_unload,
     procy_on_draw_callback_t on_draw, procy_on_resize_callback_t on_resize,
     procy_on_key_pressed_callback_t on_key_pressed,
     procy_on_key_released_callback_t on_key_released,
     procy_on_char_entered_callback_t on_char_entered) {
-  procy_state_t* state = malloc(sizeof(procy_state_t));
+  procy_state_t *state = malloc(sizeof(procy_state_t));
   state->data = NULL;
   state->parent = NULL;
   state->children = NULL;
@@ -23,14 +23,14 @@ procy_state_t* procy_create_callback_state(
   return state;
 }
 
-void procy_append_child_state(procy_state_t* parent, procy_state_t* child) {
-  parent->children =
-      realloc(parent->children, sizeof(procy_state_t*) * ++parent->child_count);
+void procy_append_child_state(procy_state_t *parent, procy_state_t *child) {
+  parent->children = realloc(parent->children,
+                             sizeof(procy_state_t *) * ++parent->child_count);
   parent->children[parent->child_count - 1] = child;
   child->parent = parent;
 }
 
-void procy_destroy_callback_state(procy_state_t* state) {
+void procy_destroy_callback_state(procy_state_t *state) {
   if (state == NULL) {
     return;
   }

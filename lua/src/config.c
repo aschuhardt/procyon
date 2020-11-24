@@ -5,7 +5,7 @@
 
 #include "argparse.h"
 
-static const char* usage[] = {
+static const char *usage[] = {
     "procyon [--(log level)] [-e|--entry (file path)]\n"
     "Log levels: error (default), warn, info, debug, trace",
     NULL};
@@ -21,11 +21,11 @@ static const int LOG_LEVEL_WARN = 1 << 2;
 static const int LOG_LEVEL_DEBUG = 1 << 3;
 static const int LOG_LEVEL_TRACE = 1 << 4;
 
-bool parse_config_args(int argc, const char** argv, config_t* cfg) {
+bool parse_config_args(int argc, const char **argv, config_t *cfg) {
   // setup available command-line arguments and their descriptions
   int log_level = LOG_LEVEL_INFO;
   bool log_quiet = false;
-  const char* entry_path = NULL;
+  const char *entry_path = NULL;
 
   cfg->window_w = DEFAULT_WINDOW_W;
   cfg->window_h = DEFAULT_WINDOW_H;

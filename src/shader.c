@@ -13,9 +13,9 @@
 
 typedef procy_shader_program_t shader_program_t;
 
-static bool compile_shader(const char* data, int shader_type, GLuint* index) {
+static bool compile_shader(const char *data, int shader_type, GLuint *index) {
   *index = glCreateShader(shader_type);
-  const GLchar* vert_source[1] = {data};
+  const GLchar *vert_source[1] = {data};
   GL_CHECK(glShaderSource(*index, 1, vert_source, NULL));
   GL_CHECK(glCompileShader(*index));
 
@@ -43,7 +43,7 @@ static bool compile_shader(const char* data, int shader_type, GLuint* index) {
 /* --------------------------- */
 
 bool procy_link_shader_program(unsigned int vert, unsigned int frag,
-                               unsigned int* index) {
+                               unsigned int *index) {
   *index = glCreateProgram();
   GL_CHECK(glAttachShader(*index, vert));
   GL_CHECK(glAttachShader(*index, frag));
@@ -70,15 +70,15 @@ bool procy_link_shader_program(unsigned int vert, unsigned int frag,
   return true;
 }
 
-bool procy_compile_vert_shader(const char* data, unsigned int* index) {
+bool procy_compile_vert_shader(const char *data, unsigned int *index) {
   return compile_shader(data, GL_VERTEX_SHADER, index);
 }
 
-bool procy_compile_frag_shader(const char* data, unsigned int* index) {
+bool procy_compile_frag_shader(const char *data, unsigned int *index) {
   return compile_shader(data, GL_FRAGMENT_SHADER, index);
 }
 
-void procy_destroy_shader_program(shader_program_t* shader) {
+void procy_destroy_shader_program(shader_program_t *shader) {
   if (shader == NULL) {
     return;
   }
@@ -100,4 +100,3 @@ void procy_destroy_shader_program(shader_program_t* shader) {
 
   shader->valid = false;
 }
-

@@ -27,13 +27,13 @@
 #define M_PI_2 1.57079632679
 #endif
 
-static int set_scale(lua_State* L) {
+static int set_scale(lua_State *L) {
   if (!verify_arg_count(L, 1, __func__)) {
     return 0;
   }
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
   lua_pop(L, 1);
 
   if (lua_isnumber(L, -1)) {
@@ -43,11 +43,11 @@ static int set_scale(lua_State* L) {
   return 0;
 }
 
-static int draw_string(lua_State* L) {
+static int draw_string(lua_State *L) {
   size_t length = 0;
   int x = lua_tointeger(L, 1);
   int y = lua_tointeger(L, 2);
-  const char* contents = lua_tolstring(L, 3, &length);
+  const char *contents = lua_tolstring(L, 3, &length);
   procy_color_t forecolor = lua_gettop(L) >= 4 ? get_color(L, 4) : WHITE;
   procy_color_t backcolor = lua_gettop(L) >= 5 ? get_color(L, 5) : BLACK;
 
@@ -56,7 +56,7 @@ static int draw_string(lua_State* L) {
   lua_pop(L, lua_gettop(L));
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
   int glyph_w = 0, glyph_h = 0;
   procy_get_glyph_size(window, &glyph_w, &glyph_h);
@@ -74,20 +74,20 @@ static int draw_string(lua_State* L) {
       int offset = 2;
 
       switch (contents[i + 1]) {
-        case 'b':
-          bold = !bold;
-          break;
-        case 'i': {
-          procy_color_t tmp = forecolor;
-          forecolor = backcolor;
-          backcolor = tmp;
-        } break;
-        case '%':
-          // escape the following '%' by skipping only the current one
-          offset = 1;
-          break;
-        default:
-          goto no_mod;
+      case 'b':
+        bold = !bold;
+        break;
+      case 'i': {
+        procy_color_t tmp = forecolor;
+        forecolor = backcolor;
+        backcolor = tmp;
+      } break;
+      case '%':
+        // escape the following '%' by skipping only the current one
+        offset = 1;
+        break;
+      default:
+        goto no_mod;
       }
 
       // offset the position in order to compensate for the
@@ -105,14 +105,14 @@ static int draw_string(lua_State* L) {
 
   no_mod:
     op = procy_create_draw_op_string_colored(x, y, size, forecolor, backcolor,
-                                             contents, i, vertical, bold);
+                                             contents, i, bold);
     procy_append_draw_op(window, &op);
   }
 
   return 0;
 }
 
-static int draw_rect(lua_State* L) {
+static int draw_rect(lua_State *L) {
   int x = lua_tointeger(L, 1);
   int y = lua_tointeger(L, 2);
   int w = lua_tointeger(L, 3);
@@ -123,7 +123,7 @@ static int draw_rect(lua_State* L) {
   lua_pop(L, lua_gettop(L));
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
   procy_draw_op_t op = procy_create_draw_op_rect(x, y, w, h, color);
   procy_append_draw_op(window, &op);
@@ -131,7 +131,7 @@ static int draw_rect(lua_State* L) {
   return 0;
 }
 
-static int draw_line(lua_State* L) {
+static int draw_line(lua_State *L) {
   int x1 = lua_tointeger(L, 1);
   int y1 = lua_tointeger(L, 2);
   int x2 = lua_tointeger(L, 3);
@@ -142,7 +142,7 @@ static int draw_line(lua_State* L) {
   lua_pop(L, lua_gettop(L));
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
   procy_draw_op_t op = procy_create_draw_op_line(x1, y1, x2, y2, color);
   procy_append_draw_op(window, &op);
@@ -150,7 +150,7 @@ static int draw_line(lua_State* L) {
   return 0;
 }
 
-static int draw_polygon(lua_State* L) {
+static int draw_polygon(lua_State *L) {
   int x = lua_tointeger(L, 1);
   int y = lua_tointeger(L, 2);
   float radius = lua_tonumber(L, 3);
@@ -161,7 +161,7 @@ static int draw_polygon(lua_State* L) {
   lua_pop(L, lua_gettop(L));
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
-  procy_window_t* window = (procy_window_t*)lua_touserdata(L, -1);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
   float interval = (2.0F * (float)M_PI) / (float)n;
   for (float theta = 0.0F; theta < 2.0F * M_PI; theta += interval) {
@@ -180,7 +180,7 @@ static int draw_polygon(lua_State* L) {
   return 0;
 }
 
-static int from_rgb(lua_State* L) {
+static int from_rgb(lua_State *L) {
   if (!verify_arg_count(L, 3, __func__)) {
     return 0;
   }
@@ -194,7 +194,7 @@ static int from_rgb(lua_State* L) {
   return 1;
 }
 
-static void add_draw_ops_table(lua_State* L) {
+static void add_draw_ops_table(lua_State *L) {
   lua_newtable(L);
 
   lua_pushcfunction(L, draw_string);
@@ -215,7 +215,7 @@ static void add_draw_ops_table(lua_State* L) {
   lua_setglobal(L, TBL_DRAWING);
 }
 
-static void add_color_table(lua_State* L) {
+static void add_color_table(lua_State *L) {
   lua_newtable(L);
 
   lua_pushcfunction(L, from_rgb);
@@ -224,7 +224,7 @@ static void add_color_table(lua_State* L) {
   lua_setglobal(L, TBL_COLOR);
 }
 
-void add_drawing(lua_State* L, script_env_t* env) {
+void add_drawing(lua_State *L, script_env_t *env) {
   add_draw_ops_table(L);
   add_color_table(L);
 }

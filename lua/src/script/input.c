@@ -13,9 +13,9 @@
 
 #define CHAR_MAX_CODEPOINT 255
 
-static void handle_key_pressed(procy_state_t* const state, procy_key_info_t key,
+static void handle_key_pressed(procy_state_t *const state, procy_key_info_t key,
                                bool shift, bool ctrl, bool alt) {
-  lua_State* L = ((script_env_t*)state->data)->L;
+  lua_State *L = ((script_env_t *)state->data)->L;
 
   lua_getglobal(L, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_KEYPRESS);
@@ -31,10 +31,10 @@ static void handle_key_pressed(procy_state_t* const state, procy_key_info_t key,
   }
 }
 
-static void handle_key_released(procy_state_t* const state,
+static void handle_key_released(procy_state_t *const state,
                                 procy_key_info_t key, bool shift, bool ctrl,
                                 bool alt) {
-  lua_State* L = ((script_env_t*)state->data)->L;
+  lua_State *L = ((script_env_t *)state->data)->L;
 
   lua_getglobal(L, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_KEYRELEASE);
@@ -50,7 +50,7 @@ static void handle_key_released(procy_state_t* const state,
   }
 }
 
-static void handle_char_entered(procy_state_t* const state,
+static void handle_char_entered(procy_state_t *const state,
                                 unsigned int codepoint) {
   // for the time being we're using a font that only supports so-called
   // "extended ASCII", up to value 255
@@ -58,14 +58,14 @@ static void handle_char_entered(procy_state_t* const state,
     return;
   }
 
-  lua_State* L = ((script_env_t*)state->data)->L;
+  lua_State *L = ((script_env_t *)state->data)->L;
 
   lua_getglobal(L, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_CHAR);
   if (lua_isfunction(L, -1)) {
     char buffer[2] = {(char)codepoint,
-                      '\0'};  // pass the truncated codepoint, followed by a
-                              // null-terminator as a two-byte string
+                      '\0'}; // pass the truncated codepoint, followed by a
+                             // null-terminator as a two-byte string
     lua_pushstring(L, &buffer[0]);
     if (lua_pcall(L, 1, 0, 0) == LUA_ERRRUN) {
       log_error("Error calling %s.%s: %s", TBL_INPUT, FUNC_EVENTS_CHAR,
@@ -74,14 +74,14 @@ static void handle_char_entered(procy_state_t* const state,
   }
 }
 
-static void add_event_handler_table(lua_State* L) {
+static void add_event_handler_table(lua_State *L) {
   lua_newtable(L);
   lua_setglobal(L, TBL_INPUT);
 }
 
-static void add_keys(lua_State* L) {
+static void add_keys(lua_State *L) {
   size_t keys_count = 0;
-  procy_key_info_t* keys = NULL;
+  procy_key_info_t *keys = NULL;
   procy_get_keys(&keys, &keys_count);
 
   // store named key values
@@ -97,7 +97,7 @@ static void add_keys(lua_State* L) {
   free(keys);
 }
 
-void add_input(lua_State* L, script_env_t* env) {
+void add_input(lua_State *L, script_env_t *env) {
   add_event_handler_table(L);
   add_keys(L);
   env->state->on_key_pressed = handle_key_pressed;
