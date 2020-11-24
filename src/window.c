@@ -415,3 +415,7 @@ void procy_begin_loop(window_t *window) {
 void procy_set_clear_color(color_t c) { glClearColor(c.r, c.g, c.b, 1.0F); }
 
 void procy_close_window(procy_window_t *window) { window->quitting = true; }
+
+void procy_set_high_fps_mode(procy_window_t *window, bool high_fps) {
+  window->high_fps = high_fps;
+}

@@ -60,4 +60,6 @@ void procy_set_glyph_scale(procy_window_t *window, float scale);
 
 void procy_close_window(procy_window_t *window);
 
+void procy_set_high_fps_mode(procy_window_t *window, bool high_fps);
+
 #endif
