@@ -1,6 +1,7 @@
 #include "drawing.h"
 
 #include <string.h>
+#include <limits.h>
 
 #include "window.h"
 
@@ -13,21 +14,17 @@ typedef procy_window_t window_t;
 
 #define PROCY_MAX_DRAW_STRING_LENGTH 256
 
-static void draw_string_chars(window_t* window, int x, int y, bool bold,
-                              bool vertical, color_t fg, color_t bg,
+static void draw_string_chars(window_t* window, short x, short y, bool bold,
+                              color_t fg, color_t bg,
                               const char* contents) {
   int glyph_size;
-  if (vertical) {
-    procy_get_glyph_size(window, NULL, &glyph_size);
-  } else {
-    procy_get_glyph_size(window, &glyph_size, NULL);
-  }
+  procy_get_glyph_size(window, &glyph_size, NULL);
 
-  size_t length = strnlen(contents, PROCY_MAX_DRAW_STRING_LENGTH);
+  const size_t length = strnlen(contents, PROCY_MAX_DRAW_STRING_LENGTH);
   draw_op_t draw_op;
-  for (int i = 0; i < length; ++i) {
+  for (size_t i = 0; i < length; ++i) {
     draw_op = procy_create_draw_op_string_colored(x, y, glyph_size, fg, bg,
-                                                  contents, i, vertical, bold);
+                                                  contents, i, bold);
     procy_append_draw_op(window, &draw_op);
   }
 }
@@ -36,67 +33,48 @@ static void draw_string_chars(window_t* window, int x, int y, bool bold,
 /* Public interface definition */
 /* --------------------------- */
 
-void procy_draw_string(window_t* window, int x, int y, color_t forecolor,
+void procy_draw_string(window_t* window, short x, short y, color_t forecolor,
                        color_t backcolor, const char* contents) {
-  draw_string_chars(window, x, y, false, false, forecolor, backcolor, contents);
+  draw_string_chars(window, x, y, false, forecolor, backcolor, contents);
 }
 
-void procy_draw_string_bold(window_t* window, int x, int y, color_t forecolor,
+void procy_draw_string_bold(window_t* window, short x, short y, color_t forecolor,
                             color_t backcolor, const char* contents) {
-  draw_string_chars(window, x, y, true, false, forecolor, backcolor, contents);
+  draw_string_chars(window, x, y, true, forecolor, backcolor, contents);
 }
 
-void procy_draw_string_vertical(window_t* window, int x, int y,
-                                color_t forecolor, color_t backcolor,
-                                const char* contents) {
-  draw_string_chars(window, x, y, false, true, forecolor, backcolor, contents);
-}
-
-void procy_draw_string_vertical_bold(window_t* window, int x, int y,
-                                     color_t forecolor, color_t backcolor,
-                                     const char* contents) {
-  draw_string_chars(window, x, y, true, true, forecolor, backcolor, contents);
-}
-
-void procy_draw_rect(window_t* window, int x, int y, int width, int height,
+void procy_draw_rect(window_t* window, short x, short y, short width, short height,
                      color_t color) {
   draw_op_t op = procy_create_draw_op_rect(x, y, width, height, color);
   procy_append_draw_op(window, &op);
 }
 
-void procy_draw_line(window_t* window, int x1, int y1, int x2, int y2,
+void procy_draw_line(window_t* window, short x1, short y1, short x2, short y2,
                      color_t color) {
   draw_op_t op = procy_create_draw_op_line(x1, y1, x2, y2, color);
   procy_append_draw_op(window, &op);
 }
 
-draw_op_t procy_create_draw_op_string(int x, int y, int size,
+draw_op_t procy_create_draw_op_string(short x, short y, int size,
                                       const char* contents, size_t index,
-                                      bool vertical, bool bold) {
-  return vertical ? procy_create_draw_op_char(x, y + (int)index * size,
-                                              (char)contents[index], bold)
-                  : procy_create_draw_op_char(x + (int)index * size, y,
-                                              (char)contents[index], bold);
+                                      bool bold) {
+  return procy_create_draw_op_char((short)((x + index * size) % SHRT_MAX), y,
+                            (char)contents[index], bold);
 }
 
 draw_op_t procy_create_draw_op_string_colored(
-    int x, int y, int size, color_t forecolor, color_t backcolor,
-    const char* contents, size_t index, bool vertical, bool bold) {
-  return vertical
-             ? procy_create_draw_op_char_colored(x, y + (int)index * size,
-                                                 forecolor, backcolor,
-                                                 (char)contents[index], bold)
-
-             : procy_create_draw_op_char_colored(x + (int)index * size, y,
-                                                 forecolor, backcolor,
-                                                 (char)contents[index], bold);
+  short x, short y, int size, color_t forecolor, color_t backcolor,
+  const char* contents, size_t index, bool bold) {
+  return procy_create_draw_op_char_colored((short)((x + index * size) % SHRT_MAX), y,
+                                           forecolor, backcolor,
+                                           (char)contents[index], bold);
 }
 
-draw_op_t procy_create_draw_op_char(int x, int y, char c, bool bold) {
+draw_op_t procy_create_draw_op_char(short x, short y, char c, bool bold) {
   return procy_create_draw_op_char_colored(x, y, WHITE, BLACK, c, bold);
 }
 
-draw_op_t procy_create_draw_op_char_colored(int x, int y, color_t forecolor,
+draw_op_t procy_create_draw_op_char_colored(short x, short y, color_t forecolor,
                                             color_t backcolor, char c,
                                             bool bold) {
   draw_op_t op = {forecolor, backcolor, DRAW_OP_TEXT, x, y};
@@ -105,7 +83,7 @@ draw_op_t procy_create_draw_op_char_colored(int x, int y, color_t forecolor,
   return op;
 }
 
-procy_draw_op_t procy_create_draw_op_rect(int x, int y, int width, int height,
+procy_draw_op_t procy_create_draw_op_rect(short x, short y, short width, short height,
                                           color_t color) {
   draw_op_t op = {color, color, DRAW_OP_RECT, x, y};
   op.data.rect.width = width;
@@ -113,7 +91,7 @@ procy_draw_op_t procy_create_draw_op_rect(int x, int y, int width, int height,
   return op;
 }
 
-procy_draw_op_t procy_create_draw_op_line(int x1, int y1, int x2, int y2,
+procy_draw_op_t procy_create_draw_op_line(short x1, short y1, short x2, short y2,
                                           color_t color) {
   draw_op_t op = {color, color, DRAW_OP_LINE, x1, y1};
   op.data.line.x2 = x2;

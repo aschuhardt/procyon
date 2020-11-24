@@ -20,18 +20,18 @@ int main(int argc, const char** argv) {
 
   // get input file size
   fseek(in_file, 0, SEEK_END);
-  unsigned long in_size = ftell(in_file);
+  const unsigned long in_size = ftell(in_file);
 
   // write include-guards and declarations
   fprintf(out_file, "#ifndef %s_H\n", name);
   fprintf(out_file, "#define %s_H\n", name);
 
   // +1 to length to account for null terminator
-  fprintf(out_file, "const unsigned char %s[%zu] = { ", name, in_size + 1);
+  fprintf(out_file, "const unsigned char %s[%lu] = { ", name, in_size + 1);
 
   // allocate a buffer on the stack,
   unsigned char buffer[4096];
-  size_t buffer_len = sizeof(buffer) / sizeof(unsigned char);
+  const size_t buffer_len = sizeof(buffer) / sizeof(unsigned char);
 
   // reset cursor position for input file and perform buffered reading
   fseek(in_file, 0, SEEK_SET);
@@ -59,6 +59,6 @@ int main(int argc, const char** argv) {
       "GenHexer input: %s,\n"
       "         output: %s,\n"
       "         name: %s\n"
-      "         size: %zu bytes\n",
+      "         size: %lu bytes\n",
       in_path, out_path, name, in_size);
 }

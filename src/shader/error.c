@@ -22,10 +22,10 @@ const char* gl_error_string(int err) {
   }
 }
 
-void gl_print_errors(int line, const char* file) {
+void gl_print_errors(int line, const char* expr, const char* file) {
   GLenum err = glGetError();
   while (err != GL_NO_ERROR) {
-    log_error("OpenGL error (%s: %d): %s", file, line,
+    log_error("OpenGL error calling %s (%s: %d): %s", expr, file, line,
               gl_error_string((int)err));
     err = glGetError();
   }

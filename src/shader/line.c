@@ -11,6 +11,8 @@
 #include "gen/line_vert.h"
 #include "shader/error.h"
 
+#include <log.h>
+
 typedef procy_line_shader_program_t line_shader_program_t;
 typedef procy_window_t window_t;
 typedef procy_color_t color_t;
@@ -28,28 +30,9 @@ static const size_t VBO_LINE_POSITION = 0;
 static const size_t ATTR_LINE_POSITION = 0;
 static const size_t ATTR_LINE_COLOR = 1;
 
-static const size_t VERTICES_PER_LINE = 2;
+#define VERTICES_PER_LINE 2
 
-static size_t count_lines_in_ops_buffer(draw_op_t* ops, size_t n) {
-  size_t count = 0;
-  for (int i = 0; i < n; i++) {
-    if (ops[i].type == DRAW_OP_LINE) {
-      ++count;
-    }
-  }
-
-  return count;
-}
-
-static void update_buffer_size(line_shader_program_t* shader,
-                               size_t line_count) {
-  if (shader->line_count != line_count) {
-    shader->vertex_buffer =
-        realloc(shader->vertex_buffer,
-                line_count * VERTICES_PER_LINE * sizeof(line_vertex_t));
-    shader->line_count = line_count;
-  }
-}
+#define DRAW_BATCH_SIZE 4096
 
 /* --------------------------- */
 /* Public interface definition */
@@ -58,26 +41,30 @@ static void update_buffer_size(line_shader_program_t* shader,
 line_shader_program_t* procy_create_line_shader() {
   line_shader_program_t* line_shader = malloc(sizeof(line_shader_program_t));
 
-  line_shader->line_count = 0;
-  line_shader->vertex_buffer = NULL;
+  if (line_shader == NULL) {
+    log_error("Failed to allocate memory for line shader");
+    return NULL;
+  }
 
-  shader_program_t* prog = &line_shader->program;
-  if ((prog->valid =
-           procy_compile_vert_shader((char*)embed_line_vert, &prog->vertex) &&
+  line_shader->vertex_batch_buffer = malloc(sizeof(line_vertex_t) * DRAW_BATCH_SIZE * VERTICES_PER_LINE);
+
+  shader_program_t* program= &line_shader->program;
+  if ((program->valid =
+           procy_compile_vert_shader((char*)embed_line_vert, &program->vertex) &&
            procy_compile_frag_shader((char*)embed_line_frag,
-                                     &prog->fragment))) {
-    GL_CHECK(glGenVertexArrays(1, &prog->vao));
-    GL_CHECK(glBindVertexArray(prog->vao));
+                                     &program->fragment))) {
+    GL_CHECK(glGenVertexArrays(1, &program->vao));
+    GL_CHECK(glBindVertexArray(program->vao));
 
-    prog->vbo_count = 1;
-    prog->vbo = malloc(sizeof(GLuint) * prog->vbo_count);
-    GL_CHECK(glGenBuffers(prog->vbo_count, prog->vbo));
+    program->vbo_count = 1;
+    program->vbo = malloc(sizeof(GLuint) * program->vbo_count);
+    GL_CHECK(glGenBuffers((int)program->vbo_count, program->vbo));
 
-    prog->valid &=
-        procy_link_shader_program(prog->vertex, prog->fragment, &prog->program);
+    program->valid &=
+        procy_link_shader_program(program->vertex, program->fragment, &program->program);
 
-    if (prog->valid) {
-      line_shader->u_ortho = glGetUniformLocation(prog->program, "u_Ortho");
+    if (program->valid) {
+      line_shader->u_ortho = glGetUniformLocation(program->program, "u_Ortho");
     }
   }
 
@@ -88,54 +75,17 @@ void procy_destroy_line_shader(line_shader_program_t* shader) {
   if (shader != NULL) {
     procy_destroy_shader_program(&shader->program);
 
-    if (shader->vertex_buffer != NULL) {
-      free(shader->vertex_buffer);
+    if (shader->vertex_batch_buffer != NULL) {
+      free(shader->vertex_batch_buffer);
     }
 
     free(shader);
   }
 }
 
-void procy_draw_line_shader(line_shader_program_t* shader,
-                            struct procy_window_t* window) {
-  size_t ops_count = window->draw_ops.length;
-  draw_op_t* ops_buffer = window->draw_ops.buffer;
-  size_t line_count = count_lines_in_ops_buffer(ops_buffer, ops_count);
-  if (line_count == 0) {
-    return;
-  }
-
-  update_buffer_size(shader, line_count);
-
-  line_vertex_t* vertices = ((line_vertex_t*)shader->vertex_buffer);
-
-  size_t line_index = 0;
-  for (size_t i = 0; i < ops_count; ++i) {
-    draw_op_t* op = &ops_buffer[i];
-    if (op->type != DRAW_OP_LINE) {
-      continue;
-    }
-
-    size_t vert_ix = line_index++ * VERTICES_PER_LINE;
-
-    line_vertex_t start = {(float)op->x, (float)op->y, op->forecolor};
-    line_vertex_t end = {(float)op->data.line.x2, (float)op->data.line.y2,
-                         op->forecolor};
-
-    vertices[vert_ix] = start;
-    vertices[vert_ix + 1] = end;
-  }
-
-  shader_program_t* prog = &shader->program;
-  GL_CHECK(glUseProgram(prog->program));
-
-  GL_CHECK(
-      glUniformMatrix4fv(shader->u_ortho, 1, GL_FALSE, &window->ortho[0][0]));
-
-  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, prog->vbo[VBO_LINE_POSITION]));
-  GL_CHECK(glBufferData(GL_ARRAY_BUFFER,
-                        line_count * VERTICES_PER_LINE * sizeof(line_vertex_t),
-                        vertices, GL_STATIC_DRAW));
+static void enable_shader_attributes(shader_program_t* program) {
+  GL_CHECK(glBindVertexArray(program->vao));
+  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_LINE_POSITION]));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_LINE_POSITION));
   GL_CHECK(glVertexAttribPointer(ATTR_LINE_POSITION, 2, GL_FLOAT, GL_FALSE,
@@ -145,13 +95,65 @@ void procy_draw_line_shader(line_shader_program_t* shader,
   GL_CHECK(glVertexAttribPointer(ATTR_LINE_COLOR, 3, GL_FLOAT, GL_FALSE,
                                  sizeof(line_vertex_t),
                                  (void*)(2 * sizeof(float))));
+}
+
+static void draw_line_batch(shader_program_t* const program, line_vertex_t* const vertices, long line_count) {
+  int buffer_size;
+
+  const int vertex_buffer_size = line_count * VERTICES_PER_LINE * sizeof(line_vertex_t);
+  GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_LINE_POSITION]));
+  GL_CHECK(glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size));
+  if (buffer_size == vertex_buffer_size) {
+    GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, vertex_buffer_size, vertices));
+  } else {
+    GL_CHECK(glBufferData(GL_ARRAY_BUFFER, vertex_buffer_size,
+        vertices, GL_STATIC_DRAW));
+  }
 
   GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
-
   GL_CHECK(glDrawArrays(GL_LINES, 0, line_count * VERTICES_PER_LINE));
+}
 
-  GL_CHECK(glDisableVertexAttribArray(ATTR_LINE_POSITION));
-  GL_CHECK(glDisableVertexAttribArray(ATTR_LINE_COLOR));
-  GL_CHECK(glUseProgram(0));
+void procy_draw_line_shader(line_shader_program_t* shader,
+                            struct procy_window_t* window) {
+  draw_op_t* ops_buffer = window->draw_ops.buffer;
+  line_vertex_t* vertex_batch = shader->vertex_batch_buffer;
+
+  shader_program_t* program = &shader->program;
+  GL_CHECK(glUseProgram(program->program));
+
+  GL_CHECK(
+      glUniformMatrix4fv(shader->u_ortho, 1, GL_FALSE, &window->ortho[0][0]));
+
+  enable_shader_attributes(program);
+
+  long batch_index = -1;
+  for (size_t i = 0; i < window->draw_ops.length; ++i) {
+    draw_op_t* op = &ops_buffer[i];
+    if (op->type != DRAW_OP_LINE) {
+      continue;
+    }
+
+    ++batch_index;
+
+    const size_t vert_index = (size_t)batch_index * VERTICES_PER_LINE;
+
+    vertex_batch[vert_index] = (line_vertex_t) {(float)op->x, (float)op->y, op->forecolor};
+    vertex_batch[vert_index + 1] = (line_vertex_t){(float)op->data.line.x2, (float)op->data.line.y2,
+                         op->forecolor};
+
+    if (batch_index == DRAW_BATCH_SIZE - 1) {
+      draw_line_batch(program, vertex_batch, batch_index + 1);
+      batch_index = -1;
+    }
+  }
+
+  if (batch_index >= 0) {
+    draw_line_batch(program, vertex_batch, (size_t)batch_index + 1);
+  }
+
+  glDisableVertexAttribArray(ATTR_LINE_POSITION);
+  glDisableVertexAttribArray(ATTR_LINE_COLOR);
+  glUseProgram(0);
 }
 

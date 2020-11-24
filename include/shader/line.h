@@ -6,8 +6,7 @@
 typedef struct procy_line_shader_program_t {
   unsigned int u_ortho;
   procy_shader_program_t program;
-  void* vertex_buffer;
-  size_t line_count;
+  void* vertex_batch_buffer;
 } procy_line_shader_program_t;
 
 procy_line_shader_program_t* procy_create_line_shader();

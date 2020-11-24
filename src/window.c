@@ -17,6 +17,7 @@
 #include "keys.h"
 #include "state.h"
 
+
 typedef procy_window_t window_t;
 typedef procy_shaders_t shaders_t;
 typedef procy_draw_op_t draw_op_t;
@@ -207,7 +208,15 @@ static void init_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
 static void expand_draw_ops_buffer(draw_op_buffer_t* draw_ops) {
   draw_ops->capacity *= 2;
   size_t buffer_size = draw_ops->capacity * sizeof(draw_op_t);
-  draw_ops->buffer = realloc(draw_ops->buffer, buffer_size);
+  draw_op_t* resized = realloc(draw_ops->buffer, buffer_size);
+  if (resized == NULL) {
+    free(draw_ops->buffer);
+    draw_ops->buffer = malloc(0);
+    draw_ops->capacity = 1;
+    draw_ops->length = 0;
+  } else {
+    draw_ops->buffer = resized;
+  }
 
   log_trace("Expanded string draw ops buffer size to %zu bytes", buffer_size);
 }
@@ -260,6 +269,12 @@ static void init_shaders(window_t* window, float text_scale) {
   window->shaders.line = procy_create_line_shader();
 }
 
+static void log_opengl_info() {
+  log_debug("Vendor: %s", glGetString(GL_VENDOR));
+  log_debug("Renderer: %s", glGetString(GL_RENDERER));
+  log_debug("OpenGL Version: %s", glGetString(GL_VERSION));
+}
+
 /* --------------------------- */
 /* Public interface definition */
 /* --------------------------- */
@@ -269,7 +284,8 @@ window_t* procy_create_window(int width, int height, const char* title,
   glfwSetErrorCallback(glfw_error_callback);
   window_t* window = malloc(sizeof(window_t));
 
-  if (set_gl_window_pointer(window, width, height, title)) {
+  if (window != NULL && set_gl_window_pointer(window, width, height, title)) {
+    log_opengl_info();
     init_shaders(window, text_scale);
     set_ortho_projection(window, width, height);
     set_event_callbacks(window);
@@ -368,7 +384,7 @@ void procy_begin_loop(window_t* window) {
     if (window->high_fps) {
       glfwPollEvents();
     } else {
-      glfwWaitEventsTimeout(1.0F);
+      glfwWaitEventsTimeout(1.0);
     }
 
     GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
