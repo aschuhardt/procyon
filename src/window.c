@@ -210,7 +210,7 @@ static void expand_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
   draw_op_t *resized = realloc(draw_ops->buffer, buffer_size);
   if (resized == NULL) {
     free(draw_ops->buffer);
-    draw_ops->buffer = malloc(0);
+    draw_ops->buffer = malloc(INITIAL_DRAW_OPS_BUFFER_SIZE);
     draw_ops->capacity = 1;
     draw_ops->length = 0;
   } else {

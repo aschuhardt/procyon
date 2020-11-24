@@ -115,7 +115,7 @@ static void draw_rect_batch(shader_program_t *const program,
   int buffer_size;
 
   // copy vertex data to video memory
-  const int vertex_buffer_size =
+  const size_t vertex_buffer_size =
       rect_count * VERTICES_PER_RECT * sizeof(rect_vertex_t);
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_RECT_POSITION]));
   GL_CHECK(
@@ -128,7 +128,7 @@ static void draw_rect_batch(shader_program_t *const program,
   }
 
   // copy indices
-  const int index_buffer_size =
+  const size_t index_buffer_size =
       rect_count * INDICES_PER_RECT * sizeof(GLushort);
   GL_CHECK(
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, program->vbo[VBO_RECT_INDICES]));

@@ -102,7 +102,7 @@ static void draw_line_batch(shader_program_t *const program,
                             line_vertex_t *const vertices, long line_count) {
   int buffer_size;
 
-  const int vertex_buffer_size =
+  const size_t vertex_buffer_size =
       line_count * VERTICES_PER_LINE * sizeof(line_vertex_t);
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_LINE_POSITION]));
   GL_CHECK(
@@ -154,7 +154,7 @@ void procy_draw_line_shader(line_shader_program_t *shader,
   }
 
   if (batch_index >= 0) {
-    draw_line_batch(program, vertex_batch, (size_t)batch_index + 1);
+    draw_line_batch(program, vertex_batch, batch_index + 1);
   }
 
   glDisableVertexAttribArray(ATTR_LINE_POSITION);

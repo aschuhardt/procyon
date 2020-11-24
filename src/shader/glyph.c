@@ -91,8 +91,8 @@ static void disable_shader_attributes() {
   glDisableVertexAttribArray(ATTR_GLYPH_BOLD);
 }
 
-static glyph_vertex_bounds_t
-compute_glyph_vertex_bounds(glyph_shader_program_t *const shader) {
+static glyph_vertex_bounds_t compute_glyph_vertex_bounds(
+    glyph_shader_program_t *const shader) {
   return (glyph_vertex_bounds_t){
       shader->glyph_scale, (float)shader->texture_w / GLYPH_WIDTH_COUNT,
       (float)shader->texture_h / GLYPH_HEIGHT_COUNT,
@@ -166,11 +166,11 @@ static void load_glyph_font(glyph_shader_program_t *shader) {
 
 static void draw_glyph_batch(shader_program_t *const program,
                              glyph_vertex_t *const vertices,
-                             GLushort *const indices, long glyph_count) {
+                             GLushort *const indices, size_t glyph_count) {
   int buffer_size;
 
   // copy vertex data to video memory
-  const int vertex_buffer_size =
+  const size_t vertex_buffer_size =
       glyph_count * VERTICES_PER_GLYPH * sizeof(glyph_vertex_t);
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_GLYPH_POSITION]));
   GL_CHECK(
@@ -183,7 +183,7 @@ static void draw_glyph_batch(shader_program_t *const program,
   }
 
   // copy indices
-  const int index_buffer_size =
+  const size_t index_buffer_size =
       glyph_count * INDICES_PER_GLYPH * sizeof(GLushort);
   GL_CHECK(
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, program->vbo[VBO_GLYPH_INDICES]));
