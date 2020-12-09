@@ -37,16 +37,15 @@ void procy_draw_string(window_t *window, short x, short y, color_t forecolor,
   draw_string_chars(window, x, y, false, forecolor, backcolor, contents);
 }
 
-void procy_draw_char(struct procy_window_t *window, short x, short y,
-                     procy_color_t forecolor, procy_color_t backcolor, char c) {
+void procy_draw_char(window_t *window, short x, short y, color_t forecolor,
+                     color_t backcolor, char c) {
   draw_op_t op =
       procy_create_draw_op_char_colored(x, y, forecolor, backcolor, c, false);
   procy_append_draw_op(window, &op);
 }
 
-void procy_draw_char_bold(struct procy_window_t *window, short x, short y,
-                          procy_color_t forecolor, procy_color_t backcolor,
-                          char c) {
+void procy_draw_char_bold(window_t *window, short x, short y, color_t forecolor,
+                          color_t backcolor, char c) {
   draw_op_t op =
       procy_create_draw_op_char_colored(x, y, forecolor, backcolor, c, true);
   procy_append_draw_op(window, &op);
