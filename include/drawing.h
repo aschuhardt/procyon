@@ -36,6 +36,13 @@ void procy_draw_string(struct procy_window_t *window, short x, short y,
                        procy_color_t forecolor, procy_color_t backcolor,
                        const char *contents);
 
+void procy_draw_char(struct procy_window_t *window, short x, short y,
+                     procy_color_t forecolor, procy_color_t backcolor, char c);
+
+void procy_draw_char_bold(struct procy_window_t *window, short x, short y,
+                          procy_color_t forecolor, procy_color_t backcolor,
+                          char c);
+
 void procy_draw_string_bold(struct procy_window_t *window, short x, short y,
                             procy_color_t forecolor, procy_color_t backcolor,
                             const char *contents);
