@@ -51,8 +51,6 @@ static int draw_string(lua_State *L) {
   procy_color_t forecolor = lua_gettop(L) >= 4 ? get_color(L, 4) : WHITE;
   procy_color_t backcolor = lua_gettop(L) >= 5 ? get_color(L, 5) : BLACK;
 
-  bool vertical = lua_gettop(L) >= 6 ? lua_toboolean(L, 6) : false;
-
   lua_pop(L, lua_gettop(L));
 
   lua_getglobal(L, GLOBAL_WINDOW_PTR);
@@ -60,7 +58,7 @@ static int draw_string(lua_State *L) {
 
   int glyph_w = 0, glyph_h = 0;
   procy_get_glyph_size(window, &glyph_w, &glyph_h);
-  int size = vertical ? glyph_h : glyph_w;
+
   bool bold = false;
   procy_draw_op_t op;
   for (size_t i = 0; i < length; i++) {
@@ -74,29 +72,25 @@ static int draw_string(lua_State *L) {
       int offset = 2;
 
       switch (contents[i + 1]) {
-      case 'b':
-        bold = !bold;
-        break;
-      case 'i': {
-        procy_color_t tmp = forecolor;
-        forecolor = backcolor;
-        backcolor = tmp;
-      } break;
-      case '%':
-        // escape the following '%' by skipping only the current one
-        offset = 1;
-        break;
-      default:
-        goto no_mod;
+        case 'b':
+          bold = !bold;
+          break;
+        case 'i': {
+          procy_color_t tmp = forecolor;
+          forecolor = backcolor;
+          backcolor = tmp;
+        } break;
+        case '%':
+          // escape the following '%' by skipping only the current one
+          offset = 1;
+          break;
+        default:
+          goto no_mod;
       }
 
       // offset the position in order to compensate for the
       // characters that are not being drawn
-      if (vertical) {
-        y -= glyph_h * offset;
-      } else {
-        x -= glyph_w * offset;
-      }
+      x -= glyph_w * offset;
 
       // skip the modifier char which follows '%'
       i += offset - 1;
@@ -104,8 +98,8 @@ static int draw_string(lua_State *L) {
     }
 
   no_mod:
-    op = procy_create_draw_op_string_colored(x, y, size, forecolor, backcolor,
-                                             contents, i, bold);
+    op = procy_create_draw_op_string_colored(x, y, glyph_w, forecolor,
+                                             backcolor, contents, i, bold);
     procy_append_draw_op(window, &op);
   }
 

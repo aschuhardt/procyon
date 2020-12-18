@@ -10,23 +10,20 @@ int main(int argc, const char **argv) {
     return -1;
   }
 
-  procy_state_t state;
-  state.children = NULL;
-  state.child_count = 0;
-  state.data = NULL;
+  procy_state_t *state = procy_create_state();
 
   bool reload = false;
   do {
     // create window object
     procy_window_t *window =
         procy_create_window(config.window_w, config.window_h, "Procyon Lua",
-                            config.glyph_scale, &state);
+                            config.glyph_scale, state);
     if (window == NULL) {
       log_error("Failed to create window");
     } else {
       // create script environment object
-      script_env_t *script_env = create_script_env(window, &state);
-      state.data = script_env;
+      script_env_t *script_env = create_script_env(window, state);
+      state->data = script_env;
       if (script_env == NULL) {
         log_error("Failed to create script environment object");
       } else {
@@ -47,6 +44,8 @@ int main(int argc, const char **argv) {
 
     procy_destroy_window(window);
   } while (reload);
+
+  procy_destroy_state(state);
 
   return 0;
 }

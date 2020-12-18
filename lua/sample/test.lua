@@ -16,10 +16,6 @@ window.on_draw = function(seconds)
   draw.rect(230, 150, 30, 20, color.from_rgb(1, 0, 0))
 
   draw.poly(200, 170, 20, 7) 
-
-  -- add a sixth argument to indicate whether text is drawn vertically
-  draw.string(100, 100 + gh * 2, "This text is vertical!",
-    color.from_rgb(0.5, 0.1, 1.0), color.from_rgb(0, 0, 0), true)
 end
 
 input.on_char_entered = function(c)

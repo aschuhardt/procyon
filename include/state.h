@@ -34,6 +34,8 @@ typedef struct procy_state_t {
   procy_on_char_entered_callback_t on_char_entered;
 } procy_state_t;
 
+procy_state_t *procy_create_state();
+
 procy_state_t *procy_create_callback_state(
     procy_on_load_callback_t on_load, procy_on_unload_callback_t on_unload,
     procy_on_draw_callback_t on_draw, procy_on_resize_callback_t on_resize,
@@ -43,6 +45,6 @@ procy_state_t *procy_create_callback_state(
 
 void procy_append_child_state(procy_state_t *parent, procy_state_t *child);
 
-void procy_destroy_callback_state(procy_state_t *state);
+void procy_destroy_state(procy_state_t *state);
 
 #endif

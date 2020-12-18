@@ -46,7 +46,8 @@ void on_unload(procy_state_t* state) {
   bench_state_t* data = (bench_state_t*)state->data;
   for (int i = 0; i < TEST_COMPLETE; ++i) {
     for (int j = 0; j < TEST_COUNT; ++j) {
-      log_info("(Test %d) %zu draws => avg. %f FPS", i, data->test_draw_counts[j],
+      log_info("(Test %d) %zu draws => avg. %f FPS", i,
+               data->test_draw_counts[j],
                1.0 / data->test_results_by_mode[i][j]);
     }
 
@@ -68,7 +69,8 @@ void on_draw(procy_state_t* state, double time) {
     for (int i = 0; i < FPS_AVG_BUFFER_SIZE; ++i) {
       avg += data->avg_buffer[i];
     }
-    data->test_results_by_mode[data->test_mode][data->test_index++] = avg / (double)FPS_AVG_BUFFER_SIZE;
+    data->test_results_by_mode[data->test_mode][data->test_index++] =
+        avg / (double)FPS_AVG_BUFFER_SIZE;
     data->avg_buffer_index = 0;
   }
 
@@ -83,16 +85,19 @@ void on_draw(procy_state_t* state, double time) {
 
   for (size_t i = 0; i < data->test_draw_counts[data->test_index]; ++i) {
     switch (data->test_mode) {
-    case TEST_MODE_STRING:
-      procy_draw_string(data->window, 200 + (i * 2 % 200), 200 + (i * 3 % 200), yellow, black, "butts");
+      case TEST_MODE_STRING:
+        procy_draw_string(data->window, 200 + (i * 2 % 200),
+                          200 + (i * 3 % 200), yellow, black, "butts");
         break;
-    case TEST_MODE_RECT: 
-        procy_draw_rect(data->window, 200 + (i * 2 % 200), 200 + (i * 3 % 200), 30, 30, yellow);
+      case TEST_MODE_RECT:
+        procy_draw_rect(data->window, 200 + (i * 2 % 200), 200 + (i * 3 % 200),
+                        30, 30, yellow);
         break;
-    case TEST_MODE_LINE:
-        procy_draw_line(data->window, 200 + (i * 2 % 200), 200 + (i * 3 % 200), 0, 0, yellow);
+      case TEST_MODE_LINE:
+        procy_draw_line(data->window, 200 + (i * 2 % 200), 200 + (i * 3 % 200),
+                        0, 0, yellow);
         break;
-    case TEST_COMPLETE:
+      case TEST_COMPLETE:
         break;
     }
   }
@@ -102,7 +107,8 @@ void on_draw(procy_state_t* state, double time) {
   procy_draw_string(data->window, 0, 0, yellow, black, fps_text);
 
   char draw_count_text[32];
-  sprintf(draw_count_text, "Count: %zu", data->test_draw_counts[data->test_index]);
+  sprintf(draw_count_text, "Count: %zu",
+          data->test_draw_counts[data->test_index]);
   procy_draw_string(data->window, 0, 10, yellow, black, draw_count_text);
 }
 
@@ -116,6 +122,6 @@ int main(int argc, const char** argv) {
   data.window = window;
   procy_begin_loop(window);
   procy_destroy_window(window);
-  procy_destroy_callback_state(state);
+  procy_destroy_state(state);
   return 0;
 }
