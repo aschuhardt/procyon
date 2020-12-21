@@ -22,4 +22,11 @@ __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
 #include "state.h"
 #include "window.h"
 
+#ifdef PROCYON_EXPORT_LOGGING
+
+// re-export logging library as a part of this header
+#include <log.h>
+
+#endif
+
 #endif
