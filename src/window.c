@@ -142,7 +142,7 @@ static void expand_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
     draw_ops->buffer = resized;
   }
 
-  log_trace("Expanded string draw ops buffer size to %zu bytes", buffer_size);
+  log_trace("Expanded draw ops buffer size to %zu bytes", buffer_size);
 }
 
 static void reset_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
