@@ -157,7 +157,8 @@ static void handle_key_entered(GLFWwindow *w, int key, int scancode, int action,
   bool ctrl = (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL;
   bool alt = (mods & GLFW_MOD_ALT) == GLFW_MOD_ALT;
   state_t *state = window->state;
-  if (action == GLFW_PRESS && state->on_key_pressed != NULL) {
+  if ((action == GLFW_PRESS || action == GLFW_REPEAT) &&
+      state->on_key_pressed != NULL) {
     state->on_key_pressed(state, window->key_table[key], shift, ctrl, alt);
   } else if (action == GLFW_RELEASE && state->on_key_released != NULL) {
     state->on_key_released(state, window->key_table[key], shift, ctrl, alt);
