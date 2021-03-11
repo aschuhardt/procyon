@@ -1,4 +1,4 @@
-find_package(Lua 5.4.1 EXACT)
+find_package(Lua 5.4)
 
 if(LUA_FOUND)
   # Lua application on top of procyon game engine
