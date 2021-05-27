@@ -9,7 +9,7 @@ typedef struct procy_line_shader_program_t {
   void *vertex_batch_buffer;
 } procy_line_shader_program_t;
 
-procy_line_shader_program_t *procy_create_line_shader();
+procy_line_shader_program_t *procy_create_line_shader(void);
 
 void procy_destroy_line_shader(procy_line_shader_program_t *shader);
 

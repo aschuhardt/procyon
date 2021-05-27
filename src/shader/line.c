@@ -38,7 +38,7 @@ static const size_t ATTR_LINE_COLOR = 1;
 /* Public interface definition */
 /* --------------------------- */
 
-line_shader_program_t *procy_create_line_shader() {
+line_shader_program_t *procy_create_line_shader(void) {
   line_shader_program_t *line_shader = malloc(sizeof(line_shader_program_t));
 
   if (line_shader == NULL) {

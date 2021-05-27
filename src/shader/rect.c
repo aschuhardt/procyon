@@ -41,7 +41,7 @@ static const size_t ATTR_RECT_COLOR = 1;
 /* Public interface definition */
 /* --------------------------- */
 
-rect_shader_program_t *procy_create_rect_shader() {
+rect_shader_program_t *procy_create_rect_shader(void) {
   rect_shader_program_t *rect_shader = malloc(sizeof(rect_shader_program_t));
 
   if (rect_shader == NULL) {

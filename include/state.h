@@ -30,7 +30,7 @@ typedef struct procy_state_t {
   procy_on_char_entered_callback_t on_char_entered;
 } procy_state_t;
 
-procy_state_t *procy_create_state();
+procy_state_t *procy_create_state(void);
 
 procy_state_t *procy_create_callback_state(
     procy_on_load_callback_t on_load, procy_on_unload_callback_t on_unload,

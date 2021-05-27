@@ -34,7 +34,7 @@ static void glfw_error_callback(int code, const char *msg) {
   log_error("GLFW error %d: %s", code, msg);
 }
 
-static void set_gl_hints() {
+static void set_gl_hints(void) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -196,7 +196,7 @@ static void init_shaders(window_t *window, float text_scale) {
   window->shaders.line = procy_create_line_shader();
 }
 
-static void log_opengl_info() {
+static void log_opengl_info(void) {
   log_debug("Vendor: %s", glGetString(GL_VENDOR));
   log_debug("Renderer: %s", glGetString(GL_RENDERER));
   log_debug("OpenGL Version: %s", glGetString(GL_VERSION));

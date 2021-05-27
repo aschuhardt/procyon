@@ -21,7 +21,7 @@ state_t *procy_create_callback_state(
   return state;
 }
 
-state_t *procy_create_state() {
+state_t *procy_create_state(void) {
   state_t *state = malloc(sizeof(state_t));
   state->data = NULL;
   state->on_load = NULL;
