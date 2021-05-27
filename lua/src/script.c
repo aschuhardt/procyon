@@ -19,18 +19,18 @@
 
 static const char *get_lua_alloc_type_name(size_t t) {
   switch (t) {
-  case LUA_TSTRING:
-    return "String";
-  case LUA_TTABLE:
-    return "Table";
-  case LUA_TFUNCTION:
-    return "Function";
-  case LUA_TUSERDATA:
-    return "UserData";
-  case LUA_TTHREAD:
-    return "Thread";
-  default:
-    return "Other";
+    case LUA_TSTRING:
+      return "String";
+    case LUA_TTABLE:
+      return "Table";
+    case LUA_TFUNCTION:
+      return "Function";
+    case LUA_TUSERDATA:
+      return "UserData";
+    case LUA_TTHREAD:
+      return "Thread";
+    default:
+      return "Other";
   }
 }
 
@@ -105,6 +105,8 @@ bool load_scripts(script_env_t *env, char *path) {
   add_input(L, env);
   add_window(L, env);
   add_drawing(L, env);
+  add_plane(L);
+  add_noise(L);
 
   if (lua_pcall(L, 0, LUA_MULTRET, 0) != LUA_OK) {
     log_error("Error running file %s: %s", path, lua_tostring(L, -1));

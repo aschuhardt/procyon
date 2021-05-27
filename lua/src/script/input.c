@@ -25,8 +25,8 @@ static void handle_key_pressed(procy_state_t *const state, procy_key_info_t key,
     lua_pushboolean(L, ctrl);
     lua_pushboolean(L, alt);
     if (lua_pcall(L, 4, 0, 0) == LUA_ERRRUN) {
-      log_error("Error calling %s.%s: %s", TBL_INPUT, FUNC_EVENTS_KEYPRESS,
-                lua_tostring(L, -1));
+      LOG_SCRIPT_ERROR(L, "Error calling %s.%s: %s", TBL_INPUT,
+                       FUNC_EVENTS_KEYPRESS, lua_tostring(L, -1));
     }
   }
 }
@@ -44,8 +44,8 @@ static void handle_key_released(procy_state_t *const state,
     lua_pushboolean(L, ctrl);
     lua_pushboolean(L, alt);
     if (lua_pcall(L, 4, 0, 0) == LUA_ERRRUN) {
-      log_error("Error calling %s.%s: %s", TBL_INPUT, FUNC_EVENTS_KEYPRESS,
-                lua_tostring(L, -1));
+      LOG_SCRIPT_ERROR(L, "Error calling %s.%s: %s", TBL_INPUT,
+                       FUNC_EVENTS_KEYPRESS, lua_tostring(L, -1));
     }
   }
 }
@@ -64,12 +64,12 @@ static void handle_char_entered(procy_state_t *const state,
   lua_getfield(L, -1, FUNC_EVENTS_CHAR);
   if (lua_isfunction(L, -1)) {
     char buffer[2] = {(char)codepoint,
-                      '\0'}; // pass the truncated codepoint, followed by a
-                             // null-terminator as a two-byte string
+                      '\0'};  // pass the truncated codepoint, followed by a
+                              // null-terminator as a two-byte string
     lua_pushstring(L, &buffer[0]);
     if (lua_pcall(L, 1, 0, 0) == LUA_ERRRUN) {
-      log_error("Error calling %s.%s: %s", TBL_INPUT, FUNC_EVENTS_CHAR,
-                lua_tostring(L, -1));
+      LOG_SCRIPT_ERROR(L, "Error calling %s.%s: %s", TBL_INPUT,
+                       FUNC_EVENTS_CHAR, lua_tostring(L, -1));
     }
   }
 }
@@ -90,8 +90,6 @@ static void add_keys(lua_State *L) {
 
     lua_pushinteger(L, key.value);
     lua_setglobal(L, key.name);
-
-    log_trace("Adding key value (%s, %d)", key.name, key.value);
   }
 
   free(keys);

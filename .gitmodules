@@ -13,3 +13,6 @@
 [submodule "procyon-ui"]
 	path = procyon-ui
 	url = git@github.com:aschuhardt/procyon-ui.git
+[submodule "lib/lua"]
+	path = lib/lua
+	url = https://github.com/walterschell/Lua.git

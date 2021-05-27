@@ -1,7 +1,6 @@
-#include <log.h>
+#include <lauxlib.h>
 #include <lua.h>
 #include <math.h>
-#include <string.h>
 
 #include "procyon.h"
 #include "script/environment.h"
@@ -189,32 +188,17 @@ static int from_rgb(lua_State *L) {
 }
 
 static void add_draw_ops_table(lua_State *L) {
-  lua_newtable(L);
-
-  lua_pushcfunction(L, draw_string);
-  lua_setfield(L, -2, FUNC_DRAWSTRING);
-
-  lua_pushcfunction(L, draw_rect);
-  lua_setfield(L, -2, FUNC_DRAWRECT);
-
-  lua_pushcfunction(L, draw_line);
-  lua_setfield(L, -2, FUNC_DRAWLINE);
-
-  lua_pushcfunction(L, draw_polygon);
-  lua_setfield(L, -2, FUNC_DRAWPOLY);
-
-  lua_pushcfunction(L, set_scale);
-  lua_setfield(L, -2, FUNC_SET_SCALE);
-
+  luaL_Reg methods[] = {
+      {FUNC_DRAWSTRING, draw_string}, {FUNC_DRAWRECT, draw_rect},
+      {FUNC_DRAWLINE, draw_line},     {FUNC_DRAWPOLY, draw_polygon},
+      {FUNC_SET_SCALE, set_scale},    {NULL, NULL}};
+  luaL_newlib(L, methods);
   lua_setglobal(L, TBL_DRAWING);
 }
 
 static void add_color_table(lua_State *L) {
-  lua_newtable(L);
-
-  lua_pushcfunction(L, from_rgb);
-  lua_setfield(L, -2, FUNC_FROMRGB);
-
+  luaL_Reg methods[] = {{FUNC_FROMRGB, from_rgb}, {NULL, NULL}};
+  luaL_newlib(L, methods);
   lua_setglobal(L, TBL_COLOR);
 }
 
