@@ -14,11 +14,9 @@ window.on_draw = function(seconds)
 
   local gw, gh = window.glyph_size()
   for y = 0, text_buffer.height - 1 do
-    local line = ""
     for x = 0, text_buffer.width - 1 do
-      line = line..string.char(text_buffer:at(x, y))
+      draw.char(x * gh, y * gh, text_buffer:at(x, y))
     end
-    draw.string(0, y * gh, line)
   end
   draw.string(0, 0, "%b%iFPS: "..tostring(math.floor(1.0 / seconds)))
 end
