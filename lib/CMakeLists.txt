@@ -1,6 +1,7 @@
 add_subdirectory(glad)
 add_subdirectory(glfw)
 
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 set(LUA_BUILD_COMPILER OFF)
 add_subdirectory(lua)
 
