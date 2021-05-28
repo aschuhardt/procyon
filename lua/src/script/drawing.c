@@ -1,4 +1,5 @@
 #include <lauxlib.h>
+#include <limits.h>
 #include <lua.h>
 #include <math.h>
 
@@ -9,6 +10,7 @@
 #define TBL_COLOR "color"
 
 #define FUNC_DRAWSTRING "string"
+#define FUNC_DRAWCHAR "char"
 #define FUNC_DRAWRECT "rect"
 #define FUNC_DRAWLINE "line"
 #define FUNC_DRAWPOLY "poly"
@@ -105,6 +107,22 @@ static int draw_string(lua_State *L) {
   return 0;
 }
 
+static int draw_char(lua_State *L) {
+  int x = lua_tointeger(L, 1);
+  int y = lua_tointeger(L, 2);
+  unsigned char value = lua_tointeger(L, 3) % UCHAR_MAX;
+  procy_color_t forecolor = lua_gettop(L) >= 4 ? get_color(L, 4) : WHITE;
+  procy_color_t backcolor = lua_gettop(L) >= 5 ? get_color(L, 5) : BLACK;
+
+  lua_getglobal(L, GLOBAL_WINDOW_PTR);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
+  procy_draw_op_t op = procy_create_draw_op_char_colored(
+      x, y, forecolor, backcolor, (char)value, false);
+  procy_append_draw_op(window, &op);
+
+  return 0;
+}
+
 static int draw_rect(lua_State *L) {
   int x = lua_tointeger(L, 1);
   int y = lua_tointeger(L, 2);
@@ -188,10 +206,13 @@ static int from_rgb(lua_State *L) {
 }
 
 static void add_draw_ops_table(lua_State *L) {
-  luaL_Reg methods[] = {
-      {FUNC_DRAWSTRING, draw_string}, {FUNC_DRAWRECT, draw_rect},
-      {FUNC_DRAWLINE, draw_line},     {FUNC_DRAWPOLY, draw_polygon},
-      {FUNC_SET_SCALE, set_scale},    {NULL, NULL}};
+  luaL_Reg methods[] = {{FUNC_DRAWSTRING, draw_string},
+                        {FUNC_DRAWRECT, draw_rect},
+                        {FUNC_DRAWLINE, draw_line},
+                        {FUNC_DRAWPOLY, draw_polygon},
+                        {FUNC_SET_SCALE, set_scale},
+                        {FUNC_DRAWCHAR, draw_char},
+                        {NULL, NULL}};
   luaL_newlib(L, methods);
   lua_setglobal(L, TBL_DRAWING);
 }
