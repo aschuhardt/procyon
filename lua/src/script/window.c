@@ -155,8 +155,6 @@ static int set_window_color(lua_State *L) {
 }
 
 void add_window(lua_State *L, script_env_t *env) {
-  lua_newtable(L);
-
   env->state->on_draw = perform_draw;
   env->state->on_resize = handle_window_resized;
   env->state->on_load = handle_window_loaded;
