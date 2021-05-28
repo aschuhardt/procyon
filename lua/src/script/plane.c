@@ -258,9 +258,11 @@ static int plane_from(lua_State *L) {
 
   // set up metatable for the new instance and assign its gc metamethod so
   // that we can manually clean up the data used for the plane buffer
-  lua_newtable(L);
-  lua_pushcfunction(L, plane_destroy_buffer);
-  lua_setfield(L, -2, "__gc");
+  luaL_Reg metamethods[] = {
+    { "__gc", plane_destroy_buffer },
+    { NULL, NULL }
+  };
+  luaL_newlib(L, metamethods);
   lua_setmetatable(L, -2);
 
   lua_pushinteger(L, width);
