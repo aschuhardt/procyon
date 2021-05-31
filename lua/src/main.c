@@ -13,7 +13,6 @@ int main(int argc, const char **argv) {
 
   char cwd[1024];
   getcwd(&cwd[0], sizeof(cwd) / sizeof(char));
-  log_warn("Working directory: %s", cwd);
 
   procy_state_t *state = procy_create_state();
 
