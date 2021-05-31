@@ -50,7 +50,7 @@ static int draw_string(lua_State *L) {
   int y = lua_tointeger(L, 2);
   const char *contents = lua_tolstring(L, 3, &length);
   procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
-  procy_color_t backcolor = luaL_opt(L, get_color, 6, BLACK);
+  procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
