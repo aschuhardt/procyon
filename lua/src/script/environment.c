@@ -1,7 +1,6 @@
 #include "script/environment.h"
 
 #include <lauxlib.h>
-#include <log.h>
 #include <lua.h>
 
 #define FIELD_COLOR_R "r"

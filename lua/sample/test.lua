@@ -43,6 +43,8 @@ window.on_draw = function(seconds)
     tree_sprite:draw(10, 500);
   end
 
+  draw.line(0, 0, 600, 600);
+
   draw.string(4, 4, "Press %b%iF2%i%b to %breload%b, or %b%iEscape%i%b to exit")
   draw.string(4, 4 + gh, "Here is an escaped percent-sign: %%")
   draw.string(4, 4 + gh * 2, string.format("Window size: %dx%d", w, h))

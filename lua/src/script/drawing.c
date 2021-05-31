@@ -26,6 +26,8 @@
 #define FIELD_SPRITE_PTR "ptr"
 #define FIELD_SPRITE_COLOR "color"
 #define FIELD_SPRITE_BACKGROUND "background"
+#define FIELD_SPRITE_WIDTH "width"
+#define FIELD_SPRITE_HEIGHT "height"
 
 #define WHITE_RGB 1.0F, 1.0F, 1.0F
 #define BLACK_RGB 0.0F, 0.0F, 0.0F
@@ -41,13 +43,13 @@
 #endif
 
 static int draw_string(lua_State *L) {
-  lua_settop(L, 6);
+  lua_settop(L, 5);
 
   size_t length = 0;
   int x = lua_tointeger(L, 1);
   int y = lua_tointeger(L, 2);
   const char *contents = lua_tolstring(L, 3, &length);
-  procy_color_t forecolor = luaL_opt(L, get_color, 5, WHITE);
+  procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
   procy_color_t backcolor = luaL_opt(L, get_color, 6, BLACK);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
@@ -104,13 +106,13 @@ static int draw_string(lua_State *L) {
 }
 
 static int draw_char(lua_State *L) {
-  lua_settop(L, 6);
+  lua_settop(L, 5);
 
   int x = lua_tointeger(L, 1);
   int y = lua_tointeger(L, 2);
   unsigned char value = lua_tointeger(L, 3) % UCHAR_MAX;
-  procy_color_t forecolor = luaL_opt(L, get_color, 5, WHITE);
-  procy_color_t backcolor = luaL_opt(L, get_color, 6, BLACK);
+  procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
+  procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
@@ -241,6 +243,21 @@ static void push_color_or_default(lua_State *L, int index, float r, float g,
   }
 }
 
+static int get_sprite_size(lua_State *L) {
+  lua_settop(L, 1);
+
+  lua_getfield(L, 1, FIELD_SPRITE_PTR);
+  procy_sprite_t *sprite = (procy_sprite_t *)lua_touserdata(L, -1);
+
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
+
+  lua_pushinteger(L, (int)((float)sprite->width * window->scale));
+  lua_pushinteger(L, (int)((float)sprite->height * window->scale));
+
+  return 2;
+}
+
 static int create_sprite(lua_State *L) {
   lua_settop(L, 7);
 
@@ -272,6 +289,12 @@ static int create_sprite(lua_State *L) {
 
   lua_pushcfunction(L, draw_sprite);
   lua_setfield(L, -2, FUNC_DRAWSPRITE);
+
+  lua_pushinteger(L, width);
+  lua_setfield(L, -2, FIELD_SPRITE_WIDTH);
+
+  lua_pushinteger(L, height);
+  lua_setfield(L, -2, FIELD_SPRITE_HEIGHT);
 
   // set metadata field so that sprites are cleaned up on gc
   luaL_setmetatable(L, TBL_SPRITE_META);
