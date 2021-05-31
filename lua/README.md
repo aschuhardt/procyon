@@ -27,7 +27,6 @@ Script loading
 Visuals
     -w, --width=<int>     window width
     -h, --height=<int>    window height
-    -s, --scale=<flt>     text scale (default = 1.0)
 ```
 
 The scripting API itself is described below.
@@ -42,11 +41,12 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 - `window.close()` - Returns nothing.  Closes the window.
 - `window.size()` - Returns two integers (width and height), representing the dimensions of the window in pixels.
 - `window.glyph_size()` - Returns two integers (width and height), representing the *scaled* dimensions of text glyphs.
+- `window.get_scale()` - Returns a floating-point number representing the window's current visual scale.  The default is 1.0.
+- `window.set_scale(scale)` - Returns nothing.  Sets the scale of the visuals presented in the window (controlled via orthographic projection matrix).
+- `window.reset_scale()` - Returns nothing.  Sets the scale of the visuals presented in the window to the default value, which is 1.0.
 - `window.reload()` - Returns nothing.  Causes the window and script environment to be disposed-of and reloaded (functionally "restarts" the app).
 - `window.set_color(color)` - Returns nothing.  Sets the "clear" color used for the window background.
-- `window.set_high_fps(enabled)` - Returns nothing.  Enables or enables so-called "high-fps mode", in which the window will attempt to update
-  with a frequency that matches the display refresh rate.  Otherwise, when high-fps mode is disabled, the window only updates every two seconds
-  or when input events are triggered.
+- `window.set_high_fps(enabled)` - Returns nothing.  Enables or enables "high-fps mode", in which the window will attempt to update with a frequency that matches the display refresh rate.  Otherwise, when high-fps mode is disabled, the window only updates every full second  or when input events are triggered.
 
 #### Fields
 - `window.on_draw` - If assigned, `on_draw` is called before each new frame is drawn.  Perform any drawing routines here.
@@ -54,6 +54,14 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 - `window.on_resize` - If assigned, `on_resize` is called when the window is resized.  Two arguments, `width` and `height`, are passed to the function. 
 - `window.on_load` - If assigned, `on_load` is called prior to the beginning of the main game loop.  Perform any initialization here.  No arguments are passed to `on_load`.
 - `window.on_unload` - If assigned, `on_unload` is called after the main game loop has terminated.  Perform any cleanup logic here.  No arguments are passed to `on_unload`.
+- `window.on_char_entered` - If assigned, `on_char_entered` is called when the user types text input.  It is passed a single argument: a string containing the character that was entered.
+- `window.on_key_pressed` - If assigned, `on_key_pressed` is called when a key has been pressed.  It is passed one argument consisting of a table with the following fields:
+  * `value` - An integer value indicating the key that was pressed.  The available key values are stored globally by name, with values accessible by their names, such as `KEY_A`.  See `include/keys.h` for all available values.
+  * `name` - A string containing the name of the key.  This is the same name as is used for the key values stored globally.
+  * `shift` - A boolean value indicating whether the Shift modifier was pressed.
+  * `ctrl` - A boolean value indicating whehter the Ctrl modifier was pressed.
+  * `alt` - A boolean value indicating whether the Alt modifier was pressed.
+- `window.on_key_released` - See previous.
 
 ---
 

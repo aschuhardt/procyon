@@ -4,7 +4,7 @@ project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -Os -fmerge-all-constants -fno-stack-protector -fdata-sections")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -O3 -fmerge-all-constants -fno-stack-protector -fdata-sections")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
 
 add_subdirectory(lib)
@@ -19,6 +19,7 @@ set(SU_SOURCE
   src/shader/glyph.c
   src/shader/rect.c
   src/shader/line.c
+  src/shader/sprite.c
   src/shader/error.c)
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -62,7 +63,9 @@ list(APPEND EMBED_FILES
   rect.vert
   rect.frag
   line.vert
-  line.frag)
+  line.frag
+  sprite.vert
+  sprite.frag)
 
 # ... and their corresponding header file names ...
 list(APPEND EMBED_HEADERS
@@ -73,7 +76,9 @@ list(APPEND EMBED_HEADERS
   rect_vert.h
   rect_frag.h
   line_vert.h
-  line_frag.h)
+  line_frag.h
+  sprite_vert.h
+  sprite_frag.h)
 
 # ... and specify target names for each embedded object
 list(APPEND EMBED_TARGETS
@@ -84,7 +89,9 @@ list(APPEND EMBED_TARGETS
   embed_rect_vert
   embed_rect_frag
   embed_line_vert
-  embed_line_frag)
+  embed_line_frag
+  embed_sprite_vert
+  embed_sprite_frag)
 
 # create a directory for generated files to be placed into
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/gen/")
@@ -105,9 +112,6 @@ endforeach()
 
 # build an implementation of a Lua wrapper for lib
 add_subdirectory(lua)
-
-# build UI toolkit
-# add_subdirectory(procyon-ui)
 
 # add benchmark tools
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/bench")

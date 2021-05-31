@@ -8,6 +8,12 @@ window.on_load = function()
       return math.floor(normalized * 255.0)
     end)
 
+  sheet = spritesheet.load("sprites.png")
+
+  if sheet then
+    tree_sprite = sheet:sprite(80, 16, 16, 16)
+  end
+
   window.set_high_fps(true)
 
   fps = 0
@@ -33,6 +39,10 @@ window.on_draw = function(seconds)
 
   draw.string(0, h - gh, "%iFPS: " .. tostring(fps))
 
+  if tree_sprite then
+    tree_sprite:draw(10, 500);
+  end
+
   draw.string(4, 4, "Press %b%iF2%i%b to %breload%b, or %b%iEscape%i%b to exit")
   draw.string(4, 4 + gh, "Here is an escaped percent-sign: %%")
   draw.string(4, 4 + gh * 2, string.format("Window size: %dx%d", w, h))
@@ -52,10 +62,16 @@ input.on_char_entered = function(c)
   current_text = current_text..c
 end
 
-input.on_key_pressed = function(key, shift, ctrl, alt) 
-  if key == KEY_F2 then
+input.on_key_pressed = function(key) 
+  if key.value == KEY_F2 then
     window.reload()
-  elseif key == KEY_ESCAPE then
+  elseif key.value == KEY_ESCAPE then
     window.close()
+  elseif key.value == KEY_Z then
+    local scale = window.get_scale()
+    window.set_scale(scale - 0.25)
+  elseif key.value == KEY_A then
+    local scale = window.get_scale()
+    window.set_scale(scale + 0.25)
   end
 end

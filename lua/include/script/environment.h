@@ -9,12 +9,12 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <string.h>  // strrchr
+#include <string.h>
 
 #include "color.h"
 
-#define GLOBAL_ENV_PTR "ptr_env"
-#define GLOBAL_WINDOW_PTR "ptr_window"
+#define GLOBAL_ENV_PTR "procyon_ptr_env"
+#define GLOBAL_WINDOW_PTR "procyon_ptr_window"
 
 typedef struct lua_State lua_State;
 typedef struct script_env_t script_env_t;
@@ -32,9 +32,7 @@ void add_plane(lua_State *L);
  * Utility methods available to script-setup logic
  */
 
-bool verify_arg_count(lua_State *L, int n, const char *name);
-
-void push_rgb_table(lua_State *L, float r, float g, float b);
+void push_color(lua_State *L, float r, float g, float b);
 
 procy_color_t get_color(lua_State *L, int index);
 

@@ -1,4 +1,5 @@
 #include <log.h>
+#include <unistd.h>
 
 #include "config.h"
 #include "procyon.h"
@@ -10,14 +11,17 @@ int main(int argc, const char **argv) {
     return -1;
   }
 
+  char cwd[1024];
+  getcwd(&cwd[0], sizeof(cwd) / sizeof(char));
+  log_warn("Working directory: %s", cwd);
+
   procy_state_t *state = procy_create_state();
 
   bool reload = false;
   do {
     // create window object
-    procy_window_t *window =
-        procy_create_window(config.window_w, config.window_h, "Procyon Lua",
-                            config.glyph_scale, state);
+    procy_window_t *window = procy_create_window(
+        config.window_w, config.window_h, "Procyon Lua", state);
     if (window == NULL) {
       log_error("Failed to create window");
     } else {

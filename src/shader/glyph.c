@@ -2,7 +2,6 @@
 
 #include <log.h>
 
-#define STBI_ONLY_PNG
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
 #include "stb_image.h"
@@ -27,7 +26,7 @@ typedef procy_glyph_shader_program_t glyph_shader_program_t;
 typedef procy_color_t color_t;
 
 typedef struct {
-  float scale, width, height, tex_width, tex_height;
+  float width, height, tex_width, tex_height;
 } glyph_vertex_bounds_t;
 
 #pragma pack(0)
@@ -94,7 +93,7 @@ static void disable_shader_attributes() {
 static glyph_vertex_bounds_t compute_glyph_vertex_bounds(
     glyph_shader_program_t *const shader) {
   return (glyph_vertex_bounds_t){
-      shader->glyph_scale, (float)shader->texture_w / GLYPH_WIDTH_COUNT,
+      (float)shader->texture_w / GLYPH_WIDTH_COUNT,
       (float)shader->texture_h / GLYPH_HEIGHT_COUNT,
       (float)shader->texture_w / GLYPH_WIDTH_COUNT / (float)shader->texture_w,
       (float)shader->texture_h / GLYPH_HEIGHT_COUNT / (float)shader->texture_h};
@@ -131,7 +130,7 @@ static void load_glyph_font(glyph_shader_program_t *shader) {
         memcpy(&combined_buffer[bitmap_size], bitmap_bold, bitmap_size);
 
         // create font texture array from bitmaps
-        GL_CHECK(glGenTextures(1, &shader->font_texture));
+        GL_CHECK(glGenTextures(0, &shader->font_texture));
 
         GL_CHECK(glActiveTexture(GL_TEXTURE0));
         GL_CHECK(glBindTexture(GL_TEXTURE_2D_ARRAY, shader->font_texture));
@@ -208,7 +207,7 @@ static void draw_glyph_batch(shader_program_t *const program,
 /* Public interface definition */
 /* --------------------------- */
 
-glyph_shader_program_t *procy_create_glyph_shader(float scale) {
+glyph_shader_program_t *procy_create_glyph_shader() {
   glyph_shader_program_t *glyph_shader = malloc(sizeof(glyph_shader_program_t));
 
   if (glyph_shader == NULL) {
@@ -223,7 +222,6 @@ glyph_shader_program_t *procy_create_glyph_shader(float scale) {
   glyph_shader->font_texture = 0;
   glyph_shader->texture_w = -1;
   glyph_shader->texture_h = -1;
-  glyph_shader->glyph_scale = scale;
 
   shader_program_t *program = &glyph_shader->program;
   if ((program->valid = procy_compile_vert_shader((char *)embed_glyph_vert,
@@ -257,29 +255,31 @@ glyph_shader_program_t *procy_create_glyph_shader(float scale) {
 static void compute_glyph_vertices(glyph_shader_program_t *shader,
                                    glyph_vertex_bounds_t *const bounds,
                                    draw_op_t *const op,
-                                   glyph_vertex_t *const vertices) {
+                                   glyph_vertex_t *const vertices,
+                                   float scale) {
   const unsigned char c = op->data.text.character;
 
   // screen coordinates
   const float x = (float)op->x;
   const float y = (float)op->y;
+  const float w = bounds->width;
+  const float h = bounds->height;
 
   // texture coordinates
   const float tx =
       (float)(c % GLYPH_WIDTH_COUNT) * bounds->width / (float)shader->texture_w;
   const float ty = floorf((float)c / GLYPH_HEIGHT_COUNT) * bounds->height /
                    (float)shader->texture_h;
+  const float tw = bounds->tex_width;
+  const float th = bounds->tex_height;
 
   const float bold = op->data.text.bold ? 1.0F : 0.0F;
 
   vertices[0] = (glyph_vertex_t){x, y, tx, ty};
-  vertices[1] = (glyph_vertex_t){x + bounds->width * bounds->scale, y,
-                                 tx + bounds->tex_width, ty};
-  vertices[2] = (glyph_vertex_t){x, y + bounds->height * bounds->scale, tx,
-                                 ty + bounds->tex_height};
-  vertices[3] = (glyph_vertex_t){
-      x + bounds->width * bounds->scale, y + bounds->height * bounds->scale,
-      tx + bounds->tex_width, ty + bounds->tex_height};
+  vertices[1] = (glyph_vertex_t){x + w * scale, y, tx + tw, ty};
+  vertices[2] = (glyph_vertex_t){x, y + h * scale, tx, ty + th};
+  vertices[3] =
+      (glyph_vertex_t){x + w * scale, y + h * scale, tx + tw, ty + th};
   for (int i = 0; i < 4; ++i) {
     vertices[i].forecolor = op->forecolor;
     vertices[i].backcolor = op->backcolor;
@@ -321,7 +321,8 @@ void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window) {
 
     // compute the glyph's 4 vertices
     glyph_vertex_t temp_vertex_buffer[VERTICES_PER_GLYPH];
-    compute_glyph_vertices(shader, &vertex_bounds, op, &temp_vertex_buffer[0]);
+    compute_glyph_vertices(shader, &vertex_bounds, op, &temp_vertex_buffer[0],
+                           window->scale);
 
     // specify the indices of the vertices in the order they're to be drawn
     const GLushort temp_index_buffer[] = {vert_index,     vert_index + 1,
@@ -356,12 +357,10 @@ void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window) {
 void procy_get_glyph_bounds(glyph_shader_program_t *shader, int *width,
                             int *height) {
   if (width != NULL) {
-    *width = (int)((float)shader->texture_w / GLYPH_WIDTH_COUNT *
-                   shader->glyph_scale);
+    *width = (int)((float)shader->texture_w / GLYPH_WIDTH_COUNT);
   }
   if (height != NULL) {
-    *height = (int)((float)shader->texture_h / GLYPH_HEIGHT_COUNT *
-                    shader->glyph_scale);
+    *height = (int)((float)shader->texture_h / GLYPH_HEIGHT_COUNT);
   }
 }
 

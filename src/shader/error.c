@@ -7,18 +7,18 @@
 
 const char *gl_error_string(int err) {
   switch (err) {
-  case GL_INVALID_ENUM:
-    return "invalid enum";
-  case GL_INVALID_VALUE:
-    return "invalid value";
-  case GL_INVALID_OPERATION:
-    return "invalid operation";
-  case GL_INVALID_FRAMEBUFFER_OPERATION:
-    return "invalid framebuffer operation";
-  case GL_OUT_OF_MEMORY:
-    return "out of memory";
-  default:
-    return "unknown OpenGL error";
+    case GL_INVALID_ENUM:
+      return "invalid enum";
+    case GL_INVALID_VALUE:
+      return "invalid value";
+    case GL_INVALID_OPERATION:
+      return "invalid operation";
+    case GL_INVALID_FRAMEBUFFER_OPERATION:
+      return "invalid framebuffer operation";
+    case GL_OUT_OF_MEMORY:
+      return "out of memory";
+    default:
+      return "unknown OpenGL error";
   }
 }
 

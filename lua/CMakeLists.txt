@@ -22,9 +22,15 @@ target_include_directories(procyon-lua
   ${STB_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${LOG_INCLUDE_DIR} ${SU_INCLUDE}) 
 set_property(TARGET procyon-lua PROPERTY EXCLUDE_FROM_ALL TRUE)
 
+add_custom_target(copy_spritesheet_for_script_test
+  COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/sample/sprites.png
+    ${CMAKE_CURRENT_BINARY_DIR}/sprites.png
+  USES_TERMINAL)
+
 add_custom_target(script_test
-  COMMAND procyon-lua -s 2 --debug -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/test.lua"
-  DEPENDS procyon-lua
+  COMMAND procyon-lua --debug -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/test.lua"
+  DEPENDS procyon-lua copy_spritesheet_for_script_test
   USES_TERMINAL)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")

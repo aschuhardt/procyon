@@ -20,79 +20,68 @@
 #define DEFAULT_OCTAVES 6
 
 static int noise_perlin(lua_State *L) {
+  lua_settop(L, 4);
+
   float value = 0.0F;
 
-  // last argument is an optional seed value (note that for the seed, only the
-  // bottom 8 bits are used)
-  if (lua_gettop(L) == 3) {
-    value = stb_perlin_noise3(lua_tonumber(L, 1), lua_tonumber(L, 2),
-                              lua_tonumber(L, 3), 0, 0, 0);
-  } else if (lua_gettop(L) == 4) {
-    value = stb_perlin_noise3_seed(lua_tonumber(L, 1), lua_tonumber(L, 2),
-                                   lua_tonumber(L, 3), 0, 0, 0,
-                                   lua_tointeger(L, 4));
-  }
+  float x = luaL_checknumber(L, 1);
+  float y = luaL_checknumber(L, 2);
+  float z = luaL_checknumber(L, 3);
 
-  lua_pushnumber(L, value);
+  if (lua_isnoneornil(L, 4)) {
+    lua_pushnumber(L, stb_perlin_noise3(x, y, z, 0, 0, 0));
+  } else {
+    int seed = luaL_checkinteger(L, 4);
+    lua_pushnumber(L, stb_perlin_noise3_seed(x, y, z, 0, 0, 0, seed));
+  }
 
   return 1;
 }
 
 static int noise_ridge(lua_State *L) {
-  float lacunarity = DEFAULT_LACUNARITY;
-  float gain = DEFAULT_GAIN;
-  float offset = DEFAULT_OFFSET;
-  int octaves = DEFAULT_OCTAVES;
+  lua_settop(L, 7);
 
-  if (lua_gettop(L) == 7) {
-    lacunarity = lua_tonumber(L, 4);
-    gain = lua_tonumber(L, 5);
-    offset = lua_tonumber(L, 6);
-    octaves = lua_tointeger(L, 7);
-  }
+  float x = luaL_checknumber(L, 1);
+  float y = luaL_checknumber(L, 2);
+  float z = luaL_checknumber(L, 3);
+  float lacunarity = luaL_optnumber(L, 4, DEFAULT_LACUNARITY);
+  float gain = luaL_optnumber(L, 5, DEFAULT_GAIN);
+  float offset = luaL_optnumber(L, 6, DEFAULT_OFFSET);
+  int octaves = luaL_optinteger(L, 7, DEFAULT_OCTAVES);
 
-  float value = stb_perlin_ridge_noise3(lua_tonumber(L, 1), lua_tonumber(L, 2),
-                                        lua_tonumber(L, 3), lacunarity, gain,
-                                        offset, octaves);
-  lua_pushnumber(L, value);
+  lua_pushnumber(
+      L, stb_perlin_ridge_noise3(x, y, z, lacunarity, gain, offset, octaves));
 
   return 1;
 }
 
 static int noise_fbm(lua_State *L) {
-  float lacunarity = DEFAULT_LACUNARITY;
-  float gain = DEFAULT_GAIN;
-  int octaves = DEFAULT_OCTAVES;
+  lua_settop(L, 6);
 
-  if (lua_gettop(L) == 6) {
-    lacunarity = lua_tonumber(L, 4);
-    gain = lua_tonumber(L, 5);
-    octaves = lua_tointeger(L, 6);
-  }
+  float x = luaL_checknumber(L, 1);
+  float y = luaL_checknumber(L, 2);
+  float z = luaL_checknumber(L, 3);
+  float lacunarity = luaL_optnumber(L, 4, DEFAULT_LACUNARITY);
+  float gain = luaL_optnumber(L, 5, DEFAULT_GAIN);
+  int octaves = luaL_optinteger(L, 6, DEFAULT_OCTAVES);
 
-  float value =
-      stb_perlin_fbm_noise3(lua_tonumber(L, 1), lua_tonumber(L, 2),
-                            lua_tonumber(L, 3), lacunarity, gain, octaves);
-  lua_pushnumber(L, value);
+  lua_pushnumber(L, stb_perlin_fbm_noise3(x, y, z, lacunarity, gain, octaves));
 
   return 1;
 }
 
 static int noise_turbulence(lua_State *L) {
-  float lacunarity = DEFAULT_LACUNARITY;
-  float gain = DEFAULT_GAIN;
-  int octaves = DEFAULT_OCTAVES;
+  lua_settop(L, 6);
 
-  if (lua_gettop(L) == 6) {
-    lacunarity = lua_tonumber(L, 4);
-    gain = lua_tonumber(L, 5);
-    octaves = lua_tointeger(L, 6);
-  }
+  float x = luaL_checknumber(L, 1);
+  float y = luaL_checknumber(L, 2);
+  float z = luaL_checknumber(L, 3);
+  float lacunarity = luaL_optnumber(L, 4, DEFAULT_LACUNARITY);
+  float gain = luaL_optnumber(L, 5, DEFAULT_GAIN);
+  int octaves = luaL_optinteger(L, 6, DEFAULT_OCTAVES);
 
-  float value = stb_perlin_turbulence_noise3(
-      lua_tonumber(L, 1), lua_tonumber(L, 2), lua_tonumber(L, 3), lacunarity,
-      gain, octaves);
-  lua_pushnumber(L, value);
+  lua_pushnumber(
+      L, stb_perlin_turbulence_noise3(x, y, z, lacunarity, gain, octaves));
 
   return 1;
 }

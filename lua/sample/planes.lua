@@ -26,12 +26,10 @@ input.on_char_entered = function(c)
   text_buffer:set(0, 0, text)
 end
 
-
-
-input.on_key_pressed = function(key, shift, ctrl, alt) 
-  if key == KEY_F2 then
+input.on_key_pressed = function(key) 
+  if key.value == KEY_F2 then
     window.reload()
-  elseif key == KEY_ESCAPE then
+  elseif key.value == KEY_ESCAPE then
     window.close()
   end
 end

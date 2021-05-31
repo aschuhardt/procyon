@@ -1,10 +1,12 @@
 #include <log.h>
 #include <procyon.h>
+#include <shader/sprite.h>
 
 #define FPS_AVG_BUFFER_SIZE 32
 #define TEST_COUNT 19
 
 typedef enum {
+  TEST_MODE_SPRITE,
   TEST_MODE_STRING,
   TEST_MODE_RECT,
   TEST_MODE_LINE,
@@ -16,6 +18,7 @@ typedef struct bench_state_t {
   size_t avg_buffer_index, test_index, test_draw_counts[TEST_COUNT];
   test_mode_t test_mode;
   procy_window_t* window;
+  procy_sprite_t* sprite;
   double** test_results_by_mode;
 } bench_state_t;
 
@@ -24,8 +27,15 @@ void on_load(procy_state_t* state) {
   data->avg_buffer_index = 0;
   data->test_index = 0;
   data->window->high_fps = true;
-  data->test_mode = TEST_MODE_STRING;
+  data->test_mode = TEST_MODE_SPRITE;
   data->test_results_by_mode = malloc(sizeof(double*) * TEST_COMPLETE);
+
+  // procy_set_scale(data->window, 2.0f);
+
+  procy_sprite_shader_program_t* sprite_shader =
+      procy_load_sprite_shader(data->window, "sprites.png");
+
+  data->sprite = procy_create_sprite(sprite_shader, 144, 128, 16, 16);
 
   for (int i = 0; i < TEST_COMPLETE; ++i) {
     data->test_results_by_mode[i] = malloc(sizeof(double) * TEST_COUNT);
@@ -55,6 +65,8 @@ void on_unload(procy_state_t* state) {
   }
 
   free(data->test_results_by_mode);
+
+  procy_destroy_sprite(data->sprite);
 }
 
 void on_draw(procy_state_t* state, double time) {
@@ -84,18 +96,20 @@ void on_draw(procy_state_t* state, double time) {
   }
 
   for (size_t i = 0; i < data->test_draw_counts[data->test_index]; ++i) {
+    short x = 200 + (i * 2 % 200);
+    short y = 200 + (i * 3 % 200);
     switch (data->test_mode) {
+      case TEST_MODE_SPRITE:
+        procy_draw_sprite(data->window, x, y, yellow, black, data->sprite);
+        break;
       case TEST_MODE_STRING:
-        procy_draw_string(data->window, 200 + (i * 2 % 200),
-                          200 + (i * 3 % 200), yellow, black, "butts");
+        procy_draw_string(data->window, x, y, yellow, black, "butts");
         break;
       case TEST_MODE_RECT:
-        procy_draw_rect(data->window, 200 + (i * 2 % 200), 200 + (i * 3 % 200),
-                        30, 30, yellow);
+        procy_draw_rect(data->window, x, y, 30, 30, yellow);
         break;
       case TEST_MODE_LINE:
-        procy_draw_line(data->window, 200 + (i * 2 % 200), 200 + (i * 3 % 200),
-                        0, 0, yellow);
+        procy_draw_line(data->window, x, y, 0, 0, yellow);
         break;
       case TEST_COMPLETE:
         break;
@@ -118,7 +132,7 @@ int main(int argc, const char** argv) {
       on_load, on_unload, on_draw, NULL, NULL, NULL, NULL);
   state->data = &data;
   procy_window_t* window =
-      procy_create_window(800, 600, "Framerate Benchmark", 1.0f, state);
+      procy_create_window(800, 600, "Framerate Benchmark", state);
   data.window = window;
   procy_begin_loop(window);
   procy_destroy_window(window);

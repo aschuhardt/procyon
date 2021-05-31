@@ -13,6 +13,7 @@
 #include "shader/glyph.h"
 #include "shader/rect.h"
 #include "shader/line.h"
+#include "shader/sprite.h"
 #include "drawing.h"
 #include "keys.h"
 #include "state.h"
@@ -28,7 +29,8 @@ typedef procy_key_info_t key_info_t;
 typedef procy_color_t color_t;
 typedef procy_state_t state_t;
 
-static const size_t INITIAL_DRAW_OPS_BUFFER_SIZE = 1024;
+#define INITIAL_DRAW_OPS_BUFFER_SIZE 1024
+#define DEFAULT_SCALE 1.0f
 
 static void glfw_error_callback(int code, const char *msg) {
   log_error("GLFW error %d: %s", code, msg);
@@ -92,6 +94,12 @@ static void destroy_shaders(shaders_t *shaders) {
   procy_destroy_glyph_shader(shaders->glyph);
   procy_destroy_rect_shader(shaders->rect);
   procy_destroy_line_shader(shaders->line);
+
+  for (int i = 0; i < MAX_SPRITE_SHADER_COUNT; ++i) {
+    if (shaders->sprite[i] != 0 && shaders->sprite[i] != NULL) {
+      procy_destroy_sprite_shader(shaders->sprite[i]);
+    }
+  }
 }
 
 /*
@@ -126,6 +134,8 @@ static void init_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
   size_t buffer_size = sizeof(draw_op_t) * draw_ops->capacity;
   draw_ops->buffer = malloc(buffer_size);
 
+  draw_ops->types_seen = 0;
+
   log_debug("Initial draw ops buffer size: %zu", buffer_size);
 }
 
@@ -146,6 +156,9 @@ static void expand_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
 }
 
 static void reset_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
+  // reset the "seen" bit flag
+  draw_ops->types_seen = 0;
+
   // start writing draw ops at the start of the buffer
   draw_ops->length = 0;
 }
@@ -190,10 +203,12 @@ static void init_key_table(window_t *w) {
   free(keys);
 }
 
-static void init_shaders(window_t *window, float text_scale) {
-  window->shaders.glyph = procy_create_glyph_shader(text_scale);
+static void init_shaders(window_t *window) {
+  window->shaders.glyph = procy_create_glyph_shader();
   window->shaders.rect = procy_create_rect_shader();
   window->shaders.line = procy_create_line_shader();
+  memset(&window->shaders.sprite[0], 0,
+         MAX_SPRITE_SHADER_COUNT * sizeof(procy_sprite_shader_program_t *));
 }
 
 static void log_opengl_info(void) {
@@ -207,13 +222,13 @@ static void log_opengl_info(void) {
 /* --------------------------- */
 
 window_t *procy_create_window(int width, int height, const char *title,
-                              float text_scale, state_t *state) {
+                              state_t *state) {
   glfwSetErrorCallback(glfw_error_callback);
   window_t *window = malloc(sizeof(window_t));
 
   if (window != NULL && set_gl_window_pointer(window, width, height, title)) {
     log_opengl_info();
-    init_shaders(window, text_scale);
+    init_shaders(window);
     set_ortho_projection(window, width, height);
     set_event_callbacks(window);
     init_draw_ops_buffer(&window->draw_ops);
@@ -222,12 +237,32 @@ window_t *procy_create_window(int width, int height, const char *title,
     window->quitting = false;
     window->high_fps = false;
     window->state = state;
+    window->scale = DEFAULT_SCALE;
   } else {
     free(window);
     return NULL;
   }
 
   return window;
+}
+
+static void draw_sprite_shaders(window_t *window) {
+  for (int i = 0; i < MAX_SPRITE_SHADER_COUNT; ++i) {
+    if (window->shaders.sprite[i] == 0) {
+      break;
+    }
+
+    procy_sprite_shader_program_t *shader = window->shaders.sprite[i];
+    if (shader == NULL || !shader->program.valid) {
+      continue;
+    }
+
+    procy_draw_sprite_shader(shader, window);
+  }
+}
+
+static bool has_draw_op_type(window_t *window, procy_draw_op_type_t type) {
+  return (window->draw_ops.types_seen & type) == type;
 }
 
 void procy_destroy_window(window_t *window) {
@@ -260,18 +295,10 @@ void procy_append_draw_op(window_t *window, draw_op_t *draw_op) {
     expand_draw_ops_buffer(buffer);
   }
   buffer->buffer[buffer->length - 1] = *draw_op;
-}
 
-void procy_append_draw_ops(procy_window_t *window, draw_op_t *draw_ops,
-                           size_t n) {
-  // TODO: test this
-  draw_op_buffer_t *buffer = &window->draw_ops;
-  size_t dest_offset = buffer->length - 1;
-  buffer->length += n;
-  if (buffer->length >= buffer->capacity) {
-    expand_draw_ops_buffer(buffer);
-  }
-  memcpy(&buffer->buffer[dest_offset], draw_ops, n * sizeof(draw_op_t));
+  // indicate that we've "seen" this type of draw op, so that the main draw loop
+  // knows to execute the associated shader step
+  buffer->types_seen |= draw_op->type;
 }
 
 void procy_get_window_size(window_t *window, int *width, int *height) {
@@ -280,10 +307,14 @@ void procy_get_window_size(window_t *window, int *width, int *height) {
 
 void procy_get_glyph_size(procy_window_t *window, int *width, int *height) {
   procy_get_glyph_bounds(window->shaders.glyph, width, height);
-}
 
-void procy_set_glyph_scale(procy_window_t *window, float scale) {
-  window->shaders.glyph->glyph_scale = scale;
+  if (width != NULL) {
+    *width = (int)((float)*width * window->scale);
+  }
+
+  if (height != NULL) {
+    *height = (int)((float)*height * window->scale);
+  }
 }
 
 void procy_begin_loop(window_t *window) {
@@ -323,16 +354,23 @@ void procy_begin_loop(window_t *window) {
     }
 
     if (window->draw_ops.length > 0) {
-      if (rect_shader->program.valid) {
+      if (rect_shader->program.valid &&
+          has_draw_op_type(window, DRAW_OP_RECT)) {
         procy_draw_rect_shader(rect_shader, window);
       }
 
-      if (line_shader->program.valid) {
+      if (line_shader->program.valid &&
+          has_draw_op_type(window, DRAW_OP_LINE)) {
         procy_draw_line_shader(line_shader, window);
       }
 
-      if (glyph_shader->program.valid) {
+      if (glyph_shader->program.valid &&
+          has_draw_op_type(window, DRAW_OP_TEXT)) {
         procy_draw_glyph_shader(glyph_shader, window);
+      }
+
+      if (has_draw_op_type(window, DRAW_OP_SPRITE)) {
+        draw_sprite_shaders(window);
       }
 
       reset_draw_ops_buffer(&window->draw_ops);
@@ -352,4 +390,18 @@ void procy_close_window(procy_window_t *window) { window->quitting = true; }
 
 void procy_set_high_fps_mode(procy_window_t *window, bool high_fps) {
   window->high_fps = high_fps;
+}
+
+void procy_set_scale(window_t *window, float scale) {
+  window->scale = scale;
+  int width, height;
+  procy_get_window_size(window, &width, &height);
+  set_ortho_projection(window, width, height);
+}
+
+void procy_reset_scale(procy_window_t *window) {
+  window->scale = DEFAULT_SCALE;
+  int width, height;
+  procy_get_window_size(window, &width, &height);
+  set_ortho_projection(window, width, height);
 }

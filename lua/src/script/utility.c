@@ -15,30 +15,27 @@
 #define FUNC_SCRIPT_RUN "run"
 
 static int write_log_info(lua_State *L) {
-  if (verify_arg_count(L, 1, __func__)) {
-    log_info("%s", lua_tostring(L, 1));
-  }
-
+  log_info("%s", luaL_checkstring(L, 1));
   return 0;
 }
 
 static int write_log_error(lua_State *L) {
-  LOG_SCRIPT_ERROR(L, "%s", lua_tostring(L, 1));
+  LOG_SCRIPT_ERROR(L, "%s", luaL_checkstring(L, 1));
   return 0;
 }
 
 static int write_log_warn(lua_State *L) {
-  LOG_SCRIPT_WARN(L, "%s", lua_tostring(L, 1));
+  LOG_SCRIPT_WARN(L, "%s", luaL_checkstring(L, 1));
   return 0;
 }
 
 static int write_log_debug(lua_State *L) {
-  LOG_SCRIPT_DEBUG(L, "%s", lua_tostring(L, 1));
+  LOG_SCRIPT_DEBUG(L, "%s", luaL_checkstring(L, 1));
   return 0;
 }
 
 static int run_script(lua_State *L) {
-  luaL_dostring(L, lua_tostring(L, 1));
+  luaL_dostring(L, luaL_checkstring(L, 1));
 
   return 0;
 }

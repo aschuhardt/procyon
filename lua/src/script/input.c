@@ -11,7 +11,33 @@
 #define FUNC_EVENTS_KEYRELEASE "on_key_released"
 #define FUNC_EVENTS_CHAR "on_char_entered"
 
+#define FIELD_KEY_VALUE "value"
+#define FIELD_KEY_NAME "name"
+#define FIELD_KEY_CTRL "ctrl"
+#define FIELD_KEY_SHIFT "shift"
+#define FIELD_KEY_ALT "alt"
+
 #define CHAR_MAX_CODEPOINT 255
+
+static void push_key_arg(lua_State *L, procy_key_info_t *key, bool shift,
+                         bool ctrl, bool alt) {
+  lua_newtable(L);
+
+  lua_pushinteger(L, key->value);
+  lua_setfield(L, -2, FIELD_KEY_VALUE);
+
+  lua_pushstring(L, key->name);
+  lua_setfield(L, -2, FIELD_KEY_NAME);
+
+  lua_pushboolean(L, shift);
+  lua_setfield(L, -2, FIELD_KEY_SHIFT);
+
+  lua_pushboolean(L, ctrl);
+  lua_setfield(L, -2, FIELD_KEY_CTRL);
+
+  lua_pushboolean(L, alt);
+  lua_setfield(L, -2, FIELD_KEY_ALT);
+}
 
 static void handle_key_pressed(procy_state_t *const state, procy_key_info_t key,
                                bool shift, bool ctrl, bool alt) {
@@ -20,11 +46,8 @@ static void handle_key_pressed(procy_state_t *const state, procy_key_info_t key,
   lua_getglobal(L, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_KEYPRESS);
   if (lua_isfunction(L, -1)) {
-    lua_pushinteger(L, key.value);
-    lua_pushboolean(L, shift);
-    lua_pushboolean(L, ctrl);
-    lua_pushboolean(L, alt);
-    if (lua_pcall(L, 4, 0, 0) == LUA_ERRRUN) {
+    push_key_arg(L, &key, shift, ctrl, alt);
+    if (lua_pcall(L, 1, 0, 0) == LUA_ERRRUN) {
       LOG_SCRIPT_ERROR(L, "Error calling %s.%s: %s", TBL_INPUT,
                        FUNC_EVENTS_KEYPRESS, lua_tostring(L, -1));
     }
@@ -39,11 +62,8 @@ static void handle_key_released(procy_state_t *const state,
   lua_getglobal(L, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_KEYRELEASE);
   if (lua_isfunction(L, -1)) {
-    lua_pushinteger(L, key.value);
-    lua_pushboolean(L, shift);
-    lua_pushboolean(L, ctrl);
-    lua_pushboolean(L, alt);
-    if (lua_pcall(L, 4, 0, 0) == LUA_ERRRUN) {
+    push_key_arg(L, &key, shift, ctrl, alt);
+    if (lua_pcall(L, 1, 0, 0) == LUA_ERRRUN) {
       LOG_SCRIPT_ERROR(L, "Error calling %s.%s: %s", TBL_INPUT,
                        FUNC_EVENTS_KEYPRESS, lua_tostring(L, -1));
     }
