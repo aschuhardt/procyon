@@ -11,6 +11,7 @@
 #define FUNC_CLOSE "close"
 #define FUNC_RELOAD "reload"
 #define FUNC_SIZE "size"
+#define FUNC_SET_TITLE "set_title"
 #define FUNC_GLYPH_SIZE "glyph_size"
 #define FUNC_ON_DRAW "on_draw"
 #define FUNC_ON_RESIZE "on_resize"
@@ -74,6 +75,19 @@ static int window_reload(lua_State *L) {
   script_env_t *env = (script_env_t *)lua_touserdata(L, -1);
 
   env->reload = true;
+
+  return 0;
+}
+
+static int set_window_title(lua_State *L) {
+  lua_settop(L, 1);
+
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
+
+  const char *title = luaL_checkstring(L, 1);
+
+  procy_set_window_title(window, title);
 
   return 0;
 }
@@ -202,6 +216,7 @@ void add_window(lua_State *L, script_env_t *env) {
                         {FUNC_SET_SCALE, set_window_scale},
                         {FUNC_GET_SCALE, get_window_scale},
                         {FUNC_RESET_SCALE, reset_window_scale},
+                        {FUNC_SET_TITLE, set_window_title},
                         {NULL, NULL}};
   luaL_newlib(L, methods);
   lua_setglobal(L, TBL_WINDOW);

@@ -392,6 +392,10 @@ void procy_set_high_fps_mode(procy_window_t *window, bool high_fps) {
   window->high_fps = high_fps;
 }
 
+void procy_set_window_title(procy_window_t *window, const char *title) {
+  glfwSetWindowTitle(window->glfw_win, title);
+}
+
 void procy_set_scale(window_t *window, float scale) {
   window->scale = scale;
   int width, height;

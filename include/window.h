@@ -58,6 +58,8 @@ void procy_get_glyph_size(procy_window_t *window, int *width, int *height);
 
 void procy_set_clear_color(procy_color_t c);
 
+void procy_set_window_title(procy_window_t *window, const char *title);
+
 void procy_close_window(procy_window_t *window);
 
 void procy_set_high_fps_mode(procy_window_t *window, bool high_fps);

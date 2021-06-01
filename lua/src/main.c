@@ -19,8 +19,8 @@ int main(int argc, const char **argv) {
   bool reload = false;
   do {
     // create window object
-    procy_window_t *window = procy_create_window(
-        config.window_w, config.window_h, "Procyon Lua", state);
+    procy_window_t *window =
+        procy_create_window(config.window_w, config.window_h, "", state);
     if (window == NULL) {
       log_error("Failed to create window");
     } else {
