@@ -52,6 +52,8 @@ static void handle_key_pressed(procy_state_t *const state, procy_key_info_t key,
                        FUNC_EVENTS_KEYPRESS, lua_tostring(L, -1));
     }
   }
+
+  lua_pop(L, lua_gettop(L));
 }
 
 static void handle_key_released(procy_state_t *const state,
@@ -68,6 +70,8 @@ static void handle_key_released(procy_state_t *const state,
                        FUNC_EVENTS_KEYPRESS, lua_tostring(L, -1));
     }
   }
+
+  lua_pop(L, lua_gettop(L));
 }
 
 static void handle_char_entered(procy_state_t *const state,
@@ -92,6 +96,8 @@ static void handle_char_entered(procy_state_t *const state,
                        FUNC_EVENTS_CHAR, lua_tostring(L, -1));
     }
   }
+
+  lua_pop(L, lua_gettop(L));
 }
 
 static void add_event_handler_table(lua_State *L) {

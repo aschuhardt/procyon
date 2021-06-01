@@ -97,7 +97,13 @@ static void perform_draw(procy_state_t *const state, double seconds) {
   lua_State *L = ((script_env_t *)state->data)->L;
 
   lua_getglobal(L, TBL_WINDOW);
-  if (lua_getfield(L, -1, FUNC_ON_DRAW) != LUA_TNONE && lua_isfunction(L, -1)) {
+  if (lua_isnoneornil(L, -1)) {
+    log_warn("on_draw was called before the window table was initialized");
+    return;
+  }
+
+  lua_getfield(L, -1, FUNC_ON_DRAW);
+  if (lua_isfunction(L, -1)) {
     lua_pushnumber(L, seconds);
     if (lua_pcall(L, 1, 0, 0) == LUA_ERRRUN) {
       LOG_SCRIPT_ERROR(L, "Error calling %s.%s: %s", TBL_WINDOW, FUNC_ON_DRAW,
@@ -113,6 +119,8 @@ static void perform_draw(procy_state_t *const state, double seconds) {
       lua_gc(L, LUA_GCCOLLECT);
     }
   }
+
+  lua_pop(L, lua_gettop(L));
 }
 
 static void handle_window_resized(procy_state_t *const state, int w, int h) {
@@ -130,6 +138,8 @@ static void handle_window_resized(procy_state_t *const state, int w, int h) {
 
     lua_gc(L, LUA_GCCOLLECT);
   }
+
+  lua_pop(L, lua_gettop(L));
 }
 
 static void handle_window_loaded(procy_state_t *const state) {
@@ -145,6 +155,8 @@ static void handle_window_loaded(procy_state_t *const state) {
 
     lua_gc(L, LUA_GCCOLLECT);
   }
+
+  lua_pop(L, lua_gettop(L));
 }
 
 static void handle_window_unloaded(procy_state_t *const state) {
@@ -160,6 +172,8 @@ static void handle_window_unloaded(procy_state_t *const state) {
 
     lua_gc(L, LUA_GCCOLLECT);
   }
+
+  lua_pop(L, lua_gettop(L));
 }
 
 static int set_window_color(lua_State *L) {
