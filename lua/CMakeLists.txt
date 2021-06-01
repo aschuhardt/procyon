@@ -34,15 +34,3 @@ add_custom_target(script_test
   COMMAND procyon-lua --debug -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/test.lua"
   DEPENDS procyon-lua copy_spritesheet_for_script_test
   USES_TERMINAL)
-
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-  add_custom_command(
-    TARGET procyon-lua
-    POST_BUILD
-    COMMAND strip -S --strip-unneeded --remove-section=.note.gnu.gold-version --remove-section=.comment --remove-section=.note --remove-section=.note.gnu.build-id --remove-section=.note.ABI-tag $<TARGET_FILE:procyon-lua>)
-  add_custom_command(
-    TARGET procyon-lua
-    POST_BUILD
-    USES_TERMINAL
-    COMMAND upx --lzma $<TARGET_FILE:procyon-lua>)
-endif()
