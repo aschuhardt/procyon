@@ -11,9 +11,18 @@ typedef struct procy_sprite_shader_program_t {
 } procy_sprite_shader_program_t;
 
 /*
- * Builds and compiles a shader program with information for rendering text
- * sprites from a bitmap font.
+ * Builds and compiles a shader program capable of rendering sprites based on a
+ * texture derived from an image file stored in-memory
+ *
  */
+procy_sprite_shader_program_t *procy_create_sprite_shader_mem(
+    unsigned char *contents, size_t length);
+
+/*
+ * Builds and compiles a shader program capable of rendering sprites based on a
+ * texture derived from an on-disk image file
+ */
+
 procy_sprite_shader_program_t *procy_create_sprite_shader(const char *path);
 
 /*

@@ -1,5 +1,6 @@
 #include "shader/sprite.h"
 
+#include <errno.h>
 #include <log.h>
 #include <string.h>
 
@@ -74,18 +75,16 @@ static void disable_shader_attributes() {
 }
 
 static bool load_sprite_texture(sprite_shader_program_t *shader,
-                                const char *path) {
+                                unsigned char *contents, size_t length) {
   if (glIsTexture(shader->texture)) {
     GL_CHECK(glDeleteTextures(1, &shader->texture));
   }
 
   int components, width, height;
-  unsigned char *bitmap =
-      stbi_load(path, &shader->texture_w, &shader->texture_h, &components, 0);
+  unsigned char *bitmap = stbi_load_from_memory(
+      contents, length, &shader->texture_w, &shader->texture_h, &components, 0);
 
   if (bitmap == NULL || shader->texture_w < 0 || shader->texture_h < 0) {
-    log_error("Failed to read sprite texture from %s", path);
-
     const char *msg = stbi_failure_reason();
     if (msg != NULL) {
       log_error("STBI failure message: %s", msg);
@@ -93,8 +92,8 @@ static bool load_sprite_texture(sprite_shader_program_t *shader,
 
     return false;
   } else {
-    log_debug("Loaded texture from \"%s\" (size: %dx%d; comp: %d)", path,
-              shader->texture_w, shader->texture_h, components);
+    log_debug("Loaded texture (size: %dx%d; comp: %d)", shader->texture_w,
+              shader->texture_h, components);
     // copy both bitmap buffers into a single location
     const size_t bitmap_size = (size_t)shader->texture_w * shader->texture_h;
     if (bitmap_size != 0) {
@@ -169,7 +168,8 @@ static void draw_sprite_batch(shader_program_t *const program,
 /* Public interface definition */
 /* --------------------------- */
 
-sprite_shader_program_t *procy_create_sprite_shader(const char *path) {
+sprite_shader_program_t *procy_create_sprite_shader_mem(unsigned char *contents,
+                                                        size_t length) {
   sprite_shader_program_t *sprite_shader =
       malloc(sizeof(sprite_shader_program_t));
 
@@ -193,7 +193,7 @@ sprite_shader_program_t *procy_create_sprite_shader(const char *path) {
                         procy_compile_frag_shader((char *)embed_sprite_frag,
                                                   &program->fragment))) {
     // load font texture and codepoints
-    if (!load_sprite_texture(sprite_shader, path)) {
+    if (!load_sprite_texture(sprite_shader, contents, length)) {
       procy_destroy_sprite_shader(sprite_shader);
       return NULL;
     }
@@ -217,6 +217,34 @@ sprite_shader_program_t *procy_create_sprite_shader(const char *path) {
   }
 
   return sprite_shader;
+}
+
+sprite_shader_program_t *procy_create_sprite_shader(const char *path) {
+  FILE *file = fopen(path, "rb");
+  if (file == NULL) {
+    log_error("Failed to open sprite texture file at \"%s\": %s", path,
+              strerror(errno));
+    return NULL;
+  }
+
+  fseek(file, 0, SEEK_END);
+  size_t len = ftell(file);
+  unsigned char *buffer = malloc(sizeof(unsigned char) * len);
+  if (buffer == NULL) {
+    log_error("Failed to allocate %zu bytes of memory for \"%s\"", len, path);
+    fclose(file);
+    return NULL;
+  }
+
+  fseek(file, 0, SEEK_SET);
+  fread(buffer, sizeof(unsigned char), len, file);
+  fclose(file);
+
+  sprite_shader_program_t *shader = procy_create_sprite_shader_mem(buffer, len);
+
+  free(buffer);
+
+  return shader;
 }
 
 static void compute_sprite_vertices(sprite_shader_program_t *shader,
