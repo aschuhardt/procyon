@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17.0)
+cmake_minimum_required(VERSION 3.18.0)
 
 project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 
@@ -6,6 +6,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -O3 -fmerge-all-constants -fno-stack-protector -fdata-sections")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
+
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "No build type provided; defaulting to Release")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Procyon build-type")
+endif()
 
 add_subdirectory(lib)
 
@@ -24,19 +29,19 @@ set(SU_SOURCE
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(SU_LIBRARY procyon)
+set(SU_LIBRARY_STATIC procyon_static)
 
 get_directory_property(parentDir PARENT_DIRECTORY)
 if(parentDir)
   set(SU_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
   set(SU_LIBRARY procyon PARENT_SCOPE)
+  set(SU_LIBRARY_STATIC procyon_static PARENT_SCOPE)
 endif()
 
-if(SU_SHARED)
-  add_library(${SU_LIBRARY} SHARED ${SU_SOURCE})
-  target_link_options(${SU_LIBRARY} PUBLIC -fPIC)
-else()
-  add_library(${SU_LIBRARY} ${SU_SOURCE})
-endif()
+add_library(${SU_LIBRARY} SHARED ${SU_SOURCE})
+target_link_options(${SU_LIBRARY} PUBLIC -fPIC)
+
+add_library(${SU_LIBRARY_STATIC} STATIC ${SU_SOURCE})
 
 target_include_directories(${SU_LIBRARY}
   PUBLIC
@@ -45,6 +50,14 @@ target_include_directories(${SU_LIBRARY}
   ${STB_INCLUDE_DIR})
 target_link_libraries(${SU_LIBRARY} PRIVATE glad glfw)
 target_link_libraries(${SU_LIBRARY} PUBLIC log)
+
+target_include_directories(${SU_LIBRARY_STATIC}
+  PUBLIC
+  ${SU_INCLUDE}
+  ${LOG_INCLUDE_DIR}
+  ${STB_INCLUDE_DIR})
+target_link_libraries(${SU_LIBRARY_STATIC} PRIVATE glad glfw)
+target_link_libraries(${SU_LIBRARY_STATIC} PUBLIC log)
 
 # Compile a small program that will convert files into
 # C header files
@@ -108,6 +121,7 @@ foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARG
   set_source_files_properties(${header} PROPERTIES GENERATED 1)
   add_custom_target(${target} DEPENDS ${header})
   add_dependencies(${SU_LIBRARY} ${target})
+  add_dependencies(${SU_LIBRARY_STATIC} ${target})
 endforeach()
 
 # build an implementation of a Lua wrapper for lib

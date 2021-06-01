@@ -12,14 +12,16 @@ set(SU_LUA_SOURCE
   src/script/plane.c
   src/script/environment.c)
 
+find_package(Lua 5.4 REQUIRED)
+
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -O3 -fmerge-all-constants -fno-stack-protector -fdata-sections")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
 
 add_executable(procyon-lua ${SU_LUA_SOURCE})
-target_link_libraries(procyon-lua PUBLIC procyon argparse lua_static)
+target_link_libraries(procyon-lua PUBLIC procyon argparse ${LUA_LIBRARY} m)
 target_include_directories(procyon-lua
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
-  ${STB_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${LOG_INCLUDE_DIR} ${SU_INCLUDE}) 
+  ${STB_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${LOG_INCLUDE_DIR} ${SU_INCLUDE} ${LUA_INCLUDE_DIR}) 
 set_property(TARGET procyon-lua PROPERTY EXCLUDE_FROM_ALL TRUE)
 
 add_custom_target(copy_spritesheet_for_script_test

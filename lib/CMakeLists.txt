@@ -1,14 +1,6 @@
 add_subdirectory(glad)
 add_subdirectory(glfw)
 
-set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
-set(LUA_BUILD_COMPILER OFF)
-add_subdirectory(lua)
-
-add_library(tinydir INTERFACE)
-target_include_directories(tinydir 
-  INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/tinydir")
-
 add_subdirectory(argparse)
 set(ARGPARSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/argparse" PARENT_SCOPE)
 set(ARGPARSE_SHARED OFF)
