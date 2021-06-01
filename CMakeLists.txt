@@ -4,12 +4,13 @@ project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -O3 -fmerge-all-constants -fno-stack-protector -fdata-sections")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -O2 -fmerge-all-constants -fno-stack-protector -fdata-sections")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
 
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type provided; defaulting to Release")
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Procyon build-type")
+  set(CMAKE_BUILD_TYPE Release)
 endif()
 
 add_subdirectory(lib)
@@ -39,10 +40,6 @@ if(parentDir)
 endif()
 
 add_library(${SU_LIBRARY} SHARED ${SU_SOURCE})
-target_link_options(${SU_LIBRARY} PUBLIC -fPIC)
-
-add_library(${SU_LIBRARY_STATIC} STATIC ${SU_SOURCE})
-
 target_include_directories(${SU_LIBRARY}
   PUBLIC
   ${SU_INCLUDE}
@@ -51,6 +48,7 @@ target_include_directories(${SU_LIBRARY}
 target_link_libraries(${SU_LIBRARY} PRIVATE glad glfw)
 target_link_libraries(${SU_LIBRARY} PUBLIC log)
 
+add_library(${SU_LIBRARY_STATIC} STATIC ${SU_SOURCE})
 target_include_directories(${SU_LIBRARY_STATIC}
   PUBLIC
   ${SU_INCLUDE}
