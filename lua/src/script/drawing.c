@@ -23,6 +23,8 @@
 #define FUNC_CREATESPRITE "sprite"
 #define FUNC_DRAWSPRITE "draw"
 #define FIELD_SPRITESHEET_PTR "ptr"
+#define FIELD_SPRITESHEET_WIDTH "width"
+#define FIELD_SPRITESHEET_HEIGHT "height"
 #define FIELD_SPRITE_PTR "ptr"
 #define FIELD_SPRITE_COLOR "color"
 #define FIELD_SPRITE_BACKGROUND "background"
@@ -317,6 +319,12 @@ static int load_spritesheet(lua_State *L) {
 
   lua_pushlightuserdata(L, shader);
   lua_setfield(L, -2, FIELD_SPRITESHEET_PTR);
+
+  lua_pushinteger(L, shader->texture_w);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_WIDTH);
+
+  lua_pushinteger(L, shader->texture_h);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_HEIGHT);
 
   lua_pushcfunction(L, create_sprite);
   lua_setfield(L, -2, FUNC_CREATESPRITE);
