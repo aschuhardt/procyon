@@ -306,39 +306,9 @@ static int create_sprite(lua_State *L) {
   return 1;
 }
 
-static int load_spritesheet(lua_State *L) {
-  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
-  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
-
-  procy_sprite_shader_program_t *shader =
-      procy_load_sprite_shader(window, luaL_checkstring(L, 1));
-
-  if (shader == NULL) {
-    return 0;
-  }
-
-  lua_newtable(L);
-
-  lua_pushlightuserdata(L, shader);
-  lua_setfield(L, -2, FIELD_SPRITESHEET_PTR);
-
-  lua_pushinteger(L, shader->texture_w);
-  lua_setfield(L, -2, FIELD_SPRITESHEET_WIDTH);
-
-  lua_pushinteger(L, shader->texture_h);
-  lua_setfield(L, -2, FIELD_SPRITESHEET_HEIGHT);
-
-  lua_pushcfunction(L, create_sprite);
-  lua_setfield(L, -2, FUNC_CREATESPRITE);
-
-  return 1;
-}
-
 static int load_spritesheet_raw(lua_State *L) {
   // accepts a table
   // the table has a "buffer" field and a "length" field
-  lua_settop(L, 1);
-
   lua_getfield(L, 1, FIELD_RAWDATA_LENGTH);
   size_t length = luaL_checkinteger(L, -1);
 
@@ -360,6 +330,47 @@ static int load_spritesheet_raw(lua_State *L) {
 
   lua_pushlightuserdata(L, shader);
   lua_setfield(L, -2, FIELD_SPRITESHEET_PTR);
+
+  lua_pushinteger(L, shader->texture_w);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_WIDTH);
+
+  lua_pushinteger(L, shader->texture_h);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_HEIGHT);
+
+  lua_pushcfunction(L, create_sprite);
+  lua_setfield(L, -2, FUNC_CREATESPRITE);
+
+  return 1;
+}
+
+static int load_spritesheet(lua_State *L) {
+  lua_settop(L, 1);
+
+  if (lua_istable(L, 1)) {
+    // load from a raw buffer object instead of from a file
+    return load_spritesheet_raw(L);
+  }
+
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
+
+  procy_sprite_shader_program_t *shader =
+      procy_load_sprite_shader(window, luaL_checkstring(L, 1));
+
+  if (shader == NULL) {
+    return 0;
+  }
+
+  lua_newtable(L);
+
+  lua_pushlightuserdata(L, shader);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_PTR);
+
+  lua_pushinteger(L, shader->texture_w);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_WIDTH);
+
+  lua_pushinteger(L, shader->texture_h);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_HEIGHT);
 
   lua_pushcfunction(L, create_sprite);
   lua_setfield(L, -2, FUNC_CREATESPRITE);
