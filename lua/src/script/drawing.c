@@ -28,6 +28,8 @@
 #define FIELD_SPRITE_BACKGROUND "background"
 #define FIELD_SPRITE_WIDTH "width"
 #define FIELD_SPRITE_HEIGHT "height"
+#define FIELD_RAWDATA_LENGTH "length"
+#define FIELD_RAWDATA_BUFFER "length"
 
 #define WHITE_RGB 1.0F, 1.0F, 1.0F
 #define BLACK_RGB 0.0F, 0.0F, 0.0F
@@ -312,6 +314,39 @@ static int load_spritesheet(lua_State *L) {
   if (shader == NULL) {
     return 0;
   }
+
+  lua_newtable(L);
+
+  lua_pushlightuserdata(L, shader);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_PTR);
+
+  lua_pushcfunction(L, create_sprite);
+  lua_setfield(L, -2, FUNC_CREATESPRITE);
+
+  return 1;
+}
+
+static int load_spritesheet_raw(lua_State *L) {
+  // accepts a table
+  // the table has a "buffer" field and a "length" field
+  lua_settop(L, 1);
+
+  lua_getfield(L, 1, FIELD_RAWDATA_LENGTH);
+  size_t length = luaL_checkinteger(L, -1);
+
+  lua_getfield(L, 1, FIELD_RAWDATA_BUFFER);
+  if (!lua_islightuserdata(L, -1)) {
+    lua_pushnil(L);
+    return 1;
+  }
+
+  unsigned char *buffer = lua_touserdata(L, -1);
+
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
+
+  procy_sprite_shader_program_t *shader =
+      procy_load_sprite_shader_mem(window, buffer, length);
 
   lua_newtable(L);
 

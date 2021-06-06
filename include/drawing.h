@@ -45,6 +45,9 @@ typedef struct procy_draw_op_t {
 struct procy_sprite_shader_program_t *procy_load_sprite_shader(
     struct procy_window_t *window, const char *path);
 
+struct procy_sprite_shader_program_t *procy_load_sprite_shader_mem(
+    struct procy_window_t *window, unsigned char *buffer, size_t length);
+
 procy_sprite_t *procy_create_sprite(
     struct procy_sprite_shader_program_t *shader, short x, short y, short width,
     short height);

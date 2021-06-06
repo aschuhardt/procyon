@@ -30,34 +30,70 @@ static void draw_string_chars(window_t *window, short x, short y, bool bold,
   }
 }
 
+static int get_next_sprite_shader_index(procy_window_t *window) {
+  procy_sprite_shader_program_t **buffer = &window->shaders.sprite[0];
+  for (int i = 0; i < MAX_SPRITE_SHADER_COUNT; ++i) {
+    if (buffer[i] == 0) {
+      return i;
+    }
+  }
+
+  // no room for more shaders
+  return -1;
+}
+
 /* --------------------------- */
 /* Public interface definition */
 /* --------------------------- */
 
 struct procy_sprite_shader_program_t *procy_load_sprite_shader(
     window_t *window, const char *path) {
-  procy_sprite_shader_program_t **buffer = &window->shaders.sprite[0];
-  for (int i = 0; i < MAX_SPRITE_SHADER_COUNT; ++i) {
-    if (buffer[i] == 0) {
-      procy_sprite_shader_program_t *shader = procy_create_sprite_shader(path);
-      if (shader == NULL) {
-        log_error("Failed to load a sprite shader \"%s\"", path);
-        return NULL;
-      }
+  // find the next index at which the new shader should be appended to the
+  // window's sprite shader buffer
+  int index = get_next_sprite_shader_index(window);
 
-      log_debug("Loaded sprite shader \"%s\" (index: %d)", path, i);
-      buffer[i] = shader;
-
-      return shader;
-    }
+  // if adding a new shader would exceed the maximum allowed, the index will be
+  // set to -1
+  if (index < 0) {
+    log_warn(
+        "Attempted to load a new sprite shader \"%s\" but the maximum number "
+        "of sprite shaders (%d) has been reached.",
+        path, MAX_SPRITE_SHADER_COUNT);
+    return NULL;
   }
 
-  // not enough room
-  log_warn(
-      "Attempted to load a new sprite shader \"%s\" but the maximum number of "
-      "sprite shaders (%d) has been reached.",
-      path, MAX_SPRITE_SHADER_COUNT);
-  return NULL;
+  procy_sprite_shader_program_t *shader = procy_create_sprite_shader(path);
+
+  if (shader != NULL) {
+    window->shaders.sprite[index] = shader;
+    log_debug("Loaded sprite shader \"%s\" (index: %d)", path, index);
+  }
+
+  return shader;
+}
+
+struct procy_sprite_shader_program_t *procy_load_sprite_shader_mem(
+    struct procy_window_t *window, unsigned char *buffer, size_t length) {
+  int index = get_next_sprite_shader_index(window);
+  if (index < 0) {
+    log_warn(
+        "Attempted to load a new sprite shader from an in-memory buffer but "
+        "the maximum nuber of sprite shaders (%d) has been reached",
+        MAX_SPRITE_SHADER_COUNT);
+    return NULL;
+  }
+
+  procy_sprite_shader_program_t *shader =
+      procy_create_sprite_shader_mem(buffer, length);
+  if (shader != NULL) {
+    window->shaders.sprite[index] = shader;
+    log_debug(
+        "Loaded a sprite shader from an in-memory buffer %zu bytes in length "
+        "(index: %d)",
+        length, index);
+  }
+
+  return shader;
 }
 
 procy_sprite_t *procy_create_sprite(procy_sprite_shader_program_t *shader,
