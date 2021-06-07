@@ -31,7 +31,7 @@
 #define FIELD_SPRITE_WIDTH "width"
 #define FIELD_SPRITE_HEIGHT "height"
 #define FIELD_RAWDATA_LENGTH "length"
-#define FIELD_RAWDATA_BUFFER "length"
+#define FIELD_RAWDATA_BUFFER "buffer"
 
 #define WHITE_RGB 1.0F, 1.0F, 1.0F
 #define BLACK_RGB 0.0F, 0.0F, 0.0F
@@ -325,6 +325,10 @@ static int load_spritesheet_raw(lua_State *L) {
 
   procy_sprite_shader_program_t *shader =
       procy_load_sprite_shader_mem(window, buffer, length);
+
+  if (shader == NULL) {
+    return 0;
+  }
 
   lua_newtable(L);
 
