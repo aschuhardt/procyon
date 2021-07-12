@@ -76,7 +76,7 @@ void on_draw(procy_state_t* state, double time) {
   bench_state_t* data = (bench_state_t*)state->data;
   data->avg_buffer[data->avg_buffer_index++] = time;
 
-  if (data->avg_buffer_index > FPS_AVG_BUFFER_SIZE) {
+  if (data->avg_buffer_index >= FPS_AVG_BUFFER_SIZE) {
     double avg = 0.0;
     for (int i = 0; i < FPS_AVG_BUFFER_SIZE; ++i) {
       avg += data->avg_buffer[i];
