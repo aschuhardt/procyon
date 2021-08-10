@@ -27,7 +27,7 @@ jobs:
         luaVersion: 5.4
       
     - name: Install Dependencies
-      run: sudo apt-get install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
+      run: sudo apt-get install libc6-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
       
     - name: Checkout Submodules
       run: git submodule update --init --recursive
