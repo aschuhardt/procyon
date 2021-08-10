@@ -9,6 +9,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: MinSizeRel
+  OUTPUT_DIR: ${{github.workspace}}/output
   
 jobs:
   build:
@@ -29,23 +30,26 @@ jobs:
     - name: Install Dependencies
       run: sudo apt-get install libc6-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
       
+    - name: Create Output Directory
+      run: mkdir ${{env.OUTPUT_DIR}}
+      
     - name: Checkout Submodules
       run: git submodule update --init --recursive
       
     - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DLua_ROOT=.lua/ -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: |
+        cmake -B ${{github.workspace}}/build \
+        -DLua_ROOT=.lua/ \
+        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
+        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
+        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
     - name: Build
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target procyon-lua
     
-    - name: Archive
-      run: mkdir archive && cp ${{github.workspace}}/build/*procyon* ./archive/ && cp ${{github.workspace}}/build/lua/procyon-lua ./archive/ && tar -cvJf archive.tar.xz ./archive/*
-
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
         name: archive
-        path: archive.tar.xz
+        path: ${{env.OUTPUT_DIR}}
