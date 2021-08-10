@@ -12,7 +12,7 @@ set(SU_LUA_SOURCE
   src/script/plane.c
   src/script/environment.c)
 
-find_package(Lua 5.3 REQUIRED)
+find_package(Lua 5.4 REQUIRED)
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -O2 -fmerge-all-constants -fdata-sections")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
