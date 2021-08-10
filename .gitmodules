@@ -3,16 +3,10 @@
 	url = https://github.com/glfw/glfw.git
 [submodule "lib/log"]
 	path = lib/log
-	url = git@github.com:aschuhardt/log.c.git
+	url = https://github.com/aschuhardt/log.c.git
 [submodule "lib/argparse"]
 	path = lib/argparse
 	url = https://github.com/cofyc/argparse.git
 [submodule "lib/stb"]
 	path = lib/stb
 	url = https://github.com/nothings/stb.git
-[submodule "procyon-ui"]
-	path = procyon-ui
-	url = git@github.com:aschuhardt/procyon-ui.git
-[submodule "lib/lua"]
-	path = lib/lua
-	url = https://github.com/walterschell/Lua.git
