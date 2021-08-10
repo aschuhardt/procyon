@@ -66,6 +66,7 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 - `draw.poly(x, y, radius, n [, color])` - Draws an `n`-sided polygon centered at pixel coordinates `(x, y)`, with a floating point `radius`, and an optional color.
 - `color.from_rgb(r, g, b)` - Returns a table with fields `r`, `g`, `b`, and `a` that represents a color value.  Arguments should be floating-point values between `0.0` and `1.0`.
 - `spritesheet.load(path)` - Return a new spritesheet object built from an image file at `path`.  Note that there is a cap on the number of spritesheets that can be loaded during the lifetime of the application (currently 32).  Modify `MAX_SPRITE_SHADER_COUNT` in `window.h` if you need to raise this cap for some reason.
+- `spritesheet.load(table)` - Returns a new spritesheet object build from raw data found in a binary buffer.  The argument should be a table with two fields: `length`, which is an integer, and `buffer`, which is a lightuserdata that contains raw texture data.  `length` should describe the length, in bytes, of `buffer`.
 - `spritesheet:sprite(x, y, w, h [, color [, background]])` - Returns a new sprite object defined by the provided position and dimensions within the spritesheet's texture.  The table that is returned has its `width` and `height` fields set accordingly.
 - `sprite:draw(x, y)` - Draws the sprite at the provided screen coordinates.
 
