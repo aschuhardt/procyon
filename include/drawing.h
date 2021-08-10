@@ -5,16 +5,10 @@
 #include <stddef.h>
 
 #include "color.h"
+#include "op_type.h"
 
 struct procy_window_t;
 struct procy_sprite_shader_program_t;
-
-typedef enum procy_draw_op_type_t {
-  DRAW_OP_TEXT = 1,
-  DRAW_OP_RECT = 1 << 1,
-  DRAW_OP_LINE = 1 << 2,
-  DRAW_OP_SPRITE = 1 << 3
-} procy_draw_op_type_t;
 
 typedef struct procy_sprite_t {
   struct procy_sprite_shader_program_t *shader;

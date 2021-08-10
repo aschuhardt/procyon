@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include "color.h"
+#include "op_type.h"
 
 #define MAX_SPRITE_SHADER_COUNT 32
 
@@ -21,7 +22,7 @@ typedef struct procy_draw_op_buffer_t {
   struct procy_draw_op_t *buffer;
   size_t length;
   size_t capacity;
-  int types_seen;
+  procy_draw_op_type_t types_seen;
 } procy_draw_op_buffer_t;
 
 typedef struct procy_shaders_t {

@@ -1,3 +1,4 @@
 build/
 include/gen/
 compile_commands.json
+.cache/

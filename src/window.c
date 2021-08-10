@@ -8,14 +8,14 @@
 #include <log.h>
 #include <string.h>
 
+#include "drawing.h"
+#include "keys.h"
 #include "shader.h"
 #include "shader/error.h"
 #include "shader/glyph.h"
-#include "shader/rect.h"
 #include "shader/line.h"
+#include "shader/rect.h"
 #include "shader/sprite.h"
-#include "drawing.h"
-#include "keys.h"
 #include "state.h"
 
 typedef procy_window_t window_t;
@@ -25,6 +25,7 @@ typedef procy_draw_op_buffer_t draw_op_buffer_t;
 typedef procy_glyph_shader_program_t glyph_shader_program_t;
 typedef procy_rect_shader_program_t rect_shader_program_t;
 typedef procy_line_shader_program_t line_shader_program_t;
+typedef procy_sprite_shader_program_t sprite_shader_program_t;
 typedef procy_key_info_t key_info_t;
 typedef procy_color_t color_t;
 typedef procy_state_t state_t;
@@ -317,6 +318,31 @@ void procy_get_glyph_size(procy_window_t *window, int *width, int *height) {
   }
 }
 
+static void execute_draw_ops(window_t *window) {
+  if (window->draw_ops.length > 0) {
+    if (window->shaders.rect->program.valid &&
+        has_draw_op_type(window, DRAW_OP_RECT)) {
+      procy_draw_rect_shader(window->shaders.rect, window);
+    }
+
+    if (window->shaders.line->program.valid &&
+        has_draw_op_type(window, DRAW_OP_LINE)) {
+      procy_draw_line_shader(window->shaders.line, window);
+    }
+
+    if (window->shaders.glyph->program.valid &&
+        has_draw_op_type(window, DRAW_OP_TEXT)) {
+      procy_draw_glyph_shader(window->shaders.glyph, window);
+    }
+
+    if (has_draw_op_type(window, DRAW_OP_SPRITE)) {
+      draw_sprite_shaders(window);
+    }
+
+    reset_draw_ops_buffer(&window->draw_ops);
+  }
+}
+
 void procy_begin_loop(window_t *window) {
   // this can be overridden later, but black is a good default
   GL_CHECK(glClearColor(0.0F, 0.0F, 0.0F, 1.0F));
@@ -333,9 +359,6 @@ void procy_begin_loop(window_t *window) {
 
   double last_frame_time = glfwGetTime();
   GLFWwindow *w = (GLFWwindow *)window->glfw_win;
-  procy_glyph_shader_program_t *glyph_shader = window->shaders.glyph;
-  procy_rect_shader_program_t *rect_shader = window->shaders.rect;
-  procy_line_shader_program_t *line_shader = window->shaders.line;
   while (!glfwWindowShouldClose(w) && !window->quitting) {
     double current_time = glfwGetTime();
     double frame_duration = current_time - last_frame_time;
@@ -353,28 +376,7 @@ void procy_begin_loop(window_t *window) {
       state->on_draw(state, frame_duration);
     }
 
-    if (window->draw_ops.length > 0) {
-      if (rect_shader->program.valid &&
-          has_draw_op_type(window, DRAW_OP_RECT)) {
-        procy_draw_rect_shader(rect_shader, window);
-      }
-
-      if (line_shader->program.valid &&
-          has_draw_op_type(window, DRAW_OP_LINE)) {
-        procy_draw_line_shader(line_shader, window);
-      }
-
-      if (glyph_shader->program.valid &&
-          has_draw_op_type(window, DRAW_OP_TEXT)) {
-        procy_draw_glyph_shader(glyph_shader, window);
-      }
-
-      if (has_draw_op_type(window, DRAW_OP_SPRITE)) {
-        draw_sprite_shaders(window);
-      }
-
-      reset_draw_ops_buffer(&window->draw_ops);
-    }
+    execute_draw_ops(window);
 
     glfwSwapBuffers(w);
   }
@@ -398,14 +400,16 @@ void procy_set_window_title(procy_window_t *window, const char *title) {
 
 void procy_set_scale(window_t *window, float scale) {
   window->scale = scale;
-  int width, height;
+  int width;
+  int height;
   procy_get_window_size(window, &width, &height);
   set_ortho_projection(window, width, height);
 }
 
 void procy_reset_scale(procy_window_t *window) {
   window->scale = DEFAULT_SCALE;
-  int width, height;
+  int width;
+  int height;
   procy_get_window_size(window, &width, &height);
   set_ortho_projection(window, width, height);
 }

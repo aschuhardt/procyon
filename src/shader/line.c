@@ -5,13 +5,13 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
+#include <log.h>
+
 #include "drawing.h"
-#include "window.h"
 #include "gen/line_frag.h"
 #include "gen/line_vert.h"
 #include "shader/error.h"
-
-#include <log.h>
+#include "window.h"
 
 typedef procy_line_shader_program_t line_shader_program_t;
 typedef procy_window_t window_t;
@@ -22,7 +22,7 @@ typedef procy_draw_op_t draw_op_t;
 #pragma pack(0)
 typedef struct line_vertex_t {
   float x, y;
-  color_t color;
+  int color;
 } line_vertex_t;
 #pragma pack(1)
 
@@ -93,9 +93,9 @@ static void enable_shader_attributes(shader_program_t *program) {
                                  sizeof(line_vertex_t), 0));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_LINE_COLOR));
-  GL_CHECK(glVertexAttribPointer(ATTR_LINE_COLOR, 3, GL_FLOAT, GL_FALSE,
-                                 sizeof(line_vertex_t),
-                                 (void *)(2 * sizeof(float))));
+  GL_CHECK(glVertexAttribIPointer(ATTR_LINE_COLOR, 1, GL_INT,
+                                  sizeof(line_vertex_t),
+                                  (void *)(2 * sizeof(float))));  // NOLINT
 }
 
 static void draw_line_batch(shader_program_t *const program,
@@ -142,10 +142,11 @@ void procy_draw_line_shader(line_shader_program_t *shader,
 
     const size_t vert_index = (size_t)batch_index * VERTICES_PER_LINE;
 
-    vertex_batch[vert_index] =
-        (line_vertex_t){(float)op->x, (float)op->y, op->forecolor};
-    vertex_batch[vert_index + 1] = (line_vertex_t){
-        (float)op->data.line.x2, (float)op->data.line.y2, op->forecolor};
+    vertex_batch[vert_index] = (line_vertex_t){(float)op->x, (float)op->y,
+                                               COLOR_TO_INT(op->forecolor)};
+    vertex_batch[vert_index + 1] =
+        (line_vertex_t){(float)op->data.line.x2, (float)op->data.line.y2,
+                        COLOR_TO_INT(op->forecolor)};
 
     if (batch_index == DRAW_BATCH_SIZE - 1) {
       draw_line_batch(program, vertex_batch, batch_index + 1);

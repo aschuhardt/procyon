@@ -11,13 +11,13 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
-#include "shader/error.h"
 #include "drawing.h"
-#include "window.h"
-#include "gen/tileset.h"
-#include "gen/tileset_bold.h"
 #include "gen/glyph_frag.h"
 #include "gen/glyph_vert.h"
+#include "gen/tileset.h"
+#include "gen/tileset_bold.h"
+#include "shader/error.h"
+#include "window.h"
 
 typedef procy_draw_op_t draw_op_t;
 typedef procy_window_t window_t;
@@ -32,7 +32,8 @@ typedef struct {
 #pragma pack(0)
 typedef struct glyph_vertex_t {
   float x, y, u, v;
-  color_t forecolor, backcolor;
+  int forecolor;
+  int backcolor;
   float bold;
 } glyph_vertex_t;
 #pragma pack(1)
@@ -64,22 +65,22 @@ static void enable_shader_attributes(shader_program_t *const program) {
   GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_TEXCOORDS));
   GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_TEXCOORDS, 2, GL_FLOAT, GL_FALSE,
                                  sizeof(glyph_vertex_t),
-                                 (void *)(2 * sizeof(float))));
+                                 (void *)(2 * sizeof(float))));  // NOLINT
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_FORECOLOR));
-  GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_FORECOLOR, 3, GL_FLOAT, GL_FALSE,
-                                 sizeof(glyph_vertex_t),
-                                 (void *)(4 * sizeof(float))));
+  GL_CHECK(glVertexAttribIPointer(ATTR_GLYPH_FORECOLOR, 1, GL_INT,
+                                  sizeof(glyph_vertex_t),
+                                  (void *)(4 * sizeof(float))));  // NOLINT
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_BACKCOLOR));
-  GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_BACKCOLOR, 3, GL_FLOAT, GL_FALSE,
-                                 sizeof(glyph_vertex_t),
-                                 (void *)(7 * sizeof(float))));
+  GL_CHECK(glVertexAttribIPointer(
+      ATTR_GLYPH_BACKCOLOR, 1, GL_INT, sizeof(glyph_vertex_t),
+      (void *)(4 * sizeof(float) + sizeof(int))));  // NOLINT
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_BOLD));
-  GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_BOLD, 1, GL_FLOAT, GL_FALSE,
-                                 sizeof(glyph_vertex_t),
-                                 (void *)(10 * sizeof(float))));
+  GL_CHECK(glVertexAttribPointer(
+      ATTR_GLYPH_BOLD, 1, GL_FLOAT, GL_FALSE, sizeof(glyph_vertex_t),
+      (void *)(4 * sizeof(float) + 2 * sizeof(int))));  // NOLINT
 }
 
 static void disable_shader_attributes() {
@@ -93,10 +94,12 @@ static void disable_shader_attributes() {
 static glyph_vertex_bounds_t compute_glyph_vertex_bounds(
     glyph_shader_program_t *const shader) {
   return (glyph_vertex_bounds_t){
-      (float)shader->texture_w / GLYPH_WIDTH_COUNT,
-      (float)shader->texture_h / GLYPH_HEIGHT_COUNT,
-      (float)shader->texture_w / GLYPH_WIDTH_COUNT / (float)shader->texture_w,
-      (float)shader->texture_h / GLYPH_HEIGHT_COUNT / (float)shader->texture_h};
+      (float)shader->texture_w / (float)GLYPH_WIDTH_COUNT,
+      (float)shader->texture_h / (float)GLYPH_HEIGHT_COUNT,
+      (float)shader->texture_w / (float)GLYPH_WIDTH_COUNT /
+          (float)shader->texture_w,
+      (float)shader->texture_h / (float)GLYPH_HEIGHT_COUNT /
+          (float)shader->texture_h};
 }
 
 static void load_glyph_font(glyph_shader_program_t *shader) {
@@ -268,8 +271,8 @@ static void compute_glyph_vertices(glyph_shader_program_t *shader,
   // texture coordinates
   const float tx =
       (float)(c % GLYPH_WIDTH_COUNT) * bounds->width / (float)shader->texture_w;
-  const float ty = floorf((float)c / GLYPH_HEIGHT_COUNT) * bounds->height /
-                   (float)shader->texture_h;
+  const float ty = floorf((float)c / (float)GLYPH_HEIGHT_COUNT) *
+                   bounds->height / (float)shader->texture_h;
   const float tw = bounds->tex_width;
   const float th = bounds->tex_height;
 
@@ -281,8 +284,8 @@ static void compute_glyph_vertices(glyph_shader_program_t *shader,
   vertices[3] =
       (glyph_vertex_t){x + w * scale, y + h * scale, tx + tw, ty + th};
   for (int i = 0; i < 4; ++i) {
-    vertices[i].forecolor = op->forecolor;
-    vertices[i].backcolor = op->backcolor;
+    vertices[i].forecolor = COLOR_TO_INT(op->forecolor);
+    vertices[i].backcolor = COLOR_TO_INT(op->backcolor);
     vertices[i].bold = bold;
   }
 }
@@ -357,10 +360,10 @@ void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window) {
 void procy_get_glyph_bounds(glyph_shader_program_t *shader, int *width,
                             int *height) {
   if (width != NULL) {
-    *width = (int)((float)shader->texture_w / GLYPH_WIDTH_COUNT);
+    *width = (int)((float)shader->texture_w / (float)GLYPH_WIDTH_COUNT);
   }
   if (height != NULL) {
-    *height = (int)((float)shader->texture_h / GLYPH_HEIGHT_COUNT);
+    *height = (int)((float)shader->texture_h / (float)GLYPH_HEIGHT_COUNT);
   }
 }
 

@@ -36,7 +36,8 @@ static int window_size(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
-  int width = 0, height = 0;
+  int width = 0;
+  int height = 0;
   procy_get_window_size(window, &width, &height);
 
   lua_pushinteger(L, width);
@@ -58,7 +59,8 @@ static int window_glyph_size(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
-  int width = 0, height = 0;
+  int width = 0;
+  int height = 0;
   procy_get_glyph_size(window, &width, &height);
 
   lua_pushinteger(L, width);
@@ -195,7 +197,7 @@ static int get_window_scale(lua_State *L) {
 
 static int set_window_scale(lua_State *L) {
   lua_settop(L, 1);
-  float scale = luaL_checknumber(L, 1);
+  float scale = (float)luaL_checknumber(L, 1);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);

@@ -60,13 +60,13 @@ static unsigned char *get_plane_buffer(lua_State *L, int index, int *width,
                                        int *height) {
   if (width != NULL) {
     lua_getfield(L, index, FIELD_PLANE_WIDTH);
-    *width = lua_isinteger(L, -1) ? lua_tointeger(L, -1) : -1;
+    *width = lua_isinteger(L, -1) ? (int)lua_tointeger(L, -1) : -1;
     lua_pop(L, 1);
   }
 
   if (height != NULL) {
     lua_getfield(L, index, FIELD_PLANE_HEIGHT);
-    *height = lua_isinteger(L, -1) ? lua_tointeger(L, -1) : -1;
+    *height = lua_isinteger(L, -1) ? (int)lua_tointeger(L, -1) : -1;
     lua_pop(L, 1);
   }
 
@@ -84,10 +84,11 @@ static unsigned char *get_plane_buffer(lua_State *L, int index, int *width,
 static int plane_at(lua_State *L) {
   lua_settop(L, 3);
 
-  int x = luaL_checkinteger(L, 2);
-  int y = luaL_checkinteger(L, 3);
+  int x = (int)luaL_checkinteger(L, 2);
+  int y = (int)luaL_checkinteger(L, 3);
 
-  int width, height;
+  int width;
+  int height;
   unsigned char *buffer = get_plane_buffer(L, 1, &width, &height);
   if (x < 0 || x > width || y < 0 || y > height) {
     LOG_SCRIPT_ERROR(L, "Plane index (%d, %d) is out-of-bounds", x, y);
@@ -106,7 +107,8 @@ static int plane_at(lua_State *L) {
 static int plane_fill(lua_State *L) {
   lua_settop(L, 2);
 
-  int width, height;
+  int width;
+  int height;
   unsigned char *buffer = get_plane_buffer(L, 1, &width, &height);
   size_t buffer_len = width * height;
 
@@ -114,7 +116,7 @@ static int plane_fill(lua_State *L) {
     int value = lua_tointeger(L, 2) % (UCHAR_MAX + 1);
     memset(buffer, value, buffer_len);
   } else if (lua_isfunction(L, 2)) {
-    for (size_t i = 0; i < buffer_len; ++i) {
+    for (long long i = 0; i < buffer_len; ++i) {
       lua_pushvalue(L, 2);
       lua_pushinteger(L, i / width);
       lua_pushinteger(L, i % width);
@@ -141,10 +143,11 @@ static int plane_fill(lua_State *L) {
 static int plane_set(lua_State *L) {
   lua_settop(L, 4);
 
-  int x = luaL_checkinteger(L, 2);
-  int y = luaL_checkinteger(L, 3);
+  int x = (int)luaL_checkinteger(L, 2);
+  int y = (int)luaL_checkinteger(L, 3);
 
-  int width, height;
+  int width;
+  int height;
   unsigned char *buffer = get_plane_buffer(L, 1, &width, &height);
   if (x < 0 || x > width || y < 0 || y > height) {
     LOG_SCRIPT_ERROR(L, "Plane index (%d, %d) is out-of-bounds", x, y);
@@ -183,7 +186,7 @@ static int plane_from(lua_State *L) {
 
   // attempt to allocate a zeroed-out buffer using those dimensions
   size_t buffer_len = (size_t)width * (size_t)height;
-  unsigned char *buffer = malloc(buffer_len * sizeof(unsigned char));
+  unsigned char *buffer = calloc(buffer_len, sizeof(unsigned char));
   if (buffer == NULL) {
     // if something went wrong, log a stack trace and bail
     LOG_SCRIPT_ERROR(L,
@@ -196,15 +199,8 @@ static int plane_from(lua_State *L) {
     if (lua_isinteger(L, 3)) {
       memset(buffer, lua_tointeger(L, 3), buffer_len);
     } else if (lua_isfunction(L, 3)) {
-      if (!apply_func_to_plane(L, 3, width, height, buffer)) {
-        goto clear;
-      }
-    } else {
-      goto clear;
+      apply_func_to_plane(L, 3, width, height, buffer);
     }
-  } else {
-  clear:
-    memset(buffer, 0, buffer_len);
   }
 
   lua_pop(L, lua_gettop(L));

@@ -12,11 +12,11 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
-#include "shader/error.h"
 #include "drawing.h"
-#include "window.h"
 #include "gen/sprite_frag.h"
 #include "gen/sprite_vert.h"
+#include "shader/error.h"
+#include "window.h"
 
 typedef procy_draw_op_t draw_op_t;
 typedef procy_window_t window_t;
@@ -28,7 +28,7 @@ typedef procy_sprite_t sprite_t;
 #pragma pack(0)
 typedef struct sprite_vertex_t {
   float x, y, u, v;
-  color_t forecolor, backcolor;
+  int forecolor, backcolor;
 } sprite_vertex_t;
 #pragma pack(1)
 
@@ -54,17 +54,17 @@ static void enable_shader_attributes(shader_program_t *const program) {
   GL_CHECK(glEnableVertexAttribArray(ATTR_SPRITE_TEXCOORDS));
   GL_CHECK(glVertexAttribPointer(ATTR_SPRITE_TEXCOORDS, 2, GL_FLOAT, GL_FALSE,
                                  sizeof(sprite_vertex_t),
-                                 (void *)(2 * sizeof(float))));
+                                 (void *)(2 * sizeof(float))));  // NOLINT
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_SPRITE_FORECOLOR));
-  GL_CHECK(glVertexAttribPointer(ATTR_SPRITE_FORECOLOR, 3, GL_FLOAT, GL_FALSE,
-                                 sizeof(sprite_vertex_t),
-                                 (void *)(4 * sizeof(float))));
+  GL_CHECK(glVertexAttribIPointer(ATTR_SPRITE_FORECOLOR, 1, GL_INT,
+                                  sizeof(sprite_vertex_t),
+                                  (void *)(4 * sizeof(float))));  // NOLINT
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_SPRITE_BACKCOLOR));
-  GL_CHECK(glVertexAttribPointer(ATTR_SPRITE_BACKCOLOR, 3, GL_FLOAT, GL_FALSE,
-                                 sizeof(sprite_vertex_t),
-                                 (void *)(7 * sizeof(float))));
+  GL_CHECK(glVertexAttribIPointer(
+      ATTR_SPRITE_BACKCOLOR, 1, GL_INT, sizeof(sprite_vertex_t),
+      (void *)(4 * sizeof(float) + sizeof(int))));  // NOLINT
 }
 
 static void disable_shader_attributes() {
@@ -80,9 +80,10 @@ static bool load_sprite_texture(sprite_shader_program_t *shader,
     GL_CHECK(glDeleteTextures(1, &shader->texture));
   }
 
-  int components, width, height;
-  unsigned char *bitmap = stbi_load_from_memory(
-      contents, length, &shader->texture_w, &shader->texture_h, &components, 0);
+  int components;
+  unsigned char *bitmap =
+      stbi_load_from_memory(contents, (int)length, &shader->texture_w,
+                            &shader->texture_h, &components, 0);
 
   if (bitmap == NULL || shader->texture_w < 0 || shader->texture_h < 0) {
     const char *msg = stbi_failure_reason();
@@ -91,30 +92,28 @@ static bool load_sprite_texture(sprite_shader_program_t *shader,
     }
 
     return false;
+  }
+
+  log_debug("Loaded texture (size: %dx%d; comp: %d)", shader->texture_w,
+            shader->texture_h, components);
+  // copy both bitmap buffers into a single location
+  const size_t bitmap_size = (size_t)shader->texture_w * shader->texture_h;
+  if (bitmap_size != 0) {
+    // create font texture array from bitmaps
+    GL_CHECK(glGenTextures(1, &shader->texture));
+
+    GL_CHECK(glActiveTexture(GL_TEXTURE0));
+    GL_CHECK(glBindTexture(GL_TEXTURE_2D, shader->texture));
+
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, shader->texture_w,
+                          shader->texture_h, 0, GL_RED, GL_UNSIGNED_BYTE,
+                          bitmap));
+
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
   } else {
-    log_debug("Loaded texture (size: %dx%d; comp: %d)", shader->texture_w,
-              shader->texture_h, components);
-    // copy both bitmap buffers into a single location
-    const size_t bitmap_size = (size_t)shader->texture_w * shader->texture_h;
-    if (bitmap_size != 0) {
-      // create font texture array from bitmaps
-      GL_CHECK(glGenTextures(1, &shader->texture));
-
-      GL_CHECK(glActiveTexture(GL_TEXTURE0));
-      GL_CHECK(glBindTexture(GL_TEXTURE_2D, shader->texture));
-
-      GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, shader->texture_w,
-                            shader->texture_h, 0, GL_RED, GL_UNSIGNED_BYTE,
-                            bitmap));
-
-      GL_CHECK(
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-      GL_CHECK(
-          glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
-    } else {
-      log_error("Sprite texture size is zero!");
-      return false;
-    }
+    log_error("Sprite texture size is zero!");
+    return false;
   }
 
   if (bitmap != NULL) {
@@ -264,8 +263,8 @@ static void compute_sprite_vertices(sprite_shader_program_t *shader,
   float ty = (float)sprite->y / (float)shader->texture_h;
   float tw = width / (float)shader->texture_w;
   float th = height / (float)shader->texture_h;
-  color_t fg = op->forecolor;
-  color_t bg = op->backcolor;
+  int fg = COLOR_TO_INT(op->forecolor);
+  int bg = COLOR_TO_INT(op->backcolor);
 
   vertices[0] = (sprite_vertex_t){x, y, tx, ty, fg, bg};
   vertices[1] = (sprite_vertex_t){x + width * scale, y, tx + tw, ty, fg, bg};

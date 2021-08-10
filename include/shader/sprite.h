@@ -22,7 +22,6 @@ procy_sprite_shader_program_t *procy_create_sprite_shader_mem(
  * Builds and compiles a shader program capable of rendering sprites based on a
  * texture derived from an on-disk image file
  */
-
 procy_sprite_shader_program_t *procy_create_sprite_shader(const char *path);
 
 /*

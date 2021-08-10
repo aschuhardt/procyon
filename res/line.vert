@@ -3,9 +3,9 @@
 uniform mat4 u_Ortho;
 
 layout(location = 0) in vec2 i_Position;
-layout(location = 1) in vec3 i_Color;
+layout(location = 1) in int i_Color;
 
-out vec3 f_Color;
+flat out int f_Color;
 
 void main(void) {
   f_Color = i_Color;

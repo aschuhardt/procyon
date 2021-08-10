@@ -9,10 +9,10 @@
 #include <string.h>
 
 #include "drawing.h"
-#include "window.h"
 #include "gen/rect_frag.h"
 #include "gen/rect_vert.h"
 #include "shader/error.h"
+#include "window.h"
 
 typedef procy_rect_shader_program_t rect_shader_program_t;
 typedef procy_window_t window_t;
@@ -23,7 +23,7 @@ typedef procy_draw_op_t draw_op_t;
 #pragma pack(0)
 typedef struct rect_vertex_t {
   float x, y;
-  color_t color;
+  int color;
 } rect_vertex_t;
 #pragma pack(1)
 
@@ -105,7 +105,7 @@ static void compute_rect_vertices(rect_shader_program_t *shader, draw_op_t *op,
   vertices[2] = (rect_vertex_t){x, y + h};
   vertices[3] = (rect_vertex_t){x + w, y + h};
   for (int i = 0; i < 4; ++i) {
-    vertices[i].color = op->forecolor;
+    vertices[i].color = COLOR_TO_INT(op->forecolor);
   }
 }
 
@@ -158,9 +158,9 @@ static void enable_shader_attributes(shader_program_t *const program) {
                                  sizeof(rect_vertex_t), 0));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_RECT_COLOR));
-  GL_CHECK(glVertexAttribPointer(ATTR_RECT_COLOR, 3, GL_FLOAT, GL_FALSE,
-                                 sizeof(rect_vertex_t),
-                                 (void *)(2 * sizeof(float))));
+  GL_CHECK(glVertexAttribIPointer(ATTR_RECT_COLOR, 1, GL_INT,
+                                  sizeof(rect_vertex_t),
+                                  (void *)(2 * sizeof(float))));  // NOLINT
 }
 
 void procy_draw_rect_shader(rect_shader_program_t *shader, window_t *window) {
