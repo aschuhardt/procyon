@@ -1,0 +1,48 @@
+name: Linux
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: MinSizeRel
+  OUTPUT_DIR: ${{github.workspace}}/output
+  
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Install Lua/LuaJIT
+      uses: leafo/gh-actions-lua@v8.0.0
+      with:
+        luaVersion: 5.4
+
+    - name: Create Output Directory
+      run: mkdir ${{env.OUTPUT_DIR}}
+      
+    - name: Checkout Submodules
+      run: git submodule update --init --recursive
+      
+    - name: Configure CMake
+      run: |
+        cmake -B ${{github.workspace}}/build \
+        -DLua_ROOT=.lua/ \
+        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
+        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
+        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target procyon-lua
+    
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        name: archive
+        path: ${{env.OUTPUT_DIR}}
