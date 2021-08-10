@@ -19,13 +19,13 @@ jobs:
     - uses: actions/checkout@v2
     
     - name: Download Lua
-      run: wget https://www.lua.org/ftp/lua-5.4.2.tar.gz -o lua.tar.gz
+      run: powershell -C wget https://www.lua.org/ftp/lua-5.4.2.tar.gz -o lua.tar.gz
       
     - name: Extract Lua
-      run: tar -xf lua.tar.gz
+      run: powershell -C tar -xf lua.tar.gz
     
     - name: Build Lua
-      run: cmd /C mingw32-make.exe -j -C ${{github.workspace}}\lua-5.4.2\ mingw
+      run: mingw32-make.exe -j -C ${{github.workspace}}\lua-5.4.2\ mingw
       
     - name: Create Output Directory
       run: mkdir ${{env.OUTPUT_DIR}}
