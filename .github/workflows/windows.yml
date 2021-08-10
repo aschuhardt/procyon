@@ -36,7 +36,7 @@ jobs:
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build \
-        -DLua_ROOT=${{github.workspace}}/lua-5.4.2/src \
+        -DLua_ROOT="${{github.workspace}}/lua-5.4.2/src" \
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
