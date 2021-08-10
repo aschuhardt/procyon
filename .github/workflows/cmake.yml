@@ -21,7 +21,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install Dependencies
-      run: sudo apt-get install liblua5.3-dev libxrandr-dev
+      run: sudo apt-get install liblua5.3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
     - name: Checkout Submodules
       run: git submodule update --init --recursive
     - name: Configure CMake
