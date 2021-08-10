@@ -21,8 +21,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
+    - name: Install Lua/LuaJIT
+      uses: leafo/gh-actions-lua@v8.0.0
+      with:
+        luaVersion: 5.4
+      
     - name: Install Dependencies
-      run: sudo apt-get install liblua5.3-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
+      run: sudo apt-get install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev
       
     - name: Checkout Submodules
       run: git submodule update --init --recursive
