@@ -2,6 +2,8 @@
 #include <procyon.h>
 #include <shader/sprite.h>
 
+#include "drawing.h"
+
 #define FPS_AVG_BUFFER_SIZE 32
 #define TEST_COUNT 19
 
@@ -70,8 +72,8 @@ void on_unload(procy_state_t* state) {
 }
 
 void on_draw(procy_state_t* state, double time) {
-  const procy_color_t yellow = procy_create_color(1.0F, 1.0F, 0.0F);
-  const procy_color_t black = procy_create_color(0.0F, 0.0F, 0.0F);
+  const procy_color_t yellow = procy_create_color(255, 170, 32);
+  const procy_color_t black = procy_create_color(0, 0, 0);
 
   bench_state_t* data = (bench_state_t*)state->data;
   data->avg_buffer[data->avg_buffer_index++] = time;
@@ -103,7 +105,7 @@ void on_draw(procy_state_t* state, double time) {
         procy_draw_sprite(data->window, x, y, yellow, black, data->sprite);
         break;
       case TEST_MODE_STRING:
-        procy_draw_string(data->window, x, y, yellow, black, "butts");
+        procy_draw_char(data->window, x, y, yellow, black, '@');
         break;
       case TEST_MODE_RECT:
         procy_draw_rect(data->window, x, y, 30, 30, yellow);
