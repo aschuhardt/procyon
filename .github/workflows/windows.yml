@@ -61,10 +61,6 @@ jobs:
     - name: Build
       run: cmake --build ./build --target procyon-lua
       
-    - name: Strip
-      if: ${{(matrix.build-type != 'Debug')}}
-      run: strip --strip-unneeded ${{env.OUTPUT_DIR}}/*
-      
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
