@@ -65,7 +65,7 @@ jobs:
         cmake \
         -B build \
         -G "MSYS Makefiles" \
-        -DLua_ROOT="${{env.LUA_DIR}}/lua-${{env.LUA_VERSION}}/src"
+        -DLua_ROOT="$(realpath ${{env.LUA_DIR}}/lua-${{env.LUA_VERSION}}/src)"
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$(realpath ${{env.OUTPUT_DIR}}) \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$(realpath ${{env.OUTPUT_DIR}}) \
         -DCMAKE_BUILD_TYPE=${{matrix.build-type}}
