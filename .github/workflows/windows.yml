@@ -61,21 +61,33 @@ jobs:
         msystem: ${{matrix.msystem}}
         install: >-
           make
-          cmake
           pkg-config
           gcc
           git
-    - name: Install Lua (64-bit)
-      run: pacman -S --noconfirm mingw-w64-x86_64-lua
+    
+    - name: Set Arch. (64-bit)
+      run: export ARCH=x86_64
       if: ${{(matrix.msystem == 'MINGW64')}}
-    - name: Install Lua (32-bit)
-      run: pacman -S --noconfirm mingw-w64-i686-lua
+    - name: Set Arch. (32-bit)
+      run: export ARCH=i686
       if: ${{(matrix.msystem == 'MINGW32')}}
+      
+    - name: Install Lua
+      run: pacman -S --noconfirm mingw-w64-$ARCH-lua
+  
+    - name: Install CMake
+      run: pacman -S --noconfirm mingw-w64-$ARCH-cmake
+      
+    - name: Install GCC
+      run: pacman -S --noconfirm mingw-w64-$ARCH-gcc
+      
     - uses: actions/checkout@v2
     - name: Checkout Submodules
       run: git submodule update --init --recursive
+      
     - name: Create Output Directory
       run: mkdir ${{env.OUTPUT_DIR}}
+      
     - name: Configure CMake
       run: |
         cmake \
@@ -84,13 +96,17 @@ jobs:
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_BUILD_TYPE=${{matrix.build-type}}
+        
     - name: Build
       run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}} --target procyon-lua
+      
     - name: Strip
       if: ${{(matrix.build-type != 'Debug')}}
       run: strip --strip-unneeded ${{env.OUTPUT_DIR}}/*
+      
     - name: Clean Up
       run: ${{env.OUTPUT_DIR}}/genhexer*
+      
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
