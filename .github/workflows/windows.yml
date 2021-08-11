@@ -9,7 +9,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   OUTPUT_DIR: output
-  LUA_BUILDDIR: lua
+  LUA_BUILDDIR: .lua_build
   LUA_VERSION: 5.4.3
   
 jobs:
@@ -52,10 +52,10 @@ jobs:
       
     - name: Build Lua
       run: |
-        mkdir ${{env.LUA_BUILDDIR}} && \
+        mkdir -p $(realpath ${{env.LUA_BUILDDIR}}) && \
         wget https://www.lua.org/ftp/lua-${{env.LUA_VERSION}}.tar.gz -O lua.tar.gz && \
-        tar -C ${{env.LUA_BUILDDIR}} -xvzf lua.tar.gz && \
-        make -C ${{env.LUA_BUILDDIR}}/lua-${{env.LUA_VERSION}} -j mingw MYCFLAGS="-O3"
+        tar -C $(realpath ${{env.LUA_BUILDDIR}}) -xvzf lua.tar.gz && \
+        make -C $(realpath ${{env.LUA_BUILDDIR}})/lua-${{env.LUA_VERSION}} -j mingw MYCFLAGS="-O3"
         
     - name: Create Output Directory
       run: mkdir $(realpath ${{env.OUTPUT_DIR}})
