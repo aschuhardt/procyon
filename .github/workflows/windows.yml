@@ -48,15 +48,15 @@ jobs:
       run: git submodule update --init --recursive
       
     - name: Create Output Directory
-      run: mkdir ${{env.OUTPUT_DIR}}
+      run: mkdir $(realpath ${{env.OUTPUT_DIR}})
       
     - name: Configure CMake
       run: |
         cmake \
         -B build \
         -G "MSYS Makefiles" \
-        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
-        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
+        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$(realpath ${{env.OUTPUT_DIR}}) \
+        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$(realpath ${{env.OUTPUT_DIR}}) \
         -DCMAKE_BUILD_TYPE=${{matrix.build-type}}
         
     - name: Build
@@ -69,5 +69,5 @@ jobs:
       uses: actions/upload-artifact@v2.2.4
       with:
         name: windows-${{matrix.arch}}-${{matrix.build-type}}
-        path: ${{env.OUTPUT_DIR}}
+        path: $(realpath ${{env.OUTPUT_DIR}})
 
