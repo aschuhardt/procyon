@@ -46,6 +46,10 @@ jobs:
         mingw-w64-${{matrix.arch}}-cmake \
         mingw-w64-${{matrix.arch}}-gcc
     
+    - uses: actions/checkout@v2
+    - name: Checkout Submodules
+      run: git submodule update --init --recursive
+      
     - name: Build Lua
       run: |
         mkdir ${{env.LUA_BUILDDIR}} && \
@@ -53,10 +57,6 @@ jobs:
         tar -C ${{env.LUA_BUILDDIR}} -xvzf lua.tar.gz && \
         make -C ${{env.LUA_BUILDDIR}}/lua-${{env.LUA_VERSION}} -j mingw MYCFLAGS="-O3"
         
-    - uses: actions/checkout@v2
-    - name: Checkout Submodules
-      run: git submodule update --init --recursive
-      
     - name: Create Output Directory
       run: mkdir $(realpath ${{env.OUTPUT_DIR}})
       
