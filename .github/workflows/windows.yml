@@ -52,6 +52,11 @@ jobs:
       matrix:
         msystem: [MINGW32, MINGW64]
         build-type: [Debug, MinSizeRel]
+        include:
+          - msystem: MINGW32
+            arch: i686
+          - msystem: MINGW64
+            arch: x86_64
     defaults:
       run:
         shell: msys2 {0}
@@ -64,22 +69,15 @@ jobs:
           pkg-config
           gcc
           git
-    
-    - name: Set Arch. (64-bit)
-      run: export ARCH=x86_64
-      if: ${{(matrix.msystem == 'MINGW64')}}
-    - name: Set Arch. (32-bit)
-      run: export ARCH=i686
-      if: ${{(matrix.msystem == 'MINGW32')}}
-      
+         
     - name: Install Lua
-      run: pacman -S --noconfirm mingw-w64-$ARCH-lua
+      run: pacman -S --noconfirm mingw-w64-${{matrix.arch}}-lua
   
     - name: Install CMake
-      run: pacman -S --noconfirm mingw-w64-$ARCH-cmake
+      run: pacman -S --noconfirm mingw-w64-${{matrix.arch}}-cmake
       
     - name: Install GCC
-      run: pacman -S --noconfirm mingw-w64-$ARCH-gcc
+      run: pacman -S --noconfirm mingw-w64-${{matrix.arch}}-gcc
       
     - uses: actions/checkout@v2
     - name: Checkout Submodules
@@ -92,7 +90,7 @@ jobs:
       run: |
         cmake \
         -B ${{github.workspace}}\build \
-        -DCMAKE_C_COMPILER=gcc \
+        -DCMAKE_C_COMPILER=mingw-64-${{matrix.arch}}-gcc \
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_BUILD_TYPE=${{matrix.build-type}}
@@ -110,6 +108,6 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
-        name: windows-${{matrix.msystem}}-${{matrix.build-type}}
+        name: windows-${{matrix.arch}}-${{matrix.build-type}}
         path: ${{env.OUTPUT_DIR}}
 
