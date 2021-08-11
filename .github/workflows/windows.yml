@@ -56,9 +56,6 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-    - uses: actions/checkout@v2
-    - name: Checkout Submodules
-      run: git submodule update --init --recursive
     - uses: msys2/setup-msys2@v2
       with:
         msystem: ${{matrix.msystem}}
@@ -68,7 +65,12 @@ jobs:
           pkg-config
           mingw-w64-lua
           gcc
-    - run: ${{matrix.compiler}} --version      
+          git
+    - name: Compiler Version
+      run: ${{matrix.compiler}} --version
+    - uses: actions/checkout@v2
+    - name: Checkout Submodules
+      run: git submodule update --init --recursive
     - name: Create Output Directory
       run: mkdir ${{env.OUTPUT_DIR}}
     - name: Configure CMake
