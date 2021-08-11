@@ -9,6 +9,8 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   OUTPUT_DIR: output
+  LUA_DIR: lua
+  LUA_VERSION: 5.4.3
   
 jobs:
   build:
@@ -34,15 +36,23 @@ jobs:
           make
           pkg-config
           gcc
+          wget
+          tar
           git
          
     - name: Install Additional Packages
       run: |
         pacman -S --noconfirm \
-        mingw-w64-${{matrix.arch}}-lua \
         mingw-w64-${{matrix.arch}}-cmake \
         mingw-w64-${{matrix.arch}}-gcc
-      
+    
+    - name: Build Lua
+      run: |
+        mkdir ${{env.LUA_DIR}} && \
+        wget https://www.lua.org/ftp/lua-${{env.LUA_VERSION}}.tar.gz -O lua.tar.gz && \
+        tar -C ${{env.LUA_DIR}} -xvzf lua.tar.gz && \
+        make -C ${{env.LUA_DIR}}/lua-${{env.LUA_VERSION}} -j mingw MYCFLAGS="-O3"
+        
     - uses: actions/checkout@v2
     - name: Checkout Submodules
       run: git submodule update --init --recursive
@@ -55,6 +65,7 @@ jobs:
         cmake \
         -B build \
         -G "MSYS Makefiles" \
+        -DLua_ROOT="${{env.LUA_DIR}}/lua-${{env.LUA_VERSION}}/src"
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$(realpath ${{env.OUTPUT_DIR}}) \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$(realpath ${{env.OUTPUT_DIR}}) \
         -DCMAKE_BUILD_TYPE=${{matrix.build-type}}
