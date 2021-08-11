@@ -62,12 +62,15 @@ jobs:
     - name: Build
       run: cmake --build build --target procyon-lua
     
-    - run: ls ${{env.OUTPUT_DIR}}
-    - run: ls build
+    - name: Clean Up
+      run: rm ${{env.OUTPUT_DIR}}/genhexer
+    
+    - name: Strip Binaries
+      run: strip --strip-unneeded ${{env.OUTPUT_DIR}}/*
     
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
         name: windows-${{matrix.arch}}-${{matrix.build-type}}
-        path: $(realpath ${{env.OUTPUT_DIR}})
+        path: ${{env.OUTPUT_DIR}}
 
