@@ -8,7 +8,7 @@ on:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  OUTPUT_DIR: ${{env.GITHUB_WORKSPACE}}/output
+  OUTPUT_DIR: output
   
 jobs:
   build:
@@ -53,15 +53,18 @@ jobs:
     - name: Configure CMake
       run: |
         cmake \
-        -B ./build \
+        -B build \
         -G "MSYS Makefiles" \
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_BUILD_TYPE=${{matrix.build-type}}
         
     - name: Build
-      run: cmake --build ${{env.GITHUB_WORKSPACE}}/build --target procyon-lua
-      
+      run: cmake --build build --target procyon-lua
+    
+    - run: ls ${{env.OUTPUT_DIR}}
+    - run: ls build
+    
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
