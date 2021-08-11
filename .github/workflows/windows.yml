@@ -79,7 +79,7 @@ jobs:
     - name: Configure CMake
       run: |
         cmake \
-        -G "MinGW Makefiles" -B ${{github.workspace}}\build \
+        -B ${{github.workspace}}\build \
         -DCMAKE_C_COMPILER=gcc \
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
