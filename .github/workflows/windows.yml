@@ -90,6 +90,7 @@ jobs:
       run: |
         cmake \
         -B ${{github.workspace}}\build \
+        -G "MSYS Makefiles" \
         -DCMAKE_C_COMPILER=mingw-64-${{matrix.arch}}-gcc \
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
