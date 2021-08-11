@@ -11,41 +11,6 @@ env:
   OUTPUT_DIR: ./output
   
 jobs:
-#   build_64bit:
-#     runs-on: windows-latest
-
-#     steps:
-#     - uses: actions/checkout@v2
-    
-#     - name: Download Lua
-#       shell: powershell
-#       run: wget https://www.lua.org/ftp/lua-5.4.2.tar.gz -o lua.tar.gz
-      
-#     - name: Extract Lua
-#       shell: powershell
-#       run: tar -xf lua.tar.gz
-    
-#     - name: Build Lua
-#       run: mingw32-make.exe -j -C ${{github.workspace}}\lua-5.4.2\ mingw
-      
-#     - name: Create Output Directory
-#       run: mkdir ${{env.OUTPUT_DIR}}
-      
-#     - name: Checkout Submodules
-#       run: git submodule update --init --recursive
-      
-#     - name: Configure CMake
-#       run: cmake -G "MinGW Makefiles" -B ${{github.workspace}}\build -DLua_ROOT='${{github.workspace}}\lua-5.4.2\src' -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-#     - name: Build
-#       run: cmake --build ${{github.workspace}}\build --config ${{env.BUILD_TYPE}} --target procyon-lua
-    
-#     - name: Upload a Build Artifact
-#       uses: actions/upload-artifact@v2.2.4
-#       with:
-#         name: windows-64bit
-#         path: ${{env.OUTPUT_DIR}}
-
   build:
     runs-on: windows-latest
     strategy:
@@ -99,9 +64,6 @@ jobs:
     - name: Strip
       if: ${{(matrix.build-type != 'Debug')}}
       run: strip --strip-unneeded ${{env.OUTPUT_DIR}}/*
-      
-    - name: Clean Up
-      run: ${{env.OUTPUT_DIR}}/genhexer*
       
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
