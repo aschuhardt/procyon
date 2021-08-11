@@ -66,10 +66,10 @@ jobs:
           gcc
           git
     - name: Install Lua (64-bit)
-      run: pacman -S --no-confirm mingw-w64-x86_64-lua
+      run: pacman -S --noconfirm mingw-w64-x86_64-lua
       if: ${{(matrix.msystem == 'MINGW64')}}
     - name: Install Lua (32-bit)
-      run: pacman -S --no-confirm mingw-w64-i686-lua
+      run: pacman -S --noconfirm mingw-w64-i686-lua
       if: ${{(matrix.msystem == 'MINGW32')}}
     - name: Compiler Version
       run: ${{matrix.compiler}} --version
