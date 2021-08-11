@@ -71,8 +71,6 @@ jobs:
     - name: Install Lua (32-bit)
       run: pacman -S --noconfirm mingw-w64-i686-lua
       if: ${{(matrix.msystem == 'MINGW32')}}
-    - name: Compiler Version
-      run: ${{matrix.compiler}} --version
     - uses: actions/checkout@v2
     - name: Checkout Submodules
       run: git submodule update --init --recursive
@@ -82,7 +80,7 @@ jobs:
       run: |
         cmake \
         -G "MinGW Makefiles" -B ${{github.workspace}}\build \
-        -DCMAKE_C_COMPILER=${{matrix.compiler}} \
+        -DCMAKE_C_COMPILER=gcc \
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_BUILD_TYPE=${{matrix.build-type}}
