@@ -63,7 +63,6 @@ jobs:
           make
           cmake
           pkg-config
-          mingw-w64-lua
           gcc
           git
     - name: Install Lua (64-bit)
