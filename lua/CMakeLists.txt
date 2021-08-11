@@ -17,10 +17,10 @@ find_package(Lua 5.4 REQUIRED)
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
 
 add_executable(procyon-lua ${SU_LUA_SOURCE})
-if(NOT WIN32)
-  target_link_libraries(procyon-lua PRIVATE dl)
-endif()
 target_link_libraries(procyon-lua PUBLIC procyon argparse ${LUA_LIBRARY} m)
+if(UNIX)
+  target_link_libraries(procyon-lua PUBLIC dl)
+endif()
 target_include_directories(procyon-lua
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
   ${STB_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${LOG_INCLUDE_DIR} ${SU_INCLUDE} ${LUA_INCLUDE_DIR}) 
