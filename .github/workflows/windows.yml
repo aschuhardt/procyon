@@ -70,14 +70,12 @@ jobs:
           gcc
           git
          
-    - name: Install Lua
-      run: pacman -S --noconfirm mingw-w64-${{matrix.arch}}-lua
-  
-    - name: Install CMake
-      run: pacman -S --noconfirm mingw-w64-${{matrix.arch}}-cmake
-      
-    - name: Install GCC
-      run: pacman -S --noconfirm mingw-w64-${{matrix.arch}}-gcc
+    - name: Install Additional Packages
+      run: |
+        pacman -S --noconfirm \
+        mingw-w64-${{matrix.arch}}-lua \
+        mingw-w64-${{matrix.arch}}-cmake \
+        mingw-w64-${{matrix.arch}}-gcc
       
     - uses: actions/checkout@v2
     - name: Checkout Submodules
@@ -91,7 +89,6 @@ jobs:
         cmake \
         -B ${{github.workspace}}\build \
         -G "MSYS Makefiles" \
-        -DCMAKE_C_COMPILER=mingw-64-${{matrix.arch}}-gcc \
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_BUILD_TYPE=${{matrix.build-type}}
