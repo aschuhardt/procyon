@@ -10,6 +10,7 @@
 
 #define FUNC_PLANE_FROM "from"
 #define FUNC_PLANE_FILL "fill"
+#define FUNC_PLANE_FOREACH "foreach"
 #define FUNC_PLANE_AT "at"
 #define FUNC_PLANE_SET "set"
 #define FIELD_PLANE_WIDTH "width"
@@ -234,11 +235,10 @@ static int plane_from(lua_State *L) {
 
 void add_plane(lua_State *L) {
   // initialize library table
-  luaL_Reg methods[] = {{FUNC_PLANE_FROM, plane_from},
-                        {FUNC_PLANE_AT, plane_at},
-                        {FUNC_PLANE_SET, plane_set},
-                        {FUNC_PLANE_FILL, plane_fill},
-                        {NULL, NULL}};
+  luaL_Reg methods[] = {
+      {FUNC_PLANE_FROM, plane_from},    {FUNC_PLANE_AT, plane_at},
+      {FUNC_PLANE_SET, plane_set},      {FUNC_PLANE_FILL, plane_fill},
+      {FUNC_PLANE_FOREACH, plane_fill}, {NULL, NULL}};
   luaL_newlib(L, methods);
   lua_setglobal(L, TBL_PLANE);
 
