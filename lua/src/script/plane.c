@@ -127,7 +127,9 @@ static int plane_fill(lua_State *L) {
         break;
       }
 
-      buffer[i] = luaL_checkinteger(L, -1) % (UCHAR_MAX + 1);
+      if (lua_isinteger(L, -1)) {
+        buffer[i] = luaL_checkinteger(L, -1) % (UCHAR_MAX + 1);
+      }
 
       lua_pop(L, 1);  // pop return value
     }
