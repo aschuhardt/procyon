@@ -121,7 +121,7 @@ static int plane_fill(lua_State *L) {
       lua_pushinteger(L, i / width);
       lua_pushinteger(L, i % width);
       lua_pushinteger(L, (int)buffer[i]);
-      if (lua_pcall(L, 3, 1, 0) != LUA_OK) {
+      if (lua_pcall(L, 3, LUA_MULTRET, 0) != LUA_OK) {
         LOG_SCRIPT_ERROR(L, "Plane fill function failed: %s",
                          lua_tostring(L, -1));
         break;
