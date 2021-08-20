@@ -123,7 +123,7 @@ static int plane_fill(lua_State *L) {
       lua_pushinteger(L, i % width);
       lua_pushinteger(L, (int)buffer[i]);
       if (lua_pcall(L, 3, LUA_MULTRET, 0) != LUA_OK) {
-        LOG_SCRIPT_ERROR(L, "Plane fill function failed: %s",
+        LOG_SCRIPT_ERROR(L, "Plane fill/foreach function failed: %s",
                          lua_tostring(L, -1));
         break;
       }
@@ -132,7 +132,9 @@ static int plane_fill(lua_State *L) {
         buffer[i] = luaL_checkinteger(L, -1) % (UCHAR_MAX + 1);
       }
 
-      lua_pop(L, 1);  // pop return value
+      if (lua_gettop(L) == 3) {
+        lua_pop(L, 1);  // pop return value
+      }
     }
   }
 
