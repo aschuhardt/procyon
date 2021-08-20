@@ -126,3 +126,13 @@ add_subdirectory(lua)
 
 # add benchmark tools
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/bench")
+
+install(
+  TARGETS ${SU_LIBRARY} ${SU_LIBRARY_STATIC}
+  CONFIGURATIONS Release
+  RUNTIME DESTINATION /usr/local/lib)
+
+install(
+  TARGETS procyon-lua
+  CONFIGURATIONS Release
+  RUNTIME DESTINATION /usr/local/bin)

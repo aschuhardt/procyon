@@ -230,6 +230,9 @@ static int plane_from(lua_State *L) {
   lua_pushcfunction(L, plane_fill);
   lua_setfield(L, -2, FUNC_PLANE_FILL);
 
+  lua_pushcfunction(L, plane_fill);
+  lua_setfield(L, -2, FUNC_PLANE_FOREACH);
+
   return 1;
 }
 
