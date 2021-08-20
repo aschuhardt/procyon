@@ -1,6 +1,7 @@
 #include "script.h"
 
 #include <lauxlib.h>
+#include <libgen.h>
 #include <log.h>
 #include <lua.h>
 #include <lualib.h>
@@ -34,31 +35,21 @@ static const char *get_lua_alloc_type_name(size_t t) {
   }
 }
 
-static size_t get_file_dir_length(char *path) {
-  char *last_segment = strrchr(path, '/');
-
-  if (last_segment == NULL) {
-    return strnlen(path, PATH_MAX);
-  }
-
-  return last_segment - path;
-}
-
 static void add_package_path_from_entry(lua_State *L, char *path) {
   // get the "package" table
   lua_getglobal(L, "package");
 
-  // push the value of the "path" record
-  lua_getfield(L, -1, "path");
+  const char *root = dirname(path);
 
   // find and push the absolute directory of the provided file
-  lua_pushstring(L, ";");
-  lua_pushlstring(L, path, get_file_dir_length(path));
-  lua_pushstring(L, "/?.lua");
+  lua_pushfstring(L, "%s/?.lua;%s/?/init.lua;", root, root);
+
+  // push the value of the "path" record
+  lua_getfield(L, -2, "path");
 
   // concatenate the directory and the existing path value, then assign
   // those to package.path
-  lua_concat(L, 4);
+  lua_concat(L, 2);
   log_debug("Module package path: %s", lua_tostring(L, -1));
   lua_setfield(L, -2, "path");
 

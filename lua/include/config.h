@@ -3,13 +3,13 @@
 
 #include <stdbool.h>
 
-#define CONFIG_SCRIPT_ENTRY_BUFFER_LENGTH 1024
-
 typedef struct config_t {
-  char script_entry[CONFIG_SCRIPT_ENTRY_BUFFER_LENGTH];
+  char* script_entry;
   int window_w, window_h;
 } config_t;
 
-bool parse_config_args(int argc, const char **argv, config_t *cfg);
+bool parse_config_args(int argc, const char** argv, config_t* cfg);
+
+void destroy_config(config_t* cfg);
 
 #endif

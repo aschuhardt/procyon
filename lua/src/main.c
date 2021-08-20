@@ -1,5 +1,4 @@
 #include <log.h>
-#include <unistd.h>
 
 #include "config.h"
 #include "procyon.h"
@@ -10,9 +9,6 @@ int main(int argc, const char **argv) {
   if (!parse_config_args(argc, argv, &config)) {
     return -1;
   }
-
-  char cwd[1024];
-  getcwd(&cwd[0], sizeof(cwd) / sizeof(char));
 
   procy_state_t *state = procy_create_state();
 
@@ -49,6 +45,8 @@ int main(int argc, const char **argv) {
   } while (reload);
 
   procy_destroy_state(state);
+
+  destroy_config(&config);
 
   return 0;
 }
