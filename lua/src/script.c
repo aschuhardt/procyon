@@ -91,7 +91,7 @@ bool load_scripts(script_env_t *env, char *path) {
 
   add_package_path_from_entry(L, path);
 
-  add_globals(L, env);
+  add_globals(L, env, path);
   add_utilities(L);
   add_input(L, env);
   add_window(L, env);
