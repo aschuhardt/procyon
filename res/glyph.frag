@@ -9,9 +9,9 @@ in float f_Bold;
 
 void main(void) {
   vec3 fg = vec3(
-      ((f_ForeColor & 0xFF0000) >> 16) / 256.0,
-      ((f_ForeColor & 0xFF00) >> 8) / 256.0,
-      ((f_ForeColor & 0xFF)) / 256.0);
+      ((f_ForeColor & 0xFF0000) >> 16) / 255.0,
+      ((f_ForeColor & 0xFF00) >> 8) / 255.0,
+      ((f_ForeColor & 0xFF)) / 255.0);
   vec3 bg = vec3(
       ((f_BackColor & 0xFF0000) >> 16) / 255.0,
       ((f_BackColor & 0xFF00) >> 8) / 255.0,
