@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 // clang-format on
 
+#include <limits.h>
 #include <log.h>
 #include <string.h>
 
@@ -386,7 +387,10 @@ void procy_begin_loop(window_t *window) {
   }
 }
 
-void procy_set_clear_color(color_t c) { glClearColor(c.r, c.g, c.b, 1.0F); }
+void procy_set_clear_color(color_t c) {
+  glClearColor((float)c.r / 255.0F, (float)c.g / 255.0F, (float)c.b / 255.0F,
+               1.0F);
+}
 
 void procy_close_window(procy_window_t *window) { window->quitting = true; }
 
