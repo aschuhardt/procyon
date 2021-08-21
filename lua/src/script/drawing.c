@@ -221,10 +221,12 @@ static int destroy_sprite(lua_State *L) {
 }
 
 static int draw_sprite(lua_State *L) {
-  lua_settop(L, 3);
+  lua_settop(L, 5);
 
   short x = (short)(luaL_checkinteger(L, 2) % SHRT_MAX);
   short y = (short)(luaL_checkinteger(L, 3) % SHRT_MAX);
+  procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
+  procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
@@ -232,13 +234,7 @@ static int draw_sprite(lua_State *L) {
   lua_getfield(L, 1, FIELD_SPRITE_PTR);
   procy_sprite_t *sprite = (procy_sprite_t *)lua_touserdata(L, -1);
 
-  lua_getfield(L, 1, FIELD_SPRITE_COLOR);
-  procy_color_t color = get_color(L, -1);
-
-  lua_getfield(L, 1, FIELD_SPRITE_BACKGROUND);
-  procy_color_t background = get_color(L, -1);
-
-  procy_draw_sprite(window, x, y, color, background, sprite);
+  procy_draw_sprite(window, x, y, forecolor, backcolor, sprite);
 
   return 0;
 }
@@ -268,7 +264,7 @@ static int get_sprite_size(lua_State *L) {
 }
 
 static int create_sprite(lua_State *L) {
-  lua_settop(L, 7);
+  lua_settop(L, 5);
 
   lua_getfield(L, 1, FIELD_SPRITESHEET_PTR);
   procy_sprite_shader_program_t *shader =
@@ -289,12 +285,6 @@ static int create_sprite(lua_State *L) {
 
   lua_pushlightuserdata(L, sprite);
   lua_setfield(L, -2, FIELD_SPRITE_PTR);
-
-  push_color_or_default(L, 6, WHITE_RGB_FLOAT);
-  lua_setfield(L, -2, FIELD_SPRITE_COLOR);
-
-  push_color_or_default(L, 7, BLACK_RGB_FLOAT);
-  lua_setfield(L, -2, FIELD_SPRITE_BACKGROUND);
 
   lua_pushcfunction(L, draw_sprite);
   lua_setfield(L, -2, FUNC_DRAWSPRITE);
