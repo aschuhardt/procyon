@@ -22,7 +22,6 @@ void add_globals(lua_State *L, script_env_t *env, const char *path) {
   }
 
   const char *root = dirname(absolute);
-  log_info("root: %s", root);
 
   lua_pushstring(L, root);
   lua_setglobal(L, FLD_ROOT);

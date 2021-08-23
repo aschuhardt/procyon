@@ -39,10 +39,13 @@ static void add_package_path_from_entry(lua_State *L, char *path) {
   // get the "package" table
   lua_getglobal(L, "package");
 
-  const char *root = dirname(path);
+  char *path_copy = strdup(path);
+  const char *root = dirname(path_copy);
 
   // find and push the absolute directory of the provided file
   lua_pushfstring(L, "%s/?.lua;%s/?/init.lua;", root, root);
+
+  free(path_copy);
 
   // push the value of the "path" record
   lua_getfield(L, -2, "path");
