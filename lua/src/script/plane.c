@@ -122,8 +122,8 @@ static int plane_fill(lua_State *L) {
   } else if (lua_isfunction(L, 2)) {
     for (long long i = 0; i < buffer_len; ++i) {
       lua_pushvalue(L, 2);
-      lua_pushinteger(L, i / width);
       lua_pushinteger(L, i % width);
+      lua_pushinteger(L, i / width);
       lua_pushinteger(L, (int)buffer[i]);
       if (lua_pcall(L, 3, LUA_MULTRET, 0) != LUA_OK) {
         LOG_SCRIPT_ERROR(L, "Plane fill/foreach function failed: %s",
