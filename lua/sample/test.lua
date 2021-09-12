@@ -8,6 +8,11 @@ window.on_load = function()
       return math.floor(normalized * 255.0)
     end)
 
+  map:set(2, 2, 0)
+  map:set(3, 3, 0)
+
+  submap = map:sub(0, 0, 16, 16)
+
   sheet = spritesheet.load("sprites.png")
 
   if sheet then
@@ -23,12 +28,18 @@ function draw_map()
   local start_x = 200
   local start_y = 200
   local size = 4
-  for x = 0, map.width do
-    for y = 0, map.height do
-      local val = map:at(x, y) / 255.0
+
+  map:foreach(
+    function(x, y, ix)
+      local val = ix / 255.0
       draw.rect(start_x + x * size, start_y + y * size, size, size, color.from_rgb(val, val, val))
-    end
-  end
+    end)
+
+  submap:foreach(
+    function(x, y, ix)
+      local val = ix / 255.0
+      draw.rect(10 + x * size * 2, 300 + y * size * 2, size * 2, size * 2, color.from_rgb(val, val, val))
+    end)
 end
 
 window.on_draw = function(seconds)

@@ -13,9 +13,12 @@
 #define FUNC_PLANE_FOREACH "foreach"
 #define FUNC_PLANE_AT "at"
 #define FUNC_PLANE_SET "set"
+#define FUNC_PLANE_SUB "sub"
 #define FIELD_PLANE_WIDTH "width"
 #define FIELD_PLANE_HEIGHT "height"
 #define FIELD_PLANE_PTR "ptr"
+
+static int plane_sub(lua_State *L);
 
 static int plane_destroy_buffer(lua_State *L) {
   lua_getfield(L, 1, FIELD_PLANE_PTR);
@@ -174,19 +177,12 @@ static int plane_set(lua_State *L) {
   return 0;
 }
 
-// modes:
-//
-// plane.from(w, h, 4)
-// plane.from(w, h, function(x, y) return x + y end)
-static int plane_from(lua_State *L) {
-  // fetch plane dimensions from first two arguments
-  int width = lua_tointeger(L, 1);
-  int height = lua_tointeger(L, 2);
-
+static unsigned char *push_new_plane(int width, int height, size_t *len,
+                                     lua_State *L) {
   // ensure dimensions are sane
   if (width <= 0 || height <= 0) {
     LOG_SCRIPT_ERROR(L, "Invalid plane dimensions (%d, %d)", width, height);
-    return 0;
+    return NULL;
   }
 
   // attempt to allocate a zeroed-out buffer using those dimensions
@@ -197,18 +193,12 @@ static int plane_from(lua_State *L) {
     LOG_SCRIPT_ERROR(L,
                      "Failed to allocate memory for plane buffer of size %zu",
                      buffer_len);
-    return 0;
+    return NULL;
   }
 
-  if (lua_gettop(L) == 3) {
-    if (lua_isinteger(L, 3)) {
-      memset(buffer, lua_tointeger(L, 3), buffer_len);
-    } else if (lua_isfunction(L, 3)) {
-      apply_func_to_plane(L, 3, width, height, buffer);
-    }
+  if (len != NULL) {
+    *len = buffer_len;
   }
-
-  lua_pop(L, lua_gettop(L));
 
   // set up return table; includes some metadata and a pointer to the C buffer
   lua_newtable(L);
@@ -223,17 +213,88 @@ static int plane_from(lua_State *L) {
   lua_pushlightuserdata(L, (void *)buffer);
   lua_setfield(L, -2, FIELD_PLANE_PTR);
 
+  // TODO: move these methods into an __index table
   lua_pushcfunction(L, plane_at);
   lua_setfield(L, -2, FUNC_PLANE_AT);
 
   lua_pushcfunction(L, plane_set);
   lua_setfield(L, -2, FUNC_PLANE_SET);
 
+  lua_pushcfunction(L, plane_sub);
+  lua_setfield(L, -2, FUNC_PLANE_SUB);
+
   lua_pushcfunction(L, plane_fill);
   lua_setfield(L, -2, FUNC_PLANE_FILL);
 
   lua_pushcfunction(L, plane_fill);
   lua_setfield(L, -2, FUNC_PLANE_FOREACH);
+
+  return buffer;
+}
+
+// plane:sub(x, y, w, h)
+static int plane_sub(lua_State *L) {
+  lua_settop(L, 5);
+
+  int source_x = (int)luaL_checkinteger(L, 2);
+  int source_y = (int)luaL_checkinteger(L, 3);
+  int target_width = (int)luaL_checkinteger(L, 4);
+  int target_height = (int)luaL_checkinteger(L, 5);
+
+  int source_width = 0;
+  int source_height = 0;
+  unsigned char *source_buffer =
+      get_plane_buffer(L, 1, &source_width, &source_height);
+
+  if (source_buffer == NULL) {
+    return 0;
+  }
+
+  unsigned char *target_buffer =
+      push_new_plane(target_width, target_height, NULL, L);
+
+  if (target_buffer == NULL) {
+    return 0;
+  }
+
+  for (int x = 0; x < target_width; ++x) {
+    if (source_x + x > source_width || source_x + x < 0) {
+      continue;
+    }
+
+    for (int y = 0; y < target_height; ++y) {
+      if (source_y + y > source_height || source_y + y < 0) {
+        continue;
+      }
+
+      target_buffer[y * target_width + x] =
+          source_buffer[(source_y + y) * source_width + source_x + x];
+    }
+  }
+
+  return 1;
+}
+
+// modes:
+//
+// plane.from(w, h, 4)
+// plane.from(w, h, function(x, y) return x + y end)
+static int plane_from(lua_State *L) {
+  // fetch plane dimensions from first two arguments
+  int width = lua_tointeger(L, 1);
+  int height = lua_tointeger(L, 2);
+
+  size_t buffer_len;
+  unsigned char *buffer = push_new_plane(width, height, &buffer_len, L);
+  if (buffer == NULL) {
+    return 0;
+  }
+
+  if (lua_isinteger(L, 3)) {
+    memset(buffer, lua_tointeger(L, 3), buffer_len);
+  } else if (lua_isfunction(L, 3)) {
+    apply_func_to_plane(L, 3, width, height, buffer);
+  }
 
   return 1;
 }

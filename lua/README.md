@@ -120,6 +120,7 @@ A plane is a 2D bitmap data structure.  Elements in the plane consist of 8-bit i
 - `plane:fill(n)` - Sets the value of each element in the plane to `n`.
 - `plane:fill(function(x, y, cur))` - Sets the value of each element in the plane to the return value of the provided function, to which is passed the current position as well as the current value of each element in the plane.
 - `plane:foreach(function(x, y, cur))` - An alias for `plane:fill` intended to be passed a function that doesn't return anything.
+- `plane:sub(x, y, w, h)` - Returns a new plane with dimensions `w` and `h`, having its values copied from the plane on which this method is called starting at position `(X, Y)`.  In other words, this returns a copied region from within the target.
 
 ---
 
