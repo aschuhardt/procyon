@@ -38,10 +38,6 @@ static bool compile_shader(const char *data, int shader_type, GLuint *index) {
   return true;
 }
 
-/* --------------------------- */
-/* Public interface definition */
-/* --------------------------- */
-
 bool procy_link_shader_program(unsigned int vert, unsigned int frag,
                                unsigned int *index) {
   *index = glCreateProgram();

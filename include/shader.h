@@ -9,7 +9,7 @@ struct procy_draw_op_t;
 
 typedef struct procy_shader_program_t {
   unsigned int vertex, fragment, program, vao, *vbo;
-  size_t vbo_count;
+  int vbo_count;
   bool valid;
 } procy_shader_program_t;
 
