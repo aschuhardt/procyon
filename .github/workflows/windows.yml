@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         msystem: [MINGW32, MINGW64]
-        build-type: [Debug, Release]
+        build-type: [Release]
         include:
           - msystem: MINGW32
             arch: i686
