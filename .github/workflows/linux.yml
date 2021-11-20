@@ -48,8 +48,14 @@ jobs:
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target procyon-lua
     
+    - name: Cleanup
+      run: rm ${{env.OUTPUT_DIR}}/genhexer
+      
+    - name: Set-Executable
+      run: chmod +x ${{env.OUTPUT_DIR}}/procyon-lua
+    
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.2.4
       with:
-        name: archive
+        name: linux-${{env.BUILD_TYPE}}
         path: ${{env.OUTPUT_DIR}}
