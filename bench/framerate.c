@@ -15,6 +15,9 @@ typedef enum {
   TEST_COMPLETE
 } test_mode_t;
 
+static const char* TEST_MODE_NAMES[] = {"Sprite", "String", "Rectangle",
+                                        "Line"};
+
 typedef struct bench_state_t {
   double avg_buffer[FPS_AVG_BUFFER_SIZE];
   size_t avg_buffer_index, test_index, test_draw_counts[TEST_COUNT];
@@ -58,7 +61,7 @@ void on_unload(procy_state_t* state) {
   bench_state_t* data = (bench_state_t*)state->data;
   for (int i = 0; i < TEST_COMPLETE; ++i) {
     for (int j = 0; j < TEST_COUNT; ++j) {
-      log_info("(Test %d) %zu draws => avg. %f FPS", i,
+      log_info("(%s) %zu draws => avg. %f FPS", TEST_MODE_NAMES[i],
                data->test_draw_counts[j],
                1.0 / data->test_results_by_mode[i][j]);
     }
