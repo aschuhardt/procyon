@@ -163,10 +163,6 @@ static void draw_sprite_batch(shader_program_t *const program,
                           GL_UNSIGNED_SHORT, 0));
 }
 
-/* --------------------------- */
-/* Public interface definition */
-/* --------------------------- */
-
 sprite_shader_program_t *procy_create_sprite_shader_mem(unsigned char *contents,
                                                         size_t length) {
   sprite_shader_program_t *sprite_shader =
@@ -263,8 +259,8 @@ static void compute_sprite_vertices(sprite_shader_program_t *shader,
   float ty = (float)sprite->y / (float)shader->texture_h;
   float tw = width / (float)shader->texture_w;
   float th = height / (float)shader->texture_h;
-  int fg = COLOR_TO_INT(op->forecolor);
-  int bg = COLOR_TO_INT(op->backcolor);
+  int fg = op->color.value;
+  int bg = op->data.sprite.background.value;
 
   vertices[0] = (sprite_vertex_t){x, y, tx, ty, fg, bg};
   vertices[1] = (sprite_vertex_t){x + width * scale, y, tx + tw, ty, fg, bg};

@@ -206,10 +206,6 @@ static void draw_glyph_batch(shader_program_t *const program,
                           GL_UNSIGNED_SHORT, 0));
 }
 
-/* --------------------------- */
-/* Public interface definition */
-/* --------------------------- */
-
 glyph_shader_program_t *procy_create_glyph_shader() {
   glyph_shader_program_t *glyph_shader = malloc(sizeof(glyph_shader_program_t));
 
@@ -284,8 +280,8 @@ static void compute_glyph_vertices(glyph_shader_program_t *shader,
   vertices[3] =
       (glyph_vertex_t){x + w * scale, y + h * scale, tx + tw, ty + th};
   for (int i = 0; i < 4; ++i) {
-    vertices[i].forecolor = COLOR_TO_INT(op->forecolor);
-    vertices[i].backcolor = COLOR_TO_INT(op->backcolor);
+    vertices[i].forecolor = op->color.value;
+    vertices[i].backcolor = op->data.text.background.value;
     vertices[i].bold = bold;
   }
 }

@@ -37,10 +37,6 @@ static const size_t ATTR_RECT_COLOR = 1;
 
 #define DRAW_BATCH_SIZE 4096
 
-/* --------------------------- */
-/* Public interface definition */
-/* --------------------------- */
-
 rect_shader_program_t *procy_create_rect_shader(void) {
   rect_shader_program_t *rect_shader = malloc(sizeof(rect_shader_program_t));
 
@@ -105,7 +101,7 @@ static void compute_rect_vertices(rect_shader_program_t *shader, draw_op_t *op,
   vertices[2] = (rect_vertex_t){x, y + h};
   vertices[3] = (rect_vertex_t){x + w, y + h};
   for (int i = 0; i < 4; ++i) {
-    vertices[i].color = COLOR_TO_INT(op->forecolor);
+    vertices[i].color = op->color.value;
   }
 }
 

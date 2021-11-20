@@ -34,10 +34,6 @@ static const size_t ATTR_LINE_COLOR = 1;
 
 #define DRAW_BATCH_SIZE 4096
 
-/* --------------------------- */
-/* Public interface definition */
-/* --------------------------- */
-
 line_shader_program_t *procy_create_line_shader(void) {
   line_shader_program_t *line_shader = malloc(sizeof(line_shader_program_t));
 
@@ -142,11 +138,10 @@ void procy_draw_line_shader(line_shader_program_t *shader,
 
     const size_t vert_index = (size_t)batch_index * VERTICES_PER_LINE;
 
-    vertex_batch[vert_index] = (line_vertex_t){(float)op->x, (float)op->y,
-                                               COLOR_TO_INT(op->forecolor)};
-    vertex_batch[vert_index + 1] =
-        (line_vertex_t){(float)op->data.line.x2, (float)op->data.line.y2,
-                        COLOR_TO_INT(op->forecolor)};
+    vertex_batch[vert_index] =
+        (line_vertex_t){(float)op->x, (float)op->y, op->color.value};
+    vertex_batch[vert_index + 1] = (line_vertex_t){
+        (float)op->data.line.x2, (float)op->data.line.y2, op->color.value};
 
     if (batch_index == DRAW_BATCH_SIZE - 1) {
       draw_line_batch(program, vertex_batch, batch_index + 1);

@@ -9,6 +9,7 @@
 #include <log.h>
 #include <string.h>
 
+#include "color.h"
 #include "drawing.h"
 #include "keys.h"
 #include "shader.h"
@@ -219,10 +220,6 @@ static void log_opengl_info(void) {
   log_debug("OpenGL Version: %s", glGetString(GL_VERSION));
 }
 
-/* --------------------------- */
-/* Public interface definition */
-/* --------------------------- */
-
 window_t *procy_create_window(int width, int height, const char *title,
                               state_t *state) {
   glfwSetErrorCallback(glfw_error_callback);
@@ -388,8 +385,13 @@ void procy_begin_loop(window_t *window) {
 }
 
 void procy_set_clear_color(color_t c) {
-  glClearColor((float)c.r / 255.0F, (float)c.g / 255.0F, (float)c.b / 255.0F,
-               1.0F);
+  unsigned char r;
+  unsigned char g;
+  unsigned char b;
+
+  procy_get_color_rgb(&c, &r, &g, &b);
+
+  glClearColor((float)r / 255.0F, (float)g / 255.0F, (float)b / 255.0F, 1.0F);
 }
 
 void procy_close_window(procy_window_t *window) { window->quitting = true; }
