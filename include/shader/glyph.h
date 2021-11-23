@@ -7,7 +7,13 @@ typedef struct procy_glyph_shader_program_t {
   procy_shader_program_t program;
   void *vertex_batch_buffer, *index_batch_buffer;
   unsigned int u_ortho, u_sampler, font_texture;
-  int texture_w, texture_h;
+  struct {
+    int width, height;
+  } texture_bounds;
+  struct {
+    int width, height;
+    float tex_width, tex_height;
+  } glyph_bounds;
 } procy_glyph_shader_program_t;
 
 /*
