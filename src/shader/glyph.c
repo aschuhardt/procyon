@@ -27,7 +27,7 @@ typedef procy_color_t color_t;
 
 #pragma pack(0)
 typedef struct glyph_vertex_t {
-  float x, y, u, v;
+  float x, y, z, u, v;
   int forecolor;
   int backcolor;
   float bold;
@@ -55,28 +55,28 @@ static void enable_shader_attributes(shader_program_t *const program) {
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_GLYPH_POSITION]));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_POSITION));
-  GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_POSITION, 2, GL_FLOAT, GL_FALSE,
+  GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_POSITION, 3, GL_FLOAT, GL_FALSE,
                                  sizeof(glyph_vertex_t), 0));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_TEXCOORDS));
   GL_CHECK(glVertexAttribPointer(ATTR_GLYPH_TEXCOORDS, 2, GL_FLOAT, GL_FALSE,
                                  sizeof(glyph_vertex_t),
-                                 (void *)(2 * sizeof(float))));  // NOLINT
+                                 (void *)(3 * sizeof(float))));  // NOLINT
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_FORECOLOR));
   GL_CHECK(glVertexAttribIPointer(ATTR_GLYPH_FORECOLOR, 1, GL_INT,
                                   sizeof(glyph_vertex_t),
-                                  (void *)(4 * sizeof(float))));  // NOLINT
+                                  (void *)(5 * sizeof(float))));  // NOLINT
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_BACKCOLOR));
   GL_CHECK(glVertexAttribIPointer(
       ATTR_GLYPH_BACKCOLOR, 1, GL_INT, sizeof(glyph_vertex_t),
-      (void *)(4 * sizeof(float) + sizeof(int))));  // NOLINT
+      (void *)(5 * sizeof(float) + sizeof(int))));  // NOLINT
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_GLYPH_BOLD));
   GL_CHECK(glVertexAttribPointer(
       ATTR_GLYPH_BOLD, 1, GL_FLOAT, GL_FALSE, sizeof(glyph_vertex_t),
-      (void *)(4 * sizeof(float) + 2 * sizeof(int))));  // NOLINT
+      (void *)(5 * sizeof(float) + 2 * sizeof(int))));  // NOLINT
 }
 
 static void disable_shader_attributes() {
@@ -121,7 +121,7 @@ static void load_glyph_font(glyph_shader_program_t *shader) {
                                       (float)shader->texture_bounds.height;
 
     // copy both bitmap buffers into a single location
-    const size_t bitmap_size =
+    size_t bitmap_size =
         (size_t)shader->texture_bounds.width * shader->texture_bounds.height;
     if (bitmap_size != 0) {
       unsigned char *combined_buffer =
@@ -171,7 +171,7 @@ static void draw_glyph_batch(shader_program_t *const program,
   int buffer_size;
 
   // copy vertex data to video memory
-  const size_t vertex_buffer_size =
+  size_t vertex_buffer_size =
       glyph_count * VERTICES_PER_GLYPH * sizeof(glyph_vertex_t);
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_GLYPH_POSITION]));
   GL_CHECK(
@@ -184,8 +184,7 @@ static void draw_glyph_batch(shader_program_t *const program,
   }
 
   // copy indices
-  const size_t index_buffer_size =
-      glyph_count * INDICES_PER_GLYPH * sizeof(GLushort);
+  size_t index_buffer_size = glyph_count * INDICES_PER_GLYPH * sizeof(GLushort);
   GL_CHECK(
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, program->vbo[VBO_GLYPH_INDICES]));
   GL_CHECK(glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE,
@@ -249,8 +248,7 @@ glyph_shader_program_t *procy_create_glyph_shader() {
 }
 
 static void compute_glyph_vertices(glyph_shader_program_t *shader,
-                                   draw_op_t *const op,
-                                   glyph_vertex_t *const vertices,
+                                   draw_op_t *op, glyph_vertex_t *vertices,
                                    float scale) {
   unsigned char c = op->data.text.character;
 
@@ -260,27 +258,28 @@ static void compute_glyph_vertices(glyph_shader_program_t *shader,
   float th = shader->glyph_bounds.tex_height;
 
   // screen coordinates
-  const float x = (float)op->x;
-  const float y = (float)op->y;
+  float x = (float)op->x;
+  float y = (float)op->y;
+  float z = (float)op->z;
 
   // texture coordinates
-  const float tx = (float)(c % GLYPH_WIDTH_COUNT) * (float)gw /
-                   (float)shader->texture_bounds.width;
-  const float ty = floorf((float)c / (float)GLYPH_HEIGHT_COUNT) * (float)gh /
-                   (float)shader->texture_bounds.height;
+  float tx = (float)(c % GLYPH_WIDTH_COUNT) * (float)gw /
+             (float)shader->texture_bounds.width;
+  float ty = floorf((float)c / (float)GLYPH_HEIGHT_COUNT) * (float)gh /
+             (float)shader->texture_bounds.height;
 
-  const float bold = op->data.text.bold ? 1.0F : 0.0F;
+  // colors + bold
+  int fg = op->color.value;
+  int bg = op->data.text.background.value;
+  float bold = op->data.text.bold ? 1.0F : 0.0F;
 
-  vertices[0] = (glyph_vertex_t){x, y, tx, ty};
-  vertices[1] = (glyph_vertex_t){x + (float)gw * scale, y, tx + tw, ty};
-  vertices[2] = (glyph_vertex_t){x, y + (float)gh * scale, tx, ty + th};
+  // clang-format off
+  vertices[0] = (glyph_vertex_t){x, y, z, tx, ty, fg, bg, bold};
+  vertices[1] = (glyph_vertex_t){x + (float)gw * scale, y, z, tx + tw, ty, fg, bg, bold};
+  vertices[2] = (glyph_vertex_t){x, y + (float)gh * scale, z, tx, ty + th, fg, bg, bold};
   vertices[3] = (glyph_vertex_t){x + (float)gw * scale, y + (float)gh * scale,
-                                 tx + tw, ty + th};
-  for (int i = 0; i < 4; ++i) {
-    vertices[i].forecolor = op->color.value;
-    vertices[i].backcolor = op->data.text.background.value;
-    vertices[i].bold = bold;
-  }
+                                 z, tx + tw, ty + th, fg, bg, bold};
+  // clang-format on
 }
 
 void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window) {
@@ -312,16 +311,16 @@ void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window) {
 
     ++batch_index;
 
-    const size_t vert_index = (size_t)batch_index * VERTICES_PER_GLYPH;
+    size_t vert_index = (size_t)batch_index * VERTICES_PER_GLYPH;
 
     // compute the glyph's 4 vertices
     glyph_vertex_t temp_vertex_buffer[VERTICES_PER_GLYPH];
     compute_glyph_vertices(shader, op, &temp_vertex_buffer[0], window->scale);
 
     // specify the indices of the vertices in the order they're to be drawn
-    const GLushort temp_index_buffer[] = {vert_index,     vert_index + 1,
-                                          vert_index + 2, vert_index + 1,
-                                          vert_index + 3, vert_index + 2};
+    GLushort temp_index_buffer[] = {vert_index,     vert_index + 1,
+                                    vert_index + 2, vert_index + 1,
+                                    vert_index + 3, vert_index + 2};
 
     // copy vertices and indices to the batch buffer
     memcpy(&vertex_batch[vert_index], temp_vertex_buffer,

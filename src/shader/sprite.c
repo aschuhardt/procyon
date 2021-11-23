@@ -27,7 +27,7 @@ typedef procy_sprite_t sprite_t;
 
 #pragma pack(0)
 typedef struct sprite_vertex_t {
-  float x, y, u, v;
+  float x, y, z, u, v;
   int forecolor, backcolor;
 } sprite_vertex_t;
 #pragma pack(1)
@@ -48,23 +48,23 @@ static void enable_shader_attributes(shader_program_t *const program) {
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_SPRITE_POSITION]));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_SPRITE_POSITION));
-  GL_CHECK(glVertexAttribPointer(ATTR_SPRITE_POSITION, 2, GL_FLOAT, GL_FALSE,
+  GL_CHECK(glVertexAttribPointer(ATTR_SPRITE_POSITION, 3, GL_FLOAT, GL_FALSE,
                                  sizeof(sprite_vertex_t), 0));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_SPRITE_TEXCOORDS));
   GL_CHECK(glVertexAttribPointer(ATTR_SPRITE_TEXCOORDS, 2, GL_FLOAT, GL_FALSE,
                                  sizeof(sprite_vertex_t),
-                                 (void *)(2 * sizeof(float))));  // NOLINT
+                                 (void *)(3 * sizeof(float))));  // NOLINT
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_SPRITE_FORECOLOR));
   GL_CHECK(glVertexAttribIPointer(ATTR_SPRITE_FORECOLOR, 1, GL_INT,
                                   sizeof(sprite_vertex_t),
-                                  (void *)(4 * sizeof(float))));  // NOLINT
+                                  (void *)(5 * sizeof(float))));  // NOLINT
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_SPRITE_BACKCOLOR));
   GL_CHECK(glVertexAttribIPointer(
       ATTR_SPRITE_BACKCOLOR, 1, GL_INT, sizeof(sprite_vertex_t),
-      (void *)(4 * sizeof(float) + sizeof(int))));  // NOLINT
+      (void *)(5 * sizeof(float) + sizeof(int))));  // NOLINT
 }
 
 static void disable_shader_attributes() {
@@ -251,6 +251,7 @@ static void compute_sprite_vertices(sprite_shader_program_t *shader,
   // screen coordinates
   float x = (float)op->x;
   float y = (float)op->y;
+  float z = (float)op->z;
   float width = (float)sprite->width;
   float height = (float)sprite->height;
 
@@ -262,11 +263,12 @@ static void compute_sprite_vertices(sprite_shader_program_t *shader,
   int fg = op->color.value;
   int bg = op->data.sprite.background.value;
 
-  vertices[0] = (sprite_vertex_t){x, y, tx, ty, fg, bg};
-  vertices[1] = (sprite_vertex_t){x + width * scale, y, tx + tw, ty, fg, bg};
-  vertices[2] = (sprite_vertex_t){x, y + height * scale, tx, ty + th, fg, bg};
+  vertices[0] = (sprite_vertex_t){x, y, z, tx, ty, fg, bg};
+  vertices[1] = (sprite_vertex_t){x + width * scale, y, z, tx + tw, ty, fg, bg};
+  vertices[2] =
+      (sprite_vertex_t){x, y + height * scale, z, tx, ty + th, fg, bg};
   vertices[3] = (sprite_vertex_t){
-      x + width * scale, y + height * scale, tx + tw, ty + th, fg, bg};
+      x + width * scale, y + height * scale, z, tx + tw, ty + th, fg, bg};
 }
 
 void procy_draw_sprite_shader(sprite_shader_program_t *shader,

@@ -8,6 +8,8 @@
 #include "script/environment.h"
 #include "shader/sprite.h"
 
+#define GLOBAL_Z_OFFSET "procyon_z_offset"
+
 #define TBL_DRAWING "draw"
 #define TBL_COLOR "color"
 #define TBL_SPRITESHEET "spritesheet"
@@ -22,6 +24,7 @@
 #define FUNC_LOADSPRITESHEET "load"
 #define FUNC_CREATESPRITE "sprite"
 #define FUNC_DRAWSPRITE "draw"
+#define FUNC_SETOFFSET "set_offset"
 #define FIELD_SPRITESHEET_PTR "ptr"
 #define FIELD_SPRITESHEET_WIDTH "width"
 #define FIELD_SPRITESHEET_HEIGHT "height"
@@ -52,11 +55,14 @@ static int draw_string(lua_State *L) {
   lua_settop(L, 5);
 
   size_t length = 0;
-  int x = lua_tointeger(L, 1);
-  int y = lua_tointeger(L, 2);
+  short x = (short)(lua_tointeger(L, 1) % SHRT_MAX);
+  short y = (short)(lua_tointeger(L, 2) % SHRT_MAX);
   const char *contents = lua_tolstring(L, 3, &length);
   procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
   procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
+
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
@@ -73,7 +79,7 @@ static int draw_string(lua_State *L) {
       // define the number of characters that will be skipped
       // note: this is used both for incrementing the character index (i +=
       // offset - 1), as well as for shifting text following the modifiers to
-      // the by (offset * glyph width) in order to compensate for non-drawn
+      // thz, e by (offset * glyph width) in order to compensate for non-drawn
       // modifier characters
       int offset = 2;
 
@@ -96,7 +102,7 @@ static int draw_string(lua_State *L) {
 
       // offset the position in order to compensate for the
       // characters that are not being drawn
-      x -= glyph_w * offset;
+      x = (short)((x + (glyph_w * offset)) % SHRT_MAX);
 
       // skip the modifier char which follows '%'
       i += offset - 1;
@@ -104,8 +110,8 @@ static int draw_string(lua_State *L) {
     }
 
   no_mod:
-    op = procy_create_draw_op_string_colored(
-        (short)x, (short)y, glyph_w, forecolor, backcolor, contents, i, bold);
+    op = procy_create_draw_op_string_colored(x, y, z, glyph_w, forecolor,
+                                             backcolor, contents, i, bold);
     procy_append_draw_op(window, &op);
   }
 
@@ -115,16 +121,19 @@ static int draw_string(lua_State *L) {
 static int draw_char(lua_State *L) {
   lua_settop(L, 5);
 
-  int x = lua_tointeger(L, 1);
-  int y = lua_tointeger(L, 2);
+  short x = (short)(lua_tointeger(L, 1) % SHRT_MAX);
+  short y = (short)(lua_tointeger(L, 2) % SHRT_MAX);
   unsigned char value = lua_tointeger(L, 3) % UCHAR_MAX;
   procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
   procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
+
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
   procy_draw_op_t op = procy_create_draw_op_char_colored(
-      (short)x, (short)y, forecolor, backcolor, (char)value, false);
+      x, y, z, forecolor, backcolor, (char)value, false);
   procy_append_draw_op(window, &op);
 
   return 0;
@@ -133,17 +142,19 @@ static int draw_char(lua_State *L) {
 static int draw_rect(lua_State *L) {
   lua_settop(L, 5);
 
-  int x = lua_tointeger(L, 1);
-  int y = lua_tointeger(L, 2);
-  int w = lua_tointeger(L, 3);
-  int h = lua_tointeger(L, 4);
+  short x = (short)(lua_tointeger(L, 1) % SHRT_MAX);
+  short y = (short)(lua_tointeger(L, 2) % SHRT_MAX);
+  short w = (short)(lua_tointeger(L, 3) % SHRT_MAX);
+  short h = (short)(lua_tointeger(L, 4) % SHRT_MAX);
   procy_color_t color = luaL_opt(L, get_color, 5, WHITE);
+
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
-  procy_draw_op_t op =
-      procy_create_draw_op_rect((short)x, (short)y, (short)w, (short)h, color);
+  procy_draw_op_t op = procy_create_draw_op_rect(x, y, z, w, h, color);
   procy_append_draw_op(window, &op);
 
   return 0;
@@ -152,17 +163,19 @@ static int draw_rect(lua_State *L) {
 static int draw_line(lua_State *L) {
   lua_settop(L, 5);
 
-  int x1 = lua_tointeger(L, 1);
-  int y1 = lua_tointeger(L, 2);
-  int x2 = lua_tointeger(L, 3);
-  int y2 = lua_tointeger(L, 4);
+  short x1 = (short)(lua_tointeger(L, 1) % SHRT_MAX);
+  short y1 = (short)(lua_tointeger(L, 2) % SHRT_MAX);
+  short x2 = (short)(lua_tointeger(L, 3) % SHRT_MAX);
+  short y2 = (short)(lua_tointeger(L, 4) % SHRT_MAX);
   procy_color_t color = luaL_opt(L, get_color, 5, WHITE);
+
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
-  procy_draw_op_t op = procy_create_draw_op_line((short)x1, (short)y1,
-                                                 (short)x2, (short)y2, color);
+  procy_draw_op_t op = procy_create_draw_op_line(x1, y1, x2, y2, z, color);
   procy_append_draw_op(window, &op);
 
   return 0;
@@ -178,6 +191,9 @@ static int draw_polygon(lua_State *L) {
 
   procy_color_t color = luaL_opt(L, get_color, 5, WHITE);
 
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
+
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
@@ -189,9 +205,11 @@ static int draw_polygon(lua_State *L) {
     float x2 = cosf(theta - adjust + interval) * radius + (float)x;
     float y2 = sinf(theta - adjust + interval) * radius + (float)y;
 
-    procy_draw_op_t op =
-        procy_create_draw_op_line((short)roundf(x1), (short)roundf(y1),
-                                  (short)roundf(x2), (short)roundf(y2), color);
+    procy_draw_op_t op = procy_create_draw_op_line(
+        (short)((int)roundf(x1) % SHRT_MAX),
+        (short)((int)roundf(y1) % SHRT_MAX),
+        (short)((int)roundf(x2) % SHRT_MAX),
+        (short)((int)roundf(y2) % SHRT_MAX), z, color);
     procy_append_draw_op(window, &op);
   }
 
@@ -228,13 +246,16 @@ static int draw_sprite(lua_State *L) {
   procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
   procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
+
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
   lua_getfield(L, 1, FIELD_SPRITE_PTR);
   procy_sprite_t *sprite = (procy_sprite_t *)lua_touserdata(L, -1);
 
-  procy_draw_sprite(window, x, y, forecolor, backcolor, sprite);
+  procy_draw_sprite(window, x, y, z, forecolor, backcolor, sprite);
 
   return 0;
 }
@@ -395,6 +416,9 @@ static void add_draw_ops(lua_State *L) {
       {FUNC_DRAWCHAR, draw_char},     {NULL, NULL}};
   luaL_newlib(L, methods);
   lua_setglobal(L, TBL_DRAWING);
+
+  lua_pushinteger(L, 0);
+  lua_setfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
 }
 
 static void add_color(lua_State *L) {

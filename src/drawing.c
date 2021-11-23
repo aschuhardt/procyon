@@ -16,15 +16,16 @@ typedef procy_window_t window_t;
 
 #define PROCY_MAX_DRAW_STRING_LENGTH 256
 
-static void draw_string_chars(window_t *window, short x, short y, bool bold,
-                              color_t fg, color_t bg, const char *contents) {
+static void draw_string_chars(window_t *window, short x, short y, short z,
+                              bool bold, color_t fg, color_t bg,
+                              const char *contents) {
   int glyph_size;
   procy_get_glyph_size(window, &glyph_size, NULL);
 
   const size_t length = strnlen(contents, PROCY_MAX_DRAW_STRING_LENGTH);
   draw_op_t draw_op;
   for (size_t i = 0; i < length; ++i) {
-    draw_op = procy_create_draw_op_string_colored(x, y, glyph_size, fg, bg,
+    draw_op = procy_create_draw_op_string_colored(x, y, z, glyph_size, fg, bg,
                                                   contents, i, bold);
     procy_append_draw_op(window, &draw_op);
   }
@@ -115,99 +116,106 @@ void procy_destroy_sprite(procy_sprite_t *sprite) {
   }
 }
 
-void procy_draw_string(window_t *window, short x, short y, color_t color,
-                       color_t background, const char *contents) {
-  draw_string_chars(window, x, y, false, color, background, contents);
+void procy_draw_string(window_t *window, short x, short y, short z,
+                       color_t color, color_t background,
+                       const char *contents) {
+  draw_string_chars(window, x, y, z, false, color, background, contents);
 }
 
-void procy_draw_char(window_t *window, short x, short y, color_t color,
+void procy_draw_char(window_t *window, short x, short y, short z, color_t color,
                      color_t background, char c) {
   draw_op_t op =
-      procy_create_draw_op_char_colored(x, y, color, background, c, false);
+      procy_create_draw_op_char_colored(x, y, z, color, background, c, false);
   procy_append_draw_op(window, &op);
 }
 
-void procy_draw_char_bold(window_t *window, short x, short y, color_t color,
-                          color_t background, char c) {
+void procy_draw_char_bold(window_t *window, short x, short y, short z,
+                          color_t color, color_t background, char c) {
   draw_op_t op =
-      procy_create_draw_op_char_colored(x, y, color, background, c, true);
+      procy_create_draw_op_char_colored(x, y, z, color, background, c, true);
   procy_append_draw_op(window, &op);
 }
 
-void procy_draw_string_bold(window_t *window, short x, short y, color_t color,
-                            color_t background, const char *contents) {
-  draw_string_chars(window, x, y, true, color, background, contents);
+void procy_draw_string_bold(window_t *window, short x, short y, short z,
+                            color_t color, color_t background,
+                            const char *contents) {
+  draw_string_chars(window, x, y, z, true, color, background, contents);
 }
 
-void procy_draw_rect(window_t *window, short x, short y, short width,
+void procy_draw_rect(window_t *window, short x, short y, short z, short width,
                      short height, color_t color) {
-  draw_op_t op = procy_create_draw_op_rect(x, y, width, height, color);
+  draw_op_t op = procy_create_draw_op_rect(x, y, z, width, height, color);
   procy_append_draw_op(window, &op);
 }
 
 void procy_draw_line(window_t *window, short x1, short y1, short x2, short y2,
-                     color_t color) {
-  draw_op_t op = procy_create_draw_op_line(x1, y1, x2, y2, color);
+                     short z, color_t color) {
+  draw_op_t op = procy_create_draw_op_line(x1, y1, x2, y2, z, color);
   procy_append_draw_op(window, &op);
 }
 
-void procy_draw_sprite(window_t *window, short x, short y, procy_color_t color,
-                       procy_color_t background, procy_sprite_t *sprite) {
-  draw_op_t op = procy_create_draw_op_sprite(x, y, color, background, sprite);
+void procy_draw_sprite(window_t *window, short x, short y, short z,
+                       procy_color_t color, procy_color_t background,
+                       procy_sprite_t *sprite) {
+  draw_op_t op =
+      procy_create_draw_op_sprite(x, y, z, color, background, sprite);
   procy_append_draw_op(window, &op);
 }
 
-draw_op_t procy_create_draw_op_string(short x, short y, int size,
+draw_op_t procy_create_draw_op_string(short x, short y, short z, int size,
                                       const char *contents, size_t index,
                                       bool bold) {
-  return procy_create_draw_op_char((short)((x + index * size) % SHRT_MAX), y,
+  return procy_create_draw_op_char((short)((x + index * size) % SHRT_MAX), y, z,
                                    (char)contents[index], bold);
 }
 
-draw_op_t procy_create_draw_op_string_colored(short x, short y, int size,
-                                              color_t color, color_t background,
+draw_op_t procy_create_draw_op_string_colored(short x, short y, short z,
+                                              int size, color_t color,
+                                              color_t background,
                                               const char *contents,
                                               size_t index, bool bold) {
   return procy_create_draw_op_char_colored(
-      (short)((x + index * size) % SHRT_MAX), y, color, background,
+      (short)((x + index * size) % SHRT_MAX), y, z, color, background,
       (char)contents[index], bold);
 }
 
-draw_op_t procy_create_draw_op_char(short x, short y, char c, bool bold) {
-  return procy_create_draw_op_char_colored(x, y, WHITE, BLACK, c, bold);
+draw_op_t procy_create_draw_op_char(short x, short y, short z, char c,
+                                    bool bold) {
+  return procy_create_draw_op_char_colored(x, y, z, WHITE, BLACK, c, bold);
 }
 
-draw_op_t procy_create_draw_op_char_colored(short x, short y, color_t color,
-                                            color_t background, char c,
-                                            bool bold) {
-  draw_op_t op = {color, DRAW_OP_TEXT, x, y};
+draw_op_t procy_create_draw_op_char_colored(short x, short y, short z,
+                                            color_t color, color_t background,
+                                            char c, bool bold) {
+  draw_op_t op = {color, DRAW_OP_TEXT, x, y, z};
   op.data.text.character = (unsigned char)c;
   op.data.text.bold = bold;
   op.data.text.background = background;
   return op;
 }
 
-procy_draw_op_t procy_create_draw_op_rect(short x, short y, short width,
-                                          short height, color_t color) {
-  draw_op_t op = {color, DRAW_OP_RECT, x, y};
+procy_draw_op_t procy_create_draw_op_rect(short x, short y, short z,
+                                          short width, short height,
+                                          color_t color) {
+  draw_op_t op = {color, DRAW_OP_RECT, x, y, z};
   op.data.rect.width = width;
   op.data.rect.height = height;
   return op;
 }
 
 procy_draw_op_t procy_create_draw_op_line(short x1, short y1, short x2,
-                                          short y2, color_t color) {
-  draw_op_t op = {color, DRAW_OP_LINE, x1, y1};
+                                          short y2, short z, color_t color) {
+  draw_op_t op = {color, DRAW_OP_LINE, x1, y1, z};
   op.data.line.x2 = x2;
   op.data.line.y2 = y2;
   return op;
 }
 
-procy_draw_op_t procy_create_draw_op_sprite(short x, short y,
+procy_draw_op_t procy_create_draw_op_sprite(short x, short y, short z,
                                             procy_color_t color,
                                             procy_color_t background,
                                             procy_sprite_t *sprite) {
-  draw_op_t op = {color, DRAW_OP_SPRITE, x, y};
+  draw_op_t op = {color, DRAW_OP_SPRITE, x, y, z};
   op.data.sprite.ptr = sprite;
   op.data.sprite.background = background;
   return op;

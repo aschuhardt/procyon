@@ -5,7 +5,7 @@
 #include <stdlib.h>
 
 #include "color.h"
-#include "op_type.h"
+#include "drawing.h"
 
 #define MAX_SPRITE_SHADER_COUNT 32
 

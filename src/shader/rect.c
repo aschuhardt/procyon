@@ -22,7 +22,7 @@ typedef procy_draw_op_t draw_op_t;
 
 #pragma pack(0)
 typedef struct rect_vertex_t {
-  float x, y;
+  float x, y, z;
   int color;
 } rect_vertex_t;
 #pragma pack(1)
@@ -93,16 +93,15 @@ static void compute_rect_vertices(rect_shader_program_t *shader, draw_op_t *op,
                                   rect_vertex_t *vertices) {
   float x = (float)op->x;
   float y = (float)op->y;
+  float z = (float)op->z;
   float w = (float)op->data.rect.width;
   float h = (float)op->data.rect.height;
+  int color = op->color.value;
 
-  vertices[0] = (rect_vertex_t){x, y};
-  vertices[1] = (rect_vertex_t){x + w, y};
-  vertices[2] = (rect_vertex_t){x, y + h};
-  vertices[3] = (rect_vertex_t){x + w, y + h};
-  for (int i = 0; i < 4; ++i) {
-    vertices[i].color = op->color.value;
-  }
+  vertices[0] = (rect_vertex_t){x, y, z, color};
+  vertices[1] = (rect_vertex_t){x + w, y, z, color};
+  vertices[2] = (rect_vertex_t){x, y + h, z, color};
+  vertices[3] = (rect_vertex_t){x + w, y + h, z, color};
 }
 
 static void draw_rect_batch(shader_program_t *const program,
@@ -150,13 +149,13 @@ static void enable_shader_attributes(shader_program_t *const program) {
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_RECT_POSITION]));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_RECT_POSITION));
-  GL_CHECK(glVertexAttribPointer(ATTR_RECT_POSITION, 2, GL_FLOAT, GL_FALSE,
+  GL_CHECK(glVertexAttribPointer(ATTR_RECT_POSITION, 3, GL_FLOAT, GL_FALSE,
                                  sizeof(rect_vertex_t), 0));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_RECT_COLOR));
   GL_CHECK(glVertexAttribIPointer(ATTR_RECT_COLOR, 1, GL_INT,
                                   sizeof(rect_vertex_t),
-                                  (void *)(2 * sizeof(float))));  // NOLINT
+                                  (void *)(3 * sizeof(float))));  // NOLINT
 }
 
 void procy_draw_rect_shader(rect_shader_program_t *shader, window_t *window) {

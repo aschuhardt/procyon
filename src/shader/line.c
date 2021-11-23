@@ -21,7 +21,7 @@ typedef procy_draw_op_t draw_op_t;
 
 #pragma pack(0)
 typedef struct line_vertex_t {
-  float x, y;
+  float x, y, z;
   int color;
 } line_vertex_t;
 #pragma pack(1)
@@ -85,13 +85,13 @@ static void enable_shader_attributes(shader_program_t *program) {
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_LINE_POSITION]));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_LINE_POSITION));
-  GL_CHECK(glVertexAttribPointer(ATTR_LINE_POSITION, 2, GL_FLOAT, GL_FALSE,
+  GL_CHECK(glVertexAttribPointer(ATTR_LINE_POSITION, 3, GL_FLOAT, GL_FALSE,
                                  sizeof(line_vertex_t), 0));
 
   GL_CHECK(glEnableVertexAttribArray(ATTR_LINE_COLOR));
   GL_CHECK(glVertexAttribIPointer(ATTR_LINE_COLOR, 1, GL_INT,
                                   sizeof(line_vertex_t),
-                                  (void *)(2 * sizeof(float))));  // NOLINT
+                                  (void *)(3 * sizeof(float))));  // NOLINT
 }
 
 static void draw_line_batch(shader_program_t *const program,
@@ -138,10 +138,11 @@ void procy_draw_line_shader(line_shader_program_t *shader,
 
     const size_t vert_index = (size_t)batch_index * VERTICES_PER_LINE;
 
-    vertex_batch[vert_index] =
-        (line_vertex_t){(float)op->x, (float)op->y, op->color.value};
-    vertex_batch[vert_index + 1] = (line_vertex_t){
-        (float)op->data.line.x2, (float)op->data.line.y2, op->color.value};
+    vertex_batch[vert_index] = (line_vertex_t){(float)op->x, (float)op->y,
+                                               (float)op->z, op->color.value};
+    vertex_batch[vert_index + 1] =
+        (line_vertex_t){(float)op->data.line.x2, (float)op->data.line.y2,
+                        (float)op->z, op->color.value};
 
     if (batch_index == DRAW_BATCH_SIZE - 1) {
       draw_line_batch(program, vertex_batch, batch_index + 1);
