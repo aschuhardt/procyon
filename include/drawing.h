@@ -82,16 +82,17 @@ void procy_draw_sprite(struct procy_window_t *window, short x, short y, short z,
                        procy_sprite_t *sprite);
 
 /*
- * Returns a new text drawing operation for the character at the provided
- * index in a string whose first character's position is the given pixel
- * position
+ * Returns a new text drawing operation for the character
+ * at the provided index in a string whose first
+ * character's position is the given pixel position
  */
 procy_draw_op_t procy_create_draw_op_string(short x, short y, short z, int size,
                                             const char *contents, size_t index,
                                             bool bold);
 /*
- * Returns a new text drawing operation bearing the provided foreground color,
- * at the provided pixel coordinates
+ * Returns a new text drawing operation bearing the
+ * provided foreground color, at the provided pixel
+ * coordinates
  */
 procy_draw_op_t procy_create_draw_op_string_colored(
     short x, short y, short z, int size, procy_color_t color,

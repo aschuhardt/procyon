@@ -105,30 +105,21 @@ void on_draw(procy_state_t* state, double time) {
     short y = 200 + (i * 3 % 200);
     switch (data->test_mode) {
       case TEST_MODE_SPRITE:
-        procy_draw_sprite(data->window, x, y, yellow, black, data->sprite);
+        procy_draw_sprite(data->window, x, y, 0, yellow, black, data->sprite);
         break;
       case TEST_MODE_STRING:
-        procy_draw_char(data->window, x, y, yellow, black, '@');
+        procy_draw_char(data->window, x, y, 0, yellow, black, '@');
         break;
       case TEST_MODE_RECT:
-        procy_draw_rect(data->window, x, y, 30, 30, yellow);
+        procy_draw_rect(data->window, x, y, 0, 30, 30, yellow);
         break;
       case TEST_MODE_LINE:
-        procy_draw_line(data->window, x, y, 0, 0, yellow);
+        procy_draw_line(data->window, x, y, 0, 0, 0, yellow);
         break;
       case TEST_COMPLETE:
         break;
     }
   }
-
-  char fps_text[32];
-  sprintf(fps_text, "FPS: %.2f", 1.0 / time);
-  procy_draw_string(data->window, 0, 0, yellow, black, fps_text);
-
-  char draw_count_text[32];
-  sprintf(draw_count_text, "Count: %zu",
-          data->test_draw_counts[data->test_index]);
-  procy_draw_string(data->window, 0, 10, yellow, black, draw_count_text);
 }
 
 int main(int argc, const char** argv) {
