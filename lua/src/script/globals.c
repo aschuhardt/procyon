@@ -6,7 +6,7 @@
 #include "script.h"
 #include "script/environment.h"
 
-#define FLD_ROOT "ROOT"
+#define FIELD_ROOT "ROOT"
 
 void add_globals(lua_State *L, script_env_t *env, const char *path) {
   lua_pushlightuserdata(L, env);
@@ -29,7 +29,7 @@ void add_globals(lua_State *L, script_env_t *env, const char *path) {
   const char *root = dirname(absolute);
 
   lua_pushstring(L, root);
-  lua_setglobal(L, FLD_ROOT);
+  lua_setglobal(L, FIELD_ROOT);
 
   free(absolute);
 }

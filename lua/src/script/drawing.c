@@ -8,7 +8,7 @@
 #include "script/environment.h"
 #include "shader/sprite.h"
 
-#define GLOBAL_Z_OFFSET "procyon_z_offset"
+#define GLOBAL_LAYER "procyon_layer"
 
 #define TBL_DRAWING "draw"
 #define TBL_COLOR "color"
@@ -24,7 +24,7 @@
 #define FUNC_LOADSPRITESHEET "load"
 #define FUNC_CREATESPRITE "sprite"
 #define FUNC_DRAWSPRITE "draw"
-#define FUNC_SETOFFSET "set_offset"
+#define FUNC_SETOFFSET "set_layer"
 #define FIELD_SPRITESHEET_PTR "ptr"
 #define FIELD_SPRITESHEET_WIDTH "width"
 #define FIELD_SPRITESHEET_HEIGHT "height"
@@ -61,7 +61,7 @@ static int draw_string(lua_State *L) {
   procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
   procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
-  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
   short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
@@ -127,7 +127,7 @@ static int draw_char(lua_State *L) {
   procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
   procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
-  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
   short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
@@ -148,7 +148,7 @@ static int draw_rect(lua_State *L) {
   short h = (short)(lua_tointeger(L, 4) % SHRT_MAX);
   procy_color_t color = luaL_opt(L, get_color, 5, WHITE);
 
-  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
   short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
@@ -169,7 +169,7 @@ static int draw_line(lua_State *L) {
   short y2 = (short)(lua_tointeger(L, 4) % SHRT_MAX);
   procy_color_t color = luaL_opt(L, get_color, 5, WHITE);
 
-  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
   short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
@@ -191,7 +191,7 @@ static int draw_polygon(lua_State *L) {
 
   procy_color_t color = luaL_opt(L, get_color, 5, WHITE);
 
-  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
   short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
@@ -246,7 +246,7 @@ static int draw_sprite(lua_State *L) {
   procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
   procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
-  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
   short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
@@ -418,7 +418,7 @@ static void add_draw_ops(lua_State *L) {
   lua_setglobal(L, TBL_DRAWING);
 
   lua_pushinteger(L, 0);
-  lua_setfield(L, LUA_REGISTRYINDEX, GLOBAL_Z_OFFSET);
+  lua_setfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
 }
 
 static void add_color(lua_State *L) {
