@@ -6,6 +6,7 @@
 // clang-format on
 
 #include <log.h>
+#include <stb_ds.h>
 
 #include "drawing.h"
 #include "gen/line_frag.h"
@@ -17,7 +18,7 @@ typedef procy_line_shader_program_t line_shader_program_t;
 typedef procy_window_t window_t;
 typedef procy_color_t color_t;
 typedef procy_shader_program_t shader_program_t;
-typedef procy_draw_op_t draw_op_t;
+typedef procy_draw_op_line_t draw_op_line_t;
 
 #pragma pack(0)
 typedef struct line_vertex_t {
@@ -115,8 +116,8 @@ static void draw_line_batch(shader_program_t *const program,
 }
 
 void procy_draw_line_shader(line_shader_program_t *shader,
-                            struct procy_window_t *window) {
-  draw_op_t *ops_buffer = window->draw_ops.buffer;
+                            struct procy_window_t *window,
+                            draw_op_line_t *draw_ops) {
   line_vertex_t *vertex_batch = shader->vertex_batch_buffer;
 
   shader_program_t *program = &shader->program;
@@ -128,21 +129,17 @@ void procy_draw_line_shader(line_shader_program_t *shader,
   enable_shader_attributes(program);
 
   long batch_index = -1;
-  for (size_t i = 0; i < window->draw_ops.length; ++i) {
-    draw_op_t *op = &ops_buffer[i];
-    if (op->type != DRAW_OP_LINE) {
-      continue;
-    }
+  while (arrlen(draw_ops) > 0) {
+    draw_op_line_t op = arrpop(draw_ops);
 
     ++batch_index;
 
     const size_t vert_index = (size_t)batch_index * VERTICES_PER_LINE;
 
-    vertex_batch[vert_index] = (line_vertex_t){(float)op->x, (float)op->y,
-                                               (float)op->z, op->color.value};
-    vertex_batch[vert_index + 1] =
-        (line_vertex_t){(float)op->data.line.x2, (float)op->data.line.y2,
-                        (float)op->z, op->color.value};
+    vertex_batch[vert_index] = (line_vertex_t){(float)op.x1, (float)op.y1,
+                                               (float)op.z, op.color.value};
+    vertex_batch[vert_index + 1] = (line_vertex_t){(float)op.x2, (float)op.y2,
+                                                   (float)op.z, op.color.value};
 
     if (batch_index == DRAW_BATCH_SIZE - 1) {
       draw_line_batch(program, vertex_batch, batch_index + 1);

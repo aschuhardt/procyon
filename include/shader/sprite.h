@@ -3,6 +3,8 @@
 
 #include "shader.h"
 
+struct procy_draw_op_sprite_t;
+
 typedef struct procy_sprite_shader_program_t {
   procy_shader_program_t program;
   void *vertex_batch_buffer, *index_batch_buffer;
@@ -29,7 +31,8 @@ procy_sprite_shader_program_t *procy_create_sprite_shader(const char *path);
  * from all of the `sprite` type draw operations
  */
 void procy_draw_sprite_shader(procy_sprite_shader_program_t *shader,
-                              struct procy_window_t *window);
+                              struct procy_window_t *window,
+                              struct procy_draw_op_sprite_t *draw_ops);
 
 /*
  * Disposes of a sprite shader program and deletes its bound resources from

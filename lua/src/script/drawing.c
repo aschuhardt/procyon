@@ -1,3 +1,5 @@
+#include "drawing.h"
+
 #include <lauxlib.h>
 #include <limits.h>
 #include <log.h>
@@ -72,7 +74,7 @@ static int draw_string(lua_State *L) {
   procy_get_glyph_size(window, &glyph_w, &glyph_h);
 
   bool bold = false;
-  procy_draw_op_t op;
+  procy_draw_op_text_t op;
   for (size_t i = 0; i < length; i++) {
     // check for inline modifiers such as %b or %i
     if (contents[i] == '%' && i < length - 1) {
@@ -102,7 +104,7 @@ static int draw_string(lua_State *L) {
 
       // offset the position in order to compensate for the
       // characters that are not being drawn
-      x = (short)((x + (glyph_w * offset)) % SHRT_MAX);
+      x = (short)((x - (glyph_w * offset)) % SHRT_MAX);
 
       // skip the modifier char which follows '%'
       i += offset - 1;
@@ -110,9 +112,10 @@ static int draw_string(lua_State *L) {
     }
 
   no_mod:
-    op = procy_create_draw_op_string_colored(x, y, z, glyph_w, forecolor,
-                                             backcolor, contents, i, bold);
-    procy_append_draw_op(window, &op);
+    op = procy_create_draw_op_char_colored(
+        (short)((x + i * glyph_w) % SHRT_MAX), y, z, forecolor, backcolor,
+        contents[i], bold);
+    procy_append_draw_op_text(window, &op);
   }
 
   return 0;
@@ -132,9 +135,9 @@ static int draw_char(lua_State *L) {
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
-  procy_draw_op_t op = procy_create_draw_op_char_colored(
+  procy_draw_op_text_t op = procy_create_draw_op_char_colored(
       x, y, z, forecolor, backcolor, (char)value, false);
-  procy_append_draw_op(window, &op);
+  procy_append_draw_op_text(window, &op);
 
   return 0;
 }
@@ -154,8 +157,8 @@ static int draw_rect(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
-  procy_draw_op_t op = procy_create_draw_op_rect(x, y, z, w, h, color);
-  procy_append_draw_op(window, &op);
+  procy_draw_op_rect_t op = procy_create_draw_op_rect(x, y, z, w, h, color);
+  procy_append_draw_op_rect(window, &op);
 
   return 0;
 }
@@ -175,8 +178,8 @@ static int draw_line(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
-  procy_draw_op_t op = procy_create_draw_op_line(x1, y1, x2, y2, z, color);
-  procy_append_draw_op(window, &op);
+  procy_draw_op_line_t op = procy_create_draw_op_line(x1, y1, x2, y2, z, color);
+  procy_append_draw_op_line(window, &op);
 
   return 0;
 }
@@ -205,12 +208,12 @@ static int draw_polygon(lua_State *L) {
     float x2 = cosf(theta - adjust + interval) * radius + (float)x;
     float y2 = sinf(theta - adjust + interval) * radius + (float)y;
 
-    procy_draw_op_t op = procy_create_draw_op_line(
+    procy_draw_op_line_t op = procy_create_draw_op_line(
         (short)((int)roundf(x1) % SHRT_MAX),
         (short)((int)roundf(y1) % SHRT_MAX),
         (short)((int)roundf(x2) % SHRT_MAX),
         (short)((int)roundf(y2) % SHRT_MAX), z, color);
-    procy_append_draw_op(window, &op);
+    procy_append_draw_op_line(window, &op);
   }
 
   return 0;

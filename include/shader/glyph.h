@@ -3,6 +3,8 @@
 
 #include "shader.h"
 
+struct procy_draw_op_text_t;
+
 typedef struct procy_glyph_shader_program_t {
   procy_shader_program_t program;
   void *vertex_batch_buffer, *index_batch_buffer;
@@ -27,7 +29,8 @@ procy_glyph_shader_program_t *procy_create_glyph_shader();
  * from all of the `GLYPH` type draw operations
  */
 void procy_draw_glyph_shader(procy_glyph_shader_program_t *shader,
-                             struct procy_window_t *window);
+                             struct procy_window_t *window,
+                             struct procy_draw_op_text_t *draw_ops);
 
 /*
  * Computes glyph bounds in pixels

@@ -6,6 +6,7 @@
 // clang-format on
 
 #include <log.h>
+#include <stb_ds.h>
 #include <string.h>
 
 #include "drawing.h"
@@ -18,7 +19,7 @@ typedef procy_rect_shader_program_t rect_shader_program_t;
 typedef procy_window_t window_t;
 typedef procy_color_t color_t;
 typedef procy_shader_program_t shader_program_t;
-typedef procy_draw_op_t draw_op_t;
+typedef procy_draw_op_rect_t draw_op_rect_t;
 
 #pragma pack(0)
 typedef struct rect_vertex_t {
@@ -89,13 +90,13 @@ void procy_destroy_rect_shader(rect_shader_program_t *shader) {
   }
 }
 
-static void compute_rect_vertices(rect_shader_program_t *shader, draw_op_t *op,
-                                  rect_vertex_t *vertices) {
+static void compute_rect_vertices(rect_shader_program_t *shader,
+                                  draw_op_rect_t *op, rect_vertex_t *vertices) {
   float x = (float)op->x;
   float y = (float)op->y;
   float z = (float)op->z;
-  float w = (float)op->data.rect.width;
-  float h = (float)op->data.rect.height;
+  float w = (float)op->width;
+  float h = (float)op->height;
   int color = op->color.value;
 
   vertices[0] = (rect_vertex_t){x, y, z, color};
@@ -158,8 +159,8 @@ static void enable_shader_attributes(shader_program_t *const program) {
                                   (void *)(3 * sizeof(float))));  // NOLINT
 }
 
-void procy_draw_rect_shader(rect_shader_program_t *shader, window_t *window) {
-  draw_op_t *ops_buffer = window->draw_ops.buffer;
+void procy_draw_rect_shader(rect_shader_program_t *shader, window_t *window,
+                            draw_op_rect_t *draw_ops) {
   rect_vertex_t *vertex_batch = shader->vertex_batch_buffer;
   GLushort *index_batch = (GLushort *)shader->index_batch_buffer;
 
@@ -173,18 +174,15 @@ void procy_draw_rect_shader(rect_shader_program_t *shader, window_t *window) {
   enable_shader_attributes(program);
 
   long batch_index = -1;
-  for (size_t i = 0; i < window->draw_ops.length; ++i) {
-    draw_op_t *op = &ops_buffer[i];
-    if (op->type != DRAW_OP_RECT) {
-      continue;
-    }
+  while (arrlen(draw_ops) > 0) {
+    draw_op_rect_t op = arrpop(draw_ops);
 
     ++batch_index;
 
     const size_t vert_index = (size_t)batch_index * VERTICES_PER_RECT;
 
     rect_vertex_t temp_vertex_buffer[VERTICES_PER_RECT];
-    compute_rect_vertices(shader, op, &temp_vertex_buffer[0]);
+    compute_rect_vertices(shader, &op, &temp_vertex_buffer[0]);
 
     const GLushort temp_index_buffer[] = {vert_index,     vert_index + 1,
                                           vert_index + 2, vert_index + 1,

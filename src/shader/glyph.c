@@ -1,15 +1,16 @@
 #include "shader/glyph.h"
 
-#include <log.h>
-
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
-#include "stb_image.h"
+#include <stb_image.h>
 
 // clang-format off
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 // clang-format on
+
+#include <log.h>
+#include <stb_ds.h>
 
 #include "drawing.h"
 #include "gen/glyph_frag.h"
@@ -19,11 +20,11 @@
 #include "shader/error.h"
 #include "window.h"
 
-typedef procy_draw_op_t draw_op_t;
 typedef procy_window_t window_t;
 typedef procy_shader_program_t shader_program_t;
 typedef procy_glyph_shader_program_t glyph_shader_program_t;
 typedef procy_color_t color_t;
+typedef procy_draw_op_text_t draw_op_text_t;
 
 #pragma pack(0)
 typedef struct glyph_vertex_t {
@@ -248,9 +249,9 @@ glyph_shader_program_t *procy_create_glyph_shader() {
 }
 
 static void compute_glyph_vertices(glyph_shader_program_t *shader,
-                                   draw_op_t *op, glyph_vertex_t *vertices,
+                                   draw_op_text_t *op, glyph_vertex_t *vertices,
                                    float scale) {
-  unsigned char c = op->data.text.character;
+  unsigned char c = op->character;
 
   int gw = shader->glyph_bounds.width;
   int gh = shader->glyph_bounds.height;
@@ -270,8 +271,8 @@ static void compute_glyph_vertices(glyph_shader_program_t *shader,
 
   // colors + bold
   int fg = op->color.value;
-  int bg = op->data.text.background.value;
-  float bold = op->data.text.bold ? 1.0F : 0.0F;
+  int bg = op->background.value;
+  float bold = op->bold ? 1.0F : 0.0F;
 
   // clang-format off
   vertices[0] = (glyph_vertex_t){x, y, z, tx, ty, fg, bg, bold};
@@ -282,8 +283,8 @@ static void compute_glyph_vertices(glyph_shader_program_t *shader,
   // clang-format on
 }
 
-void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window) {
-  draw_op_t *ops_buffer = window->draw_ops.buffer;
+void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window,
+                             draw_op_text_t *draw_ops) {
   glyph_vertex_t *vertex_batch = shader->vertex_batch_buffer;
   GLushort *index_batch = shader->index_batch_buffer;
 
@@ -303,11 +304,8 @@ void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window) {
   // glyph drawn, so compute them just once
 
   long batch_index = -1;
-  for (size_t i = 0; i < window->draw_ops.length; ++i) {
-    draw_op_t *op = &ops_buffer[i];
-    if (op->type != DRAW_OP_TEXT) {
-      continue;
-    }
+  while (arrlen(draw_ops) > 0) {
+    draw_op_text_t op = arrpop(draw_ops);
 
     ++batch_index;
 
@@ -315,7 +313,7 @@ void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window) {
 
     // compute the glyph's 4 vertices
     glyph_vertex_t temp_vertex_buffer[VERTICES_PER_GLYPH];
-    compute_glyph_vertices(shader, op, &temp_vertex_buffer[0], window->scale);
+    compute_glyph_vertices(shader, &op, &temp_vertex_buffer[0], window->scale);
 
     // specify the indices of the vertices in the order they're to be drawn
     GLushort temp_index_buffer[] = {vert_index,     vert_index + 1,

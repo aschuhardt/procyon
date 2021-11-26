@@ -2,10 +2,11 @@
 
 #include <errno.h>
 #include <log.h>
+#include <stb_ds.h>
 #include <string.h>
 
 #define STBI_FAILURE_USERMSG
-#include "stb_image.h"
+#include <stb_image.h>
 
 // clang-format off
 #include <glad/glad.h>
@@ -18,12 +19,12 @@
 #include "shader/error.h"
 #include "window.h"
 
-typedef procy_draw_op_t draw_op_t;
 typedef procy_window_t window_t;
 typedef procy_shader_program_t shader_program_t;
 typedef procy_sprite_shader_program_t sprite_shader_program_t;
 typedef procy_color_t color_t;
 typedef procy_sprite_t sprite_t;
+typedef procy_draw_op_sprite_t draw_op_sprite_t;
 
 #pragma pack(0)
 typedef struct sprite_vertex_t {
@@ -243,10 +244,10 @@ sprite_shader_program_t *procy_create_sprite_shader(const char *path) {
 }
 
 static void compute_sprite_vertices(sprite_shader_program_t *shader,
-                                    draw_op_t *const op,
+                                    procy_draw_op_sprite_t *const op,
                                     sprite_vertex_t *const vertices,
                                     float scale) {
-  sprite_t *sprite = op->data.sprite.ptr;
+  sprite_t *sprite = op->ptr;
 
   // screen coordinates
   float x = (float)op->x;
@@ -261,7 +262,7 @@ static void compute_sprite_vertices(sprite_shader_program_t *shader,
   float tw = width / (float)shader->texture_w;
   float th = height / (float)shader->texture_h;
   int fg = op->color.value;
-  int bg = op->data.sprite.background.value;
+  int bg = op->background.value;
 
   vertices[0] = (sprite_vertex_t){x, y, z, tx, ty, fg, bg};
   vertices[1] = (sprite_vertex_t){x + width * scale, y, z, tx + tw, ty, fg, bg};
@@ -271,9 +272,9 @@ static void compute_sprite_vertices(sprite_shader_program_t *shader,
       x + width * scale, y + height * scale, z, tx + tw, ty + th, fg, bg};
 }
 
-void procy_draw_sprite_shader(sprite_shader_program_t *shader,
-                              window_t *window) {
-  draw_op_t *ops_buffer = window->draw_ops.buffer;
+void procy_draw_sprite_shader(procy_sprite_shader_program_t *shader,
+                              window_t *window,
+                              struct procy_draw_op_sprite_t *draw_ops) {
   sprite_vertex_t *vertex_batch = shader->vertex_batch_buffer;
   GLushort *index_batch = shader->index_batch_buffer;
 
@@ -290,11 +291,8 @@ void procy_draw_sprite_shader(sprite_shader_program_t *shader,
   enable_shader_attributes(program);
 
   long batch_index = -1;
-  for (size_t i = 0; i < window->draw_ops.length; ++i) {
-    draw_op_t *op = &ops_buffer[i];
-    if (op->type != DRAW_OP_SPRITE || op->data.sprite.ptr->shader != shader) {
-      continue;
-    }
+  while (arrlen(draw_ops) > 0) {
+    draw_op_sprite_t op = arrpop(draw_ops);
 
     ++batch_index;
 
@@ -302,7 +300,7 @@ void procy_draw_sprite_shader(sprite_shader_program_t *shader,
 
     // compute the sprite's 4 vertices
     sprite_vertex_t temp_vertex_buffer[VERTICES_PER_SPRITE];
-    compute_sprite_vertices(shader, op, &temp_vertex_buffer[0], window->scale);
+    compute_sprite_vertices(shader, &op, &temp_vertex_buffer[0], window->scale);
 
     // specify the indices of the vertices in the order they're to be drawn
     const GLushort temp_index_buffer[] = {vert_index,     vert_index + 1,

@@ -3,6 +3,9 @@
 // clang-format off
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
 // clang-format on
 
 #include <limits.h>
@@ -20,20 +23,16 @@
 #include "shader/sprite.h"
 #include "state.h"
 
-typedef procy_window_t window_t;
-typedef procy_shaders_t shaders_t;
-typedef procy_draw_op_t draw_op_t;
-typedef procy_draw_op_buffer_t draw_op_buffer_t;
-typedef procy_glyph_shader_program_t glyph_shader_program_t;
-typedef procy_rect_shader_program_t rect_shader_program_t;
-typedef procy_line_shader_program_t line_shader_program_t;
-typedef procy_sprite_shader_program_t sprite_shader_program_t;
-typedef procy_key_info_t key_info_t;
-typedef procy_color_t color_t;
-typedef procy_state_t state_t;
-
-#define INITIAL_DRAW_OPS_BUFFER_SIZE 1024
 #define DEFAULT_SCALE 1.0f
+
+// associates a sprite shader with all of the pending draw-ops that correspond
+// to it
+typedef struct procy_draw_op_sprite_bucket_t {
+  sprite_shader_program_t *shader;
+  draw_op_sprite_t *sprite_draw_ops;
+} procy_draw_op_sprite_bucket_t;
+
+typedef procy_draw_op_sprite_bucket_t draw_op_sprite_bucket_t;
 
 static void glfw_error_callback(int code, const char *msg) {
   log_error("GLFW error %d: %s", code, msg);
@@ -93,21 +92,37 @@ static void set_window_callbacks(GLFWwindow *w) {
   glfwSetFramebufferSizeCallback(w, window_resized);
 }
 
-static void destroy_shaders(shaders_t *shaders) {
-  procy_destroy_glyph_shader(shaders->glyph);
-  procy_destroy_rect_shader(shaders->rect);
-  procy_destroy_line_shader(shaders->line);
-
-  for (int i = 0; i < MAX_SPRITE_SHADER_COUNT; ++i) {
-    if (shaders->sprite[i] != 0 && shaders->sprite[i] != NULL) {
-      procy_destroy_sprite_shader(shaders->sprite[i]);
-    }
-  }
+static void destroy_rect_shaders(window_t *window) {
+  procy_destroy_rect_shader(window->shaders.rect);
 }
 
-/*
- * Returns false upon failing to initialize a GLFW window
- */
+static void destroy_sprite_shaders(window_t *window) {
+  // first clean-up sprite draw-op buckets that refer to the shaders
+  // now that no buckets are referring to the shaders, we can clean them up as
+  // well
+  sprite_shader_program_t **sprite_shaders = window->shaders.sprite;
+  for (int i = 0; i < arrlen(sprite_shaders); ++i) {
+    procy_destroy_sprite_shader(sprite_shaders[i]);
+  }
+
+  arrfree(sprite_shaders);
+}
+
+static void destroy_glyph_shaders(window_t *window) {
+  procy_destroy_glyph_shader(window->shaders.glyph);
+}
+
+static void destroy_line_shaders(window_t *window) {
+  procy_destroy_line_shader(window->shaders.line);
+}
+
+static void destroy_shaders(window_t *window) {
+  destroy_glyph_shaders(window);
+  destroy_rect_shaders(window);
+  destroy_sprite_shaders(window);
+  destroy_line_shaders(window);
+}
+
 static bool set_gl_window_pointer(window_t *w, int width, int height,
                                   const char *title) {
   if (!glfwInit()) {
@@ -128,42 +143,6 @@ static bool set_gl_window_pointer(window_t *w, int width, int height,
   glViewport(0, 0, width, height);
 
   return true;
-}
-
-static void init_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
-  draw_ops->length = 0;
-  draw_ops->capacity = INITIAL_DRAW_OPS_BUFFER_SIZE;
-
-  size_t buffer_size = sizeof(draw_op_t) * draw_ops->capacity;
-  draw_ops->buffer = malloc(buffer_size);
-
-  draw_ops->types_seen = 0;
-
-  log_debug("Initial draw ops buffer size: %zu", buffer_size);
-}
-
-static void expand_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
-  draw_ops->capacity *= 2;
-  size_t buffer_size = draw_ops->capacity * sizeof(draw_op_t);
-  draw_op_t *resized = realloc(draw_ops->buffer, buffer_size);
-  if (resized == NULL) {
-    free(draw_ops->buffer);
-    draw_ops->buffer = malloc(INITIAL_DRAW_OPS_BUFFER_SIZE);
-    draw_ops->capacity = 1;
-    draw_ops->length = 0;
-  } else {
-    draw_ops->buffer = resized;
-  }
-
-  log_trace("Expanded draw ops buffer size to %zu bytes", buffer_size);
-}
-
-static void reset_draw_ops_buffer(draw_op_buffer_t *draw_ops) {
-  // reset the "seen" bit flag
-  draw_ops->types_seen = 0;
-
-  // start writing draw ops at the start of the buffer
-  draw_ops->length = 0;
 }
 
 static void handle_key_entered(GLFWwindow *w, int key, int scancode, int action,
@@ -210,8 +189,6 @@ static void init_shaders(window_t *window) {
   window->shaders.glyph = procy_create_glyph_shader();
   window->shaders.rect = procy_create_rect_shader();
   window->shaders.line = procy_create_line_shader();
-  memset(&window->shaders.sprite[0], 0,
-         MAX_SPRITE_SHADER_COUNT * sizeof(procy_sprite_shader_program_t *));
 }
 
 static void log_opengl_info(void) {
@@ -223,20 +200,18 @@ static void log_opengl_info(void) {
 window_t *procy_create_window(int width, int height, const char *title,
                               state_t *state) {
   glfwSetErrorCallback(glfw_error_callback);
-  window_t *window = malloc(sizeof(window_t));
+  window_t *window = calloc(1, sizeof(window_t));
 
   if (window != NULL && set_gl_window_pointer(window, width, height, title)) {
     log_opengl_info();
-    init_shaders(window);
-    set_ortho_projection(window, width, height);
-    set_event_callbacks(window);
-    init_draw_ops_buffer(&window->draw_ops);
-    init_key_table(window);
 
-    window->quitting = false;
-    window->high_fps = false;
     window->state = state;
     window->scale = DEFAULT_SCALE;
+
+    init_shaders(window);
+    init_key_table(window);
+    set_ortho_projection(window, width, height);
+    set_event_callbacks(window);
   } else {
     free(window);
     return NULL;
@@ -246,22 +221,17 @@ window_t *procy_create_window(int width, int height, const char *title,
 }
 
 static void draw_sprite_shaders(window_t *window) {
-  for (int i = 0; i < MAX_SPRITE_SHADER_COUNT; ++i) {
-    if (window->shaders.sprite[i] == 0) {
-      break;
+  for (int i = 0; i < arrlen(window->draw_ops_sprite); ++i) {
+    draw_op_sprite_bucket_t *bucket = &window->draw_ops_sprite[i];
+    if (arrlen(bucket->sprite_draw_ops) > 0) {
+      procy_draw_sprite_shader(bucket->shader, window, bucket->sprite_draw_ops);
     }
-
-    procy_sprite_shader_program_t *shader = window->shaders.sprite[i];
-    if (shader == NULL || !shader->program.valid) {
-      continue;
-    }
-
-    procy_draw_sprite_shader(shader, window);
   }
 }
 
-static bool has_draw_op_type(window_t *window, procy_draw_op_type_t type) {
-  return (window->draw_ops.types_seen & type) == type;
+void procy_append_sprite_shader(procy_window_t *window,
+                                struct procy_sprite_shader_program_t *shader) {
+  arrput(window->shaders.sprite, shader);  // NOLINT
 }
 
 void procy_destroy_window(window_t *window) {
@@ -269,14 +239,19 @@ void procy_destroy_window(window_t *window) {
     return;
   }
 
-  destroy_shaders(&window->shaders);
+  for (int i = 0; i < arrlen(window->draw_ops_sprite); ++i) {
+    arrfree(window->draw_ops_sprite[i].sprite_draw_ops);
+  }
+
+  arrfree(window->draw_ops_sprite);
+  arrfree(window->draw_ops_rect);
+  arrfree(window->draw_ops_text);
+  arrfree(window->draw_ops_line);
+
+  destroy_shaders(window);
 
   if (window->glfw_win != NULL) {
     glfwDestroyWindow(window->glfw_win);
-  }
-
-  if (window->draw_ops.buffer != NULL) {
-    free(window->draw_ops.buffer);
   }
 
   if (window->key_table != NULL) {
@@ -287,17 +262,32 @@ void procy_destroy_window(window_t *window) {
   free(window);
 }
 
-void procy_append_draw_op(window_t *window, draw_op_t *draw_op) {
-  draw_op_buffer_t *buffer = &window->draw_ops;
-  buffer->length++;
-  if (buffer->length >= buffer->capacity) {
-    expand_draw_ops_buffer(buffer);
-  }
-  buffer->buffer[buffer->length - 1] = *draw_op;
+void procy_append_draw_op_text(procy_window_t *window, draw_op_text_t *op) {
+  arrput(window->draw_ops_text, *op);
+}
 
-  // indicate that we've "seen" this type of draw op, so that the main draw loop
-  // knows to execute the associated shader step
-  buffer->types_seen |= draw_op->type;
+void procy_append_draw_op_rect(procy_window_t *window, draw_op_rect_t *op) {
+  arrput(window->draw_ops_rect, *op);
+}
+
+void procy_append_draw_op_sprite(procy_window_t *window, draw_op_sprite_t *op) {
+  for (int i = 0; i < arrlen(window->draw_ops_sprite); ++i) {
+    draw_op_sprite_bucket_t *bucket = &window->draw_ops_sprite[i];
+    if (bucket->shader == op->ptr->shader) {
+      arrput(bucket->sprite_draw_ops, *op);
+      return;
+    }
+  }
+
+  // no draw ops for this shader have been created yet; create a new bucket to
+  // hold this op and its sprite's shader
+  draw_op_sprite_bucket_t bucket = {op->ptr->shader, NULL};
+  arrput(bucket.sprite_draw_ops, *op);
+  arrput(window->draw_ops_sprite, bucket);
+}
+
+void procy_append_draw_op_line(procy_window_t *window, draw_op_line_t *op) {
+  arrput(window->draw_ops_line, *op);
 }
 
 void procy_get_window_size(window_t *window, int *width, int *height) {
@@ -305,6 +295,8 @@ void procy_get_window_size(window_t *window, int *width, int *height) {
 }
 
 void procy_get_glyph_size(procy_window_t *window, int *width, int *height) {
+  // assume that we're always going to have our default glyph shader in the
+  // first index
   procy_get_glyph_bounds(window->shaders.glyph, width, height);
 
   if (width != NULL) {
@@ -317,28 +309,10 @@ void procy_get_glyph_size(procy_window_t *window, int *width, int *height) {
 }
 
 static void execute_draw_ops(window_t *window) {
-  if (window->draw_ops.length > 0) {
-    if (window->shaders.rect->program.valid &&
-        has_draw_op_type(window, DRAW_OP_RECT)) {
-      procy_draw_rect_shader(window->shaders.rect, window);
-    }
-
-    if (window->shaders.line->program.valid &&
-        has_draw_op_type(window, DRAW_OP_LINE)) {
-      procy_draw_line_shader(window->shaders.line, window);
-    }
-
-    if (window->shaders.glyph->program.valid &&
-        has_draw_op_type(window, DRAW_OP_TEXT)) {
-      procy_draw_glyph_shader(window->shaders.glyph, window);
-    }
-
-    if (has_draw_op_type(window, DRAW_OP_SPRITE)) {
-      draw_sprite_shaders(window);
-    }
-
-    reset_draw_ops_buffer(&window->draw_ops);
-  }
+  procy_draw_rect_shader(window->shaders.rect, window, window->draw_ops_rect);
+  procy_draw_line_shader(window->shaders.line, window, window->draw_ops_line);
+  procy_draw_glyph_shader(window->shaders.glyph, window, window->draw_ops_text);
+  draw_sprite_shaders(window);
 }
 
 void procy_begin_loop(window_t *window) {
