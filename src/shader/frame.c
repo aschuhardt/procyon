@@ -93,7 +93,16 @@ procy_frame_shader_program_t *procy_create_frame_shader(window_t *window) {
 
 void procy_destroy_frame_shader(frame_shader_program_t *shader) {
   procy_destroy_shader_program(&shader->program);
-  // TODO: cleanup texture + framebuffer
+
+  if (glIsTexture(shader->texture)) {
+    glDeleteTextures(1, &shader->texture);
+  }
+
+  if (glIsFramebuffer(shader->framebuffer)) {
+    glDeleteFramebuffers(1, &shader->framebuffer);
+  }
+
+  free(shader);
 }
 
 void procy_frame_shader_begin(frame_shader_program_t *shader) {
