@@ -17,6 +17,8 @@ typedef procy_draw_op_line_t draw_op_line_t;
 #define WHITE (procy_create_color(1.0F, 1.0F, 1.0F))
 #define BLACK (procy_create_color(0.0F, 0.0F, 0.0F))
 
+#define PROCY_MAX_DRAW_STRING_LENGTH 256
+
 static void draw_string_chars(window_t *window, short x, short y, short z,
                               bool bold, color_t fg, color_t bg,
                               const char *contents) {

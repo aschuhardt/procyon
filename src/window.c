@@ -17,6 +17,7 @@
 #include "keys.h"
 #include "shader.h"
 #include "shader/error.h"
+#include "shader/frame.h"
 #include "shader/glyph.h"
 #include "shader/line.h"
 #include "shader/rect.h"
@@ -24,6 +25,19 @@
 #include "state.h"
 
 #define DEFAULT_SCALE 1.0f
+
+typedef procy_window_t window_t;
+typedef procy_glyph_shader_program_t glyph_shader_program_t;
+typedef procy_rect_shader_program_t rect_shader_program_t;
+typedef procy_line_shader_program_t line_shader_program_t;
+typedef procy_sprite_shader_program_t sprite_shader_program_t;
+typedef procy_draw_op_text_t draw_op_text_t;
+typedef procy_draw_op_rect_t draw_op_rect_t;
+typedef procy_draw_op_sprite_t draw_op_sprite_t;
+typedef procy_draw_op_line_t draw_op_line_t;
+typedef procy_key_info_t key_info_t;
+typedef procy_color_t color_t;
+typedef procy_state_t state_t;
 
 // associates a sprite shader with all of the pending draw-ops that correspond
 // to it
@@ -81,19 +95,13 @@ static void window_resized(GLFWwindow *w, int width, int height) {
 
   window_t *window = (window_t *)glfwGetWindowUserPointer(w);
 
+  procy_frame_shader_resized(window->shaders.frame, width, height);
+
   set_ortho_projection(window, width, height);
   state_t *state = window->state;
   if (state->on_resize != NULL) {
     state->on_resize(state, width, height);
   }
-}
-
-static void set_window_callbacks(GLFWwindow *w) {
-  glfwSetFramebufferSizeCallback(w, window_resized);
-}
-
-static void destroy_rect_shaders(window_t *window) {
-  procy_destroy_rect_shader(window->shaders.rect);
 }
 
 static void destroy_sprite_shaders(window_t *window) {
@@ -108,19 +116,12 @@ static void destroy_sprite_shaders(window_t *window) {
   arrfree(sprite_shaders);
 }
 
-static void destroy_glyph_shaders(window_t *window) {
-  procy_destroy_glyph_shader(window->shaders.glyph);
-}
-
-static void destroy_line_shaders(window_t *window) {
-  procy_destroy_line_shader(window->shaders.line);
-}
-
 static void destroy_shaders(window_t *window) {
-  destroy_glyph_shaders(window);
-  destroy_rect_shaders(window);
+  procy_destroy_frame_shader(window->shaders.frame);
+  procy_destroy_glyph_shader(window->shaders.glyph);
+  procy_destroy_rect_shader(window->shaders.rect);
+  procy_destroy_line_shader(window->shaders.line);
   destroy_sprite_shaders(window);
-  destroy_line_shaders(window);
 }
 
 static bool set_gl_window_pointer(window_t *w, int width, int height,
@@ -138,7 +139,7 @@ static bool set_gl_window_pointer(window_t *w, int width, int height,
   }
 
   glfwSetWindowUserPointer(w->glfw_win, w);
-  set_window_callbacks(w->glfw_win);
+  glfwSetFramebufferSizeCallback(w->glfw_win, window_resized);
 
   glViewport(0, 0, width, height);
 
@@ -186,6 +187,7 @@ static void init_key_table(window_t *w) {
 }
 
 static void init_shaders(window_t *window) {
+  window->shaders.frame = procy_create_frame_shader(window);
   window->shaders.glyph = procy_create_glyph_shader();
   window->shaders.rect = procy_create_rect_shader();
   window->shaders.line = procy_create_line_shader();
@@ -309,10 +311,17 @@ void procy_get_glyph_size(procy_window_t *window, int *width, int *height) {
 }
 
 static void execute_draw_ops(window_t *window) {
+  // bind the framebuffer so that all draw ops are drawn to its texture instead
+  // of directly to the screen
+  procy_frame_shader_begin(window->shaders.frame);
+
   procy_draw_rect_shader(window->shaders.rect, window, window->draw_ops_rect);
   procy_draw_line_shader(window->shaders.line, window, window->draw_ops_line);
   procy_draw_glyph_shader(window->shaders.glyph, window, window->draw_ops_text);
   draw_sprite_shaders(window);
+
+  // un-bind the framebuffer
+  procy_frame_shader_end(window->shaders.frame);
 }
 
 void procy_begin_loop(window_t *window) {
@@ -342,13 +351,13 @@ void procy_begin_loop(window_t *window) {
       glfwWaitEventsTimeout(1.0);
     }
 
-    GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
-
     if (state->on_draw != NULL) {
       state->on_draw(state, frame_duration);
     }
 
     execute_draw_ops(window);
+
+    procy_draw_frame_shader(window->shaders.frame);
 
     glfwSwapBuffers(w);
   }

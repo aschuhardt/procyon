@@ -9,6 +9,7 @@
 
 struct procy_key_info_t;
 struct procy_state_t;
+struct procy_frame_shader_program_t;
 struct procy_glyph_shader_program_t;
 struct procy_rect_shader_program_t;
 struct procy_line_shader_program_t;
@@ -25,6 +26,7 @@ typedef struct procy_window_t {
     struct procy_glyph_shader_program_t *glyph;
     struct procy_rect_shader_program_t *rect;
     struct procy_line_shader_program_t *line;
+    struct procy_frame_shader_program_t *frame;
     struct procy_sprite_shader_program_t **sprite;
   } shaders;
   float ortho[4][4];

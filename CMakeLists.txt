@@ -25,6 +25,7 @@ set(SU_SOURCE
   src/shader/rect.c
   src/shader/line.c
   src/shader/sprite.c
+  src/shader/frame.c
   src/shader/error.c)
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -75,7 +76,9 @@ list(APPEND EMBED_FILES
   line.vert
   line.frag
   sprite.vert
-  sprite.frag)
+  sprite.frag
+  frame.vert
+  frame.frag)
 
 # ... and their corresponding header file names ...
 list(APPEND EMBED_HEADERS
@@ -88,7 +91,9 @@ list(APPEND EMBED_HEADERS
   line_vert.h
   line_frag.h
   sprite_vert.h
-  sprite_frag.h)
+  sprite_frag.h
+  frame_vert.h
+  frame_frag.h)
 
 # ... and specify target names for each embedded object
 list(APPEND EMBED_TARGETS
@@ -101,7 +106,9 @@ list(APPEND EMBED_TARGETS
   embed_line_vert
   embed_line_frag
   embed_sprite_vert
-  embed_sprite_frag)
+  embed_sprite_frag
+  embed_frame_vert
+  embed_frame_frag)
 
 # create a directory for generated files to be placed into
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/gen/")
