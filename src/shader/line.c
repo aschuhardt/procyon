@@ -11,6 +11,7 @@
 #include "drawing.h"
 #include "gen/line_frag.h"
 #include "gen/line_vert.h"
+#include "shader.h"
 #include "shader/error.h"
 #include "window.h"
 
@@ -27,43 +28,32 @@ typedef struct line_vertex_t {
 } line_vertex_t;
 #pragma pack(1)
 
-static const size_t VBO_LINE_POSITION = 0;
-static const size_t ATTR_LINE_POSITION = 0;
-static const size_t ATTR_LINE_COLOR = 1;
+#define VBO_LINE_POSITION 0
+#define ATTR_LINE_POSITION 0
+#define ATTR_LINE_COLOR 1
 
 #define VERTICES_PER_LINE 2
 
 #define DRAW_BATCH_SIZE 4096
 
 line_shader_program_t *procy_create_line_shader(void) {
-  line_shader_program_t *line_shader = malloc(sizeof(line_shader_program_t));
-
-  if (line_shader == NULL) {
-    log_error("Failed to allocate memory for line shader");
-    return NULL;
-  }
+  line_shader_program_t *line_shader = calloc(1, sizeof(line_shader_program_t));
 
   line_shader->vertex_batch_buffer =
       malloc(sizeof(line_vertex_t) * DRAW_BATCH_SIZE * VERTICES_PER_LINE);
 
   shader_program_t *program = &line_shader->program;
-  if ((program->valid = procy_compile_vert_shader((char *)embed_line_vert,
-                                                  &program->vertex) &&
-                        procy_compile_frag_shader((char *)embed_line_frag,
-                                                  &program->fragment))) {
-    GL_CHECK(glGenVertexArrays(1, &program->vao));
-    GL_CHECK(glBindVertexArray(program->vao));
 
-    program->vbo_count = 1;
-    program->vbo = malloc(sizeof(GLuint) * program->vbo_count);
-    GL_CHECK(glGenBuffers((int)program->vbo_count, program->vbo));
+  GL_CHECK(glGenVertexArrays(1, &program->vao));
+  GL_CHECK(glBindVertexArray(program->vao));
 
-    program->valid &= procy_link_shader_program(
-        program->vertex, program->fragment, &program->program);
+  program->vbo_count = 1;
+  program->vbo = malloc(sizeof(GLuint) * program->vbo_count);
+  GL_CHECK(glGenBuffers((int)program->vbo_count, program->vbo));
 
-    if (program->valid) {
-      line_shader->u_ortho = glGetUniformLocation(program->program, "u_Ortho");
-    }
+  if (procy_compile_and_link_shader(program, (char *)&embed_line_vert[0],
+                                    (char *)&embed_line_frag[0])) {
+    line_shader->u_ortho = glGetUniformLocation(program->program, "u_Ortho");
   }
 
   return line_shader;
@@ -95,11 +85,11 @@ static void enable_shader_attributes(shader_program_t *program) {
                                   (void *)(3 * sizeof(float))));  // NOLINT
 }
 
-static void draw_line_batch(shader_program_t *const program,
-                            line_vertex_t *const vertices, long line_count) {
+static void draw_line_batch(shader_program_t *program, line_vertex_t *vertices,
+                            long line_count) {
   int buffer_size;
 
-  const size_t vertex_buffer_size =
+  size_t vertex_buffer_size =
       line_count * VERTICES_PER_LINE * sizeof(line_vertex_t);
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_LINE_POSITION]));
   GL_CHECK(
@@ -134,7 +124,7 @@ void procy_draw_line_shader(line_shader_program_t *shader,
 
     ++batch_index;
 
-    const size_t vert_index = (size_t)batch_index * VERTICES_PER_LINE;
+    size_t vert_index = (size_t)batch_index * VERTICES_PER_LINE;
 
     vertex_batch[vert_index] = (line_vertex_t){(float)op.x1, (float)op.y1,
                                                (float)op.z, op.color.value};

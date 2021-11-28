@@ -82,11 +82,8 @@ procy_frame_shader_program_t *procy_create_frame_shader(window_t *window) {
   program->vbo = malloc(sizeof(GLuint) * program->vbo_count);
   glGenBuffers(program->vbo_count, program->vbo);
 
-  // compile + link shader programs
-  procy_compile_vert_shader((char *)&embed_frame_vert[0], &program->vertex);
-  procy_compile_frag_shader((char *)&embed_frame_frag[0], &program->fragment);
-  procy_link_shader_program(program->vertex, program->fragment,
-                            &program->program);
+  procy_compile_and_link_shader(program, (char *)&embed_frame_vert[0],
+                                (char *)&embed_frame_frag[0]);
 
   return shader;
 }
@@ -131,7 +128,6 @@ void procy_draw_frame_shader(frame_shader_program_t *shader) {
   GL_CHECK(glBindVertexArray(program->vao));
 
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_FRAME_VERTICES]));
-
   // position
   GL_CHECK(glEnableVertexAttribArray(ATTR_FRAME_POSITION));
   GL_CHECK(glVertexAttribPointer(ATTR_FRAME_POSITION, 2, GL_FLOAT, GL_FALSE,

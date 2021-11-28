@@ -1,5 +1,7 @@
 #include "shader/glyph.h"
 
+#include "shader.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FAILURE_USERMSG
 #include <stb_image.h>
@@ -35,23 +37,23 @@ typedef struct glyph_vertex_t {
 } glyph_vertex_t;
 #pragma pack(1)
 
-static const size_t VBO_GLYPH_POSITION = 0;
-static const size_t VBO_GLYPH_INDICES = 1;
-static const size_t ATTR_GLYPH_POSITION = 0;
-static const size_t ATTR_GLYPH_TEXCOORDS = 1;
-static const size_t ATTR_GLYPH_FORECOLOR = 2;
-static const size_t ATTR_GLYPH_BACKCOLOR = 3;
-static const size_t ATTR_GLYPH_BOLD = 4;
+#define VBO_GLYPH_POSITION 0
+#define VBO_GLYPH_INDICES 1
+#define ATTR_GLYPH_POSITION 0
+#define ATTR_GLYPH_TEXCOORDS 1
+#define ATTR_GLYPH_FORECOLOR 2
+#define ATTR_GLYPH_BACKCOLOR 3
+#define ATTR_GLYPH_BOLD 4
 
 // size of the glyph texture in terms of number of glyphs per side
-static const int GLYPH_WIDTH_COUNT = 16;
-static const int GLYPH_HEIGHT_COUNT = 16;
+#define GLYPH_WIDTH_COUNT 16
+#define GLYPH_HEIGHT_COUNT 16
 
 #define VERTICES_PER_GLYPH 4
 #define INDICES_PER_GLYPH 6
 #define DRAW_BATCH_SIZE 4096
 
-static void enable_shader_attributes(shader_program_t *const program) {
+static void enable_shader_attributes(shader_program_t *program) {
   GL_CHECK(glBindVertexArray(program->vao));
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_GLYPH_POSITION]));
 
@@ -78,14 +80,6 @@ static void enable_shader_attributes(shader_program_t *const program) {
   GL_CHECK(glVertexAttribPointer(
       ATTR_GLYPH_BOLD, 1, GL_FLOAT, GL_FALSE, sizeof(glyph_vertex_t),
       (void *)(5 * sizeof(float) + 2 * sizeof(int))));  // NOLINT
-}
-
-static void disable_shader_attributes() {
-  glDisableVertexAttribArray(ATTR_GLYPH_POSITION);
-  glDisableVertexAttribArray(ATTR_GLYPH_TEXCOORDS);
-  glDisableVertexAttribArray(ATTR_GLYPH_FORECOLOR);
-  glDisableVertexAttribArray(ATTR_GLYPH_BACKCOLOR);
-  glDisableVertexAttribArray(ATTR_GLYPH_BOLD);
 }
 
 static void load_glyph_font(glyph_shader_program_t *shader) {
@@ -166,9 +160,9 @@ static void load_glyph_font(glyph_shader_program_t *shader) {
   }
 }
 
-static void draw_glyph_batch(shader_program_t *const program,
-                             glyph_vertex_t *const vertices,
-                             GLushort *const indices, size_t glyph_count) {
+static void draw_glyph_batch(shader_program_t *program,
+                             glyph_vertex_t *vertices, unsigned short *indices,
+                             size_t glyph_count) {
   int buffer_size;
 
   // copy vertex data to video memory
@@ -185,7 +179,8 @@ static void draw_glyph_batch(shader_program_t *const program,
   }
 
   // copy indices
-  size_t index_buffer_size = glyph_count * INDICES_PER_GLYPH * sizeof(GLushort);
+  size_t index_buffer_size =
+      glyph_count * INDICES_PER_GLYPH * sizeof(unsigned short);
   GL_CHECK(
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, program->vbo[VBO_GLYPH_INDICES]));
   GL_CHECK(glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE,
@@ -194,9 +189,10 @@ static void draw_glyph_batch(shader_program_t *const program,
     GL_CHECK(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, index_buffer_size,
                              indices));
   } else {
-    GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                          glyph_count * INDICES_PER_GLYPH * sizeof(GLushort),
-                          indices, GL_STATIC_DRAW));
+    GL_CHECK(
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     glyph_count * INDICES_PER_GLYPH * sizeof(unsigned short),
+                     indices, GL_STATIC_DRAW));
   }
 
   // make draw call
@@ -206,46 +202,34 @@ static void draw_glyph_batch(shader_program_t *const program,
 }
 
 glyph_shader_program_t *procy_create_glyph_shader() {
-  glyph_shader_program_t *glyph_shader = malloc(sizeof(glyph_shader_program_t));
+  glyph_shader_program_t *shader = calloc(1, sizeof(glyph_shader_program_t));
 
-  if (glyph_shader == NULL) {
-    log_error("Failed to allocate memory for the glyph shader");
-    return NULL;
-  }
-
-  glyph_shader->index_batch_buffer =
-      malloc(sizeof(GLushort) * DRAW_BATCH_SIZE * INDICES_PER_GLYPH);
-  glyph_shader->vertex_batch_buffer =
+  shader->index_batch_buffer =
+      malloc(sizeof(unsigned short) * DRAW_BATCH_SIZE * INDICES_PER_GLYPH);
+  shader->vertex_batch_buffer =
       malloc(sizeof(glyph_vertex_t) * DRAW_BATCH_SIZE * VERTICES_PER_GLYPH);
-  glyph_shader->font_texture = 0;
 
-  shader_program_t *program = &glyph_shader->program;
-  if ((program->valid = procy_compile_vert_shader((char *)embed_glyph_vert,
-                                                  &program->vertex) &&
-                        procy_compile_frag_shader((char *)embed_glyph_frag,
-                                                  &program->fragment))) {
-    // load font texture and codepoints
-    load_glyph_font(glyph_shader);
+  shader_program_t *program = &shader->program;
 
-    // create vertex array
-    GL_CHECK(glGenVertexArrays(1, &program->vao));
-    GL_CHECK(glBindVertexArray(program->vao));
-
-    // create vertex buffers
-    program->vbo_count = 2;
-    program->vbo = malloc(sizeof(GLuint) * program->vbo_count);
-    GL_CHECK(glGenBuffers((int)program->vbo_count, program->vbo));
-
-    program->valid &= procy_link_shader_program(
-        program->vertex, program->fragment, &program->program);
-
-    if (program->valid) {
-      glyph_shader->u_ortho =
-          GL_CHECK(glGetUniformLocation(program->program, "u_Ortho"));
-    }
+  if (procy_compile_and_link_shader(program, (char *)&embed_glyph_vert[0],
+                                    (char *)&embed_glyph_frag[0])) {
+    shader->u_ortho =
+        GL_CHECK(glGetUniformLocation(program->program, "u_Ortho"));
   }
 
-  return glyph_shader;
+  // load font texture and codepoints
+  load_glyph_font(shader);
+
+  // create vertex array
+  GL_CHECK(glGenVertexArrays(1, &program->vao));
+  GL_CHECK(glBindVertexArray(program->vao));
+
+  // create vertex buffers
+  program->vbo_count = 2;
+  program->vbo = malloc(sizeof(GLuint) * program->vbo_count);
+  GL_CHECK(glGenBuffers((int)program->vbo_count, program->vbo));
+
+  return shader;
 }
 
 static void compute_glyph_vertices(glyph_shader_program_t *shader,
@@ -286,7 +270,7 @@ static void compute_glyph_vertices(glyph_shader_program_t *shader,
 void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window,
                              draw_op_text_t *draw_ops) {
   glyph_vertex_t *vertex_batch = shader->vertex_batch_buffer;
-  GLushort *index_batch = shader->index_batch_buffer;
+  unsigned short *index_batch = shader->index_batch_buffer;
 
   shader_program_t *program = &shader->program;
   GL_CHECK(glUseProgram(program->program));
@@ -316,9 +300,9 @@ void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window,
     compute_glyph_vertices(shader, &op, &temp_vertex_buffer[0], window->scale);
 
     // specify the indices of the vertices in the order they're to be drawn
-    GLushort temp_index_buffer[] = {vert_index,     vert_index + 1,
-                                    vert_index + 2, vert_index + 1,
-                                    vert_index + 3, vert_index + 2};
+    unsigned short temp_index_buffer[] = {vert_index,     vert_index + 1,
+                                          vert_index + 2, vert_index + 1,
+                                          vert_index + 3, vert_index + 2};
 
     // copy vertices and indices to the batch buffer
     memcpy(&vertex_batch[vert_index], temp_vertex_buffer,
@@ -339,8 +323,6 @@ void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window,
     draw_glyph_batch(program, &vertex_batch[0], &index_batch[0],
                      batch_index + 1);
   }
-
-  disable_shader_attributes();
 
   glUseProgram(0);
 }

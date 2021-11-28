@@ -75,10 +75,6 @@ bool procy_compile_frag_shader(const char *data, unsigned int *index) {
 }
 
 void procy_destroy_shader_program(shader_program_t *shader) {
-  if (shader == NULL) {
-    return;
-  }
-
   if (glIsProgram(shader->program)) {
     glDeleteProgram(shader->program);
   }
@@ -93,6 +89,12 @@ void procy_destroy_shader_program(shader_program_t *shader) {
   if (glIsVertexArray(shader->vao)) {
     glDeleteVertexArrays(1, &shader->vao);
   }
+}
 
-  shader->valid = false;
+bool procy_compile_and_link_shader(procy_shader_program_t *program,
+                                   const char *vert, const char *frag) {
+  return procy_compile_frag_shader(frag, &program->fragment) &&
+         procy_compile_vert_shader(vert, &program->vertex) &&
+         procy_link_shader_program(program->vertex, program->fragment,
+                                   &program->program);
 }

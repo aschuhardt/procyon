@@ -33,18 +33,18 @@ typedef struct sprite_vertex_t {
 } sprite_vertex_t;
 #pragma pack(1)
 
-static const size_t VBO_SPRITE_POSITION = 0;
-static const size_t VBO_SPRITE_INDICES = 1;
-static const size_t ATTR_SPRITE_POSITION = 0;
-static const size_t ATTR_SPRITE_TEXCOORDS = 1;
-static const size_t ATTR_SPRITE_FORECOLOR = 2;
-static const size_t ATTR_SPRITE_BACKCOLOR = 3;
+#define VBO_SPRITE_POSITION 0
+#define VBO_SPRITE_INDICES 1
+#define ATTR_SPRITE_POSITION 0
+#define ATTR_SPRITE_TEXCOORDS 1
+#define ATTR_SPRITE_FORECOLOR 2
+#define ATTR_SPRITE_BACKCOLOR 3
 
 #define VERTICES_PER_SPRITE 4
 #define INDICES_PER_SPRITE 6
 #define DRAW_BATCH_SIZE 4096
 
-static void enable_shader_attributes(shader_program_t *const program) {
+static void enable_shader_attributes(shader_program_t *program) {
   GL_CHECK(glBindVertexArray(program->vao));
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_SPRITE_POSITION]));
 
@@ -98,7 +98,7 @@ static bool load_sprite_texture(sprite_shader_program_t *shader,
   log_debug("Loaded texture (size: %dx%d; comp: %d)", shader->texture_w,
             shader->texture_h, components);
   // copy both bitmap buffers into a single location
-  const size_t bitmap_size = (size_t)shader->texture_w * shader->texture_h;
+  size_t bitmap_size = (size_t)shader->texture_w * shader->texture_h;
   if (bitmap_size != 0) {
     // create font texture array from bitmaps
     GL_CHECK(glGenTextures(1, &shader->texture));
@@ -124,13 +124,13 @@ static bool load_sprite_texture(sprite_shader_program_t *shader,
   return true;
 }
 
-static void draw_sprite_batch(shader_program_t *const program,
-                              sprite_vertex_t *const vertices,
-                              GLushort *const indices, size_t sprite_count) {
+static void draw_sprite_batch(shader_program_t *program,
+                              sprite_vertex_t *vertices,
+                              unsigned short *indices, size_t sprite_count) {
   int buffer_size;
 
   // copy vertex data to video memory
-  const size_t vertex_buffer_size =
+  size_t vertex_buffer_size =
       sprite_count * VERTICES_PER_SPRITE * sizeof(sprite_vertex_t);
   GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, program->vbo[VBO_SPRITE_POSITION]));
   GL_CHECK(
@@ -143,8 +143,8 @@ static void draw_sprite_batch(shader_program_t *const program,
   }
 
   // copy indices
-  const size_t index_buffer_size =
-      sprite_count * INDICES_PER_SPRITE * sizeof(GLushort);
+  size_t index_buffer_size =
+      sprite_count * INDICES_PER_SPRITE * sizeof(unsigned short);
   GL_CHECK(
       glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, program->vbo[VBO_SPRITE_INDICES]));
   GL_CHECK(glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE,
@@ -153,9 +153,10 @@ static void draw_sprite_batch(shader_program_t *const program,
     GL_CHECK(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, index_buffer_size,
                              indices));
   } else {
-    GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                          sprite_count * INDICES_PER_SPRITE * sizeof(GLushort),
-                          indices, GL_STATIC_DRAW));
+    GL_CHECK(
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                     sprite_count * INDICES_PER_SPRITE * sizeof(unsigned short),
+                     indices, GL_STATIC_DRAW));
   }
 
   // make draw call
@@ -167,49 +168,36 @@ static void draw_sprite_batch(shader_program_t *const program,
 sprite_shader_program_t *procy_create_sprite_shader_mem(unsigned char *contents,
                                                         size_t length) {
   sprite_shader_program_t *sprite_shader =
-      malloc(sizeof(sprite_shader_program_t));
-
-  if (sprite_shader == NULL) {
-    log_error("Failed to allocate memory for the sprite shader");
-    return NULL;
-  }
+      calloc(1, sizeof(sprite_shader_program_t));
 
   sprite_shader->index_batch_buffer =
-      malloc(sizeof(GLushort) * DRAW_BATCH_SIZE * INDICES_PER_SPRITE);
+      malloc(sizeof(unsigned short) * DRAW_BATCH_SIZE * INDICES_PER_SPRITE);
   sprite_shader->vertex_batch_buffer =
       malloc(sizeof(sprite_vertex_t) * DRAW_BATCH_SIZE * VERTICES_PER_SPRITE);
-  sprite_shader->texture = 0;
   sprite_shader->texture_w = -1;
   sprite_shader->texture_h = -1;
 
   shader_program_t *program = &sprite_shader->program;
-  memset(program, 0, sizeof(shader_program_t));
-  if ((program->valid = procy_compile_vert_shader((char *)embed_sprite_vert,
-                                                  &program->vertex) &&
-                        procy_compile_frag_shader((char *)embed_sprite_frag,
-                                                  &program->fragment))) {
-    // load font texture and codepoints
-    if (!load_sprite_texture(sprite_shader, contents, length)) {
-      procy_destroy_sprite_shader(sprite_shader);
-      return NULL;
-    }
 
-    // create vertex array
-    GL_CHECK(glGenVertexArrays(1, &program->vao));
-    GL_CHECK(glBindVertexArray(program->vao));
+  // load font texture and codepoints
+  if (!load_sprite_texture(sprite_shader, contents, length)) {
+    procy_destroy_sprite_shader(sprite_shader);
+    return NULL;
+  }
 
-    // create vertex buffers
-    program->vbo_count = 2;
-    program->vbo = malloc(sizeof(GLuint) * program->vbo_count);
-    GL_CHECK(glGenBuffers((int)program->vbo_count, program->vbo));
+  // create vertex array
+  GL_CHECK(glGenVertexArrays(1, &program->vao));
+  GL_CHECK(glBindVertexArray(program->vao));
 
-    program->valid &= procy_link_shader_program(
-        program->vertex, program->fragment, &program->program);
+  // create vertex buffers
+  program->vbo_count = 2;
+  program->vbo = malloc(sizeof(unsigned int) * program->vbo_count);
+  GL_CHECK(glGenBuffers((int)program->vbo_count, program->vbo));
 
-    if (program->valid) {
-      sprite_shader->u_ortho =
-          GL_CHECK(glGetUniformLocation(program->program, "u_Ortho"));
-    }
+  if (procy_compile_and_link_shader(program, (char *)&embed_sprite_vert[0],
+                                    (char *)&embed_sprite_frag[0])) {
+    sprite_shader->u_ortho =
+        GL_CHECK(glGetUniformLocation(program->program, "u_Ortho"));
   }
 
   return sprite_shader;
@@ -244,9 +232,8 @@ sprite_shader_program_t *procy_create_sprite_shader(const char *path) {
 }
 
 static void compute_sprite_vertices(sprite_shader_program_t *shader,
-                                    procy_draw_op_sprite_t *const op,
-                                    sprite_vertex_t *const vertices,
-                                    float scale) {
+                                    procy_draw_op_sprite_t *op,
+                                    sprite_vertex_t *vertices, float scale) {
   sprite_t *sprite = op->ptr;
 
   // screen coordinates
@@ -276,7 +263,7 @@ void procy_draw_sprite_shader(procy_sprite_shader_program_t *shader,
                               window_t *window,
                               struct procy_draw_op_sprite_t *draw_ops) {
   sprite_vertex_t *vertex_batch = shader->vertex_batch_buffer;
-  GLushort *index_batch = shader->index_batch_buffer;
+  unsigned short *index_batch = shader->index_batch_buffer;
 
   shader_program_t *program = &shader->program;
   GL_CHECK(glUseProgram(program->program));
@@ -296,14 +283,14 @@ void procy_draw_sprite_shader(procy_sprite_shader_program_t *shader,
 
     ++batch_index;
 
-    const size_t vert_index = (size_t)batch_index * VERTICES_PER_SPRITE;
+    size_t vert_index = (size_t)batch_index * VERTICES_PER_SPRITE;
 
     // compute the sprite's 4 vertices
     sprite_vertex_t temp_vertex_buffer[VERTICES_PER_SPRITE];
     compute_sprite_vertices(shader, &op, &temp_vertex_buffer[0], window->scale);
 
     // specify the indices of the vertices in the order they're to be drawn
-    const GLushort temp_index_buffer[] = {vert_index,     vert_index + 1,
+    unsigned short temp_index_buffer[] = {vert_index,     vert_index + 1,
                                           vert_index + 2, vert_index + 1,
                                           vert_index + 3, vert_index + 2};
 

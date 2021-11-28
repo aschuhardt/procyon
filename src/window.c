@@ -204,7 +204,7 @@ window_t *procy_create_window(int width, int height, const char *title,
   glfwSetErrorCallback(glfw_error_callback);
   window_t *window = calloc(1, sizeof(window_t));
 
-  if (window != NULL && set_gl_window_pointer(window, width, height, title)) {
+  if (set_gl_window_pointer(window, width, height, title)) {
     log_opengl_info();
 
     window->state = state;
@@ -215,6 +215,8 @@ window_t *procy_create_window(int width, int height, const char *title,
     set_ortho_projection(window, width, height);
     set_event_callbacks(window);
   } else {
+    log_error("Failed to initialize window or OpenGL context!");
+
     free(window);
     return NULL;
   }
