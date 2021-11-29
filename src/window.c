@@ -15,6 +15,7 @@
 #include "color.h"
 #include "drawing.h"
 #include "keys.h"
+#include "mouse.h"
 #include "shader.h"
 #include "shader/error.h"
 #include "shader/frame.h"
@@ -104,6 +105,26 @@ static void window_resized(GLFWwindow *w, int width, int height) {
   }
 }
 
+static void mouse_moved(GLFWwindow *w, double x, double y) {
+  window_t *window = (window_t *)glfwGetWindowUserPointer(w);
+  state_t *state = window->state;
+  if (state->on_mouse_moved != NULL) {
+    state->on_mouse_moved(state, x, y);
+  }
+}
+
+static void mouse_action(GLFWwindow *w, int button, int action, int mods) {
+  window_t *window = (window_t *)glfwGetWindowUserPointer(w);
+  state_t *state = window->state;
+  procy_mouse_button_t mapped_button = procy_map_glfw_mouse_button(button);
+  procy_mouse_mod_t mapped_mods = procy_map_glfw_mouse_modifier(mods);
+  if (action == GLFW_PRESS && state->on_mouse_pressed != NULL) {
+    state->on_mouse_pressed(state, mapped_button, mapped_mods);
+  } else if (action == GLFW_RELEASE) {
+    state->on_mouse_released(state, mapped_button, mapped_mods);
+  }
+}
+
 static void destroy_sprite_shaders(window_t *window) {
   // first clean-up sprite draw-op buckets that refer to the shaders
   // now that no buckets are referring to the shaders, we can clean them up as
@@ -139,15 +160,14 @@ static bool set_gl_window_pointer(window_t *w, int width, int height,
   }
 
   glfwSetWindowUserPointer(w->glfw_win, w);
-  glfwSetFramebufferSizeCallback(w->glfw_win, window_resized);
 
   glViewport(0, 0, width, height);
 
   return true;
 }
 
-static void handle_key_entered(GLFWwindow *w, int key, int scancode, int action,
-                               int mods) {
+static void key_entered(GLFWwindow *w, int key, int scancode, int action,
+                        int mods) {
   window_t *window = glfwGetWindowUserPointer(w);
   bool shift = (mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT;
   bool ctrl = (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL;
@@ -161,7 +181,7 @@ static void handle_key_entered(GLFWwindow *w, int key, int scancode, int action,
   }
 }
 
-static void handle_char_entered(GLFWwindow *w, unsigned int codepoint) {
+static void char_entered(GLFWwindow *w, unsigned int codepoint) {
   window_t *window = glfwGetWindowUserPointer(w);
   state_t *state = window->state;
   if (state->on_char_entered != NULL) {
@@ -170,8 +190,11 @@ static void handle_char_entered(GLFWwindow *w, unsigned int codepoint) {
 }
 
 static void set_event_callbacks(window_t *w) {
-  glfwSetKeyCallback(w->glfw_win, handle_key_entered);
-  glfwSetCharCallback(w->glfw_win, handle_char_entered);
+  glfwSetKeyCallback(w->glfw_win, key_entered);
+  glfwSetCharCallback(w->glfw_win, char_entered);
+  glfwSetFramebufferSizeCallback(w->glfw_win, window_resized);
+  glfwSetCursorPosCallback(w->glfw_win, mouse_moved);
+  glfwSetMouseButtonCallback(w->glfw_win, mouse_action);
 }
 
 static void init_key_table(window_t *w) {
@@ -403,4 +426,20 @@ void procy_reset_scale(procy_window_t *window) {
   int height;
   procy_get_window_size(window, &width, &height);
   set_ortho_projection(window, width, height);
+}
+
+void procy_set_mouse_captured(window_t *window) {
+  glfwSetInputMode(window->glfw_win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+}
+
+void procy_set_mouse_normal(window_t *window) {
+  glfwSetInputMode(window->glfw_win, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+}
+
+void procy_set_mouse_hidden(window_t *window) {
+  glfwSetInputMode(window->glfw_win, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+}
+
+void procy_get_mouse_position(window_t *window, double *x, double *y) {
+  glfwGetCursorPos(window->glfw_win, x, y);
 }

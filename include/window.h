@@ -79,4 +79,18 @@ void procy_set_scale(procy_window_t *window, float scale);
 
 void procy_reset_scale(procy_window_t *window);
 
+void procy_set_mouse_captured(procy_window_t *window);
+
+void procy_set_mouse_normal(procy_window_t *window);
+
+void procy_set_mouse_hidden(procy_window_t *window);
+
+void procy_get_mouse_position(procy_window_t *window, double *x, double *y);
+
+/*
+void procy_set_fullscreen(procy_window_t *window);
+
+void procy_set_windowed(procy_window_t *window);
+*/
+
 #endif

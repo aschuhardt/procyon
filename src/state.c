@@ -9,7 +9,10 @@ state_t *procy_create_callback_state(
     procy_on_draw_callback_t on_draw, procy_on_resize_callback_t on_resize,
     procy_on_key_pressed_callback_t on_key_pressed,
     procy_on_key_released_callback_t on_key_released,
-    procy_on_char_entered_callback_t on_char_entered) {
+    procy_on_char_entered_callback_t on_char_entered,
+    procy_on_mouse_moved_callback_t on_mouse_moved,
+    procy_on_mouse_pressed_callback_t on_mouse_pressed,
+    procy_on_mouse_released_callback_t on_mouse_released) {
   state_t *state = procy_create_state();
   state->on_load = on_load;
   state->on_unload = on_unload;
@@ -18,6 +21,9 @@ state_t *procy_create_callback_state(
   state->on_key_pressed = on_key_pressed;
   state->on_key_released = on_key_released;
   state->on_char_entered = on_char_entered;
+  state->on_mouse_moved = on_mouse_moved;
+  state->on_mouse_pressed = on_mouse_pressed;
+  state->on_mouse_released = on_mouse_released;
   return state;
 }
 
@@ -31,6 +37,9 @@ state_t *procy_create_state(void) {
   state->on_key_pressed = NULL;
   state->on_key_released = NULL;
   state->on_char_entered = NULL;
+  state->on_mouse_moved = NULL;
+  state->on_mouse_pressed = NULL;
+  state->on_mouse_released = NULL;
   return state;
 }
 

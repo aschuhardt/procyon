@@ -21,6 +21,7 @@ set(SU_SOURCE
   src/shader.c
   src/keys.c
   src/color.c
+  src/mouse.c
   src/shader/glyph.c
   src/shader/rect.c
   src/shader/line.c
