@@ -32,6 +32,9 @@ typedef struct procy_window_t {
   struct {
     int width, height;
   } initial_size;
+  struct {
+    float x, y;
+  } dpi_scale;
   float ortho[4][4];
   float scale;
   bool quitting, high_fps;

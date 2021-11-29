@@ -120,7 +120,7 @@ static void mouse_action(GLFWwindow *w, int button, int action, int mods) {
   procy_mouse_mod_t mapped_mods = procy_map_glfw_mouse_modifier(mods);
   if (action == GLFW_PRESS && state->on_mouse_pressed != NULL) {
     state->on_mouse_pressed(state, mapped_button, mapped_mods);
-  } else if (action == GLFW_RELEASE) {
+  } else if (action == GLFW_RELEASE && state->on_mouse_released != NULL) {
     state->on_mouse_released(state, mapped_button, mapped_mods);
   }
 }
@@ -175,6 +175,9 @@ static void key_entered(GLFWwindow *w, int key, int scancode, int action,
   state_t *state = window->state;
   if ((action == GLFW_PRESS || action == GLFW_REPEAT) &&
       state->on_key_pressed != NULL) {
+    if (key == GLFW_KEY_F11) {
+      procy_set_fullscreen(window);
+    }
     state->on_key_pressed(state, window->key_table[key], shift, ctrl, alt);
   } else if (action == GLFW_RELEASE && state->on_key_released != NULL) {
     state->on_key_released(state, window->key_table[key], shift, ctrl, alt);
@@ -222,6 +225,21 @@ static void log_opengl_info(void) {
   log_debug("OpenGL Version: %s", glGetString(GL_VERSION));
 }
 
+static void set_dpi_scale(window_t *window) {
+  GLFWmonitor *monitor = glfwGetWindowMonitor(window->glfw_win);
+  if (monitor != NULL) {
+    // full-screen mode; use the monitor's DPI
+    glfwGetMonitorContentScale(monitor, &window->dpi_scale.x,
+                               &window->dpi_scale.y);
+  } else {
+    // windowed; use the window DPI
+    glfwGetWindowContentScale(window->glfw_win, &window->dpi_scale.x,
+                              &window->dpi_scale.y);
+  }
+
+  log_debug("DPI scale: %0.2fx%0.2f", window->dpi_scale.x, window->dpi_scale.y);
+}
+
 window_t *procy_create_window(int width, int height, const char *title,
                               state_t *state) {
   glfwSetErrorCallback(glfw_error_callback);
@@ -240,6 +258,7 @@ window_t *procy_create_window(int width, int height, const char *title,
     init_key_table(window);
     set_ortho_projection(window, width, height);
     set_event_callbacks(window);
+    set_dpi_scale(window);
   } else {
     log_error("Failed to initialize window or OpenGL context!");
 
@@ -450,10 +469,13 @@ void procy_get_mouse_position(window_t *window, double *x, double *y) {
 void procy_set_fullscreen(procy_window_t *window) {
   GLFWmonitor *monitor = glfwGetPrimaryMonitor();
   if (monitor != NULL) {
+    log_debug("Switching to fullscreen mode");
     const GLFWvidmode *video_mode = glfwGetVideoMode(monitor);
     glfwSetWindowMonitor(window->glfw_win, monitor, 0, 0, video_mode->width,
                          video_mode->height, GLFW_DONT_CARE);
   }
+
+  set_dpi_scale(window);
 }
 
 void procy_set_windowed(procy_window_t *window) {
@@ -463,10 +485,13 @@ void procy_set_windowed(procy_window_t *window) {
     return;
   }
 
+  log_debug("Switching to windowed mode");
   const GLFWvidmode *video_mode = glfwGetVideoMode(monitor);
   glfwSetWindowMonitor(window->glfw_win, NULL,
                        video_mode->width / 2 - window->initial_size.width / 2,
                        video_mode->height / 2 - window->initial_size.height / 2,
                        window->initial_size.width, window->initial_size.height,
                        GLFW_DONT_CARE);
+
+  set_dpi_scale(window);
 }

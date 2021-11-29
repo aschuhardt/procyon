@@ -234,17 +234,18 @@ glyph_shader_program_t *procy_create_glyph_shader() {
 
 static void compute_glyph_vertices(glyph_shader_program_t *shader,
                                    draw_op_text_t *op, glyph_vertex_t *vertices,
-                                   float scale) {
+                                   window_t *window) {
   unsigned char c = op->character;
 
-  int gw = shader->glyph_bounds.width;
-  int gh = shader->glyph_bounds.height;
+  float scale = window->scale;
+  float gw = (float)shader->glyph_bounds.width * window->dpi_scale.x;
+  float gh = (float)shader->glyph_bounds.height * window->dpi_scale.y;
   float tw = shader->glyph_bounds.tex_width;
   float th = shader->glyph_bounds.tex_height;
 
   // screen coordinates
-  float x = (float)op->x;
-  float y = (float)op->y;
+  float x = (float)op->x * window->dpi_scale.x;
+  float y = (float)op->y * window->dpi_scale.y;
   float z = (float)op->z;
 
   // texture coordinates
@@ -297,7 +298,7 @@ void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window,
 
     // compute the glyph's 4 vertices
     glyph_vertex_t temp_vertex_buffer[VERTICES_PER_GLYPH];
-    compute_glyph_vertices(shader, &op, &temp_vertex_buffer[0], window->scale);
+    compute_glyph_vertices(shader, &op, &temp_vertex_buffer[0], window);
 
     // specify the indices of the vertices in the order they're to be drawn
     unsigned short temp_index_buffer[] = {vert_index,     vert_index + 1,
