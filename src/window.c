@@ -230,6 +230,9 @@ window_t *procy_create_window(int width, int height, const char *title,
   if (set_gl_window_pointer(window, width, height, title)) {
     log_opengl_info();
 
+    window->initial_size.width = width;
+    window->initial_size.height = height;
+
     window->state = state;
     window->scale = DEFAULT_SCALE;
 
@@ -442,4 +445,28 @@ void procy_set_mouse_hidden(window_t *window) {
 
 void procy_get_mouse_position(window_t *window, double *x, double *y) {
   glfwGetCursorPos(window->glfw_win, x, y);
+}
+
+void procy_set_fullscreen(procy_window_t *window) {
+  GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+  if (monitor != NULL) {
+    const GLFWvidmode *video_mode = glfwGetVideoMode(monitor);
+    glfwSetWindowMonitor(window->glfw_win, monitor, 0, 0, video_mode->width,
+                         video_mode->height, GLFW_DONT_CARE);
+  }
+}
+
+void procy_set_windowed(procy_window_t *window) {
+  GLFWmonitor *monitor = glfwGetWindowMonitor(window->glfw_win);
+  if (monitor == NULL) {
+    // already in windowed mode
+    return;
+  }
+
+  const GLFWvidmode *video_mode = glfwGetVideoMode(monitor);
+  glfwSetWindowMonitor(window->glfw_win, NULL,
+                       video_mode->width / 2 - window->initial_size.width / 2,
+                       video_mode->height / 2 - window->initial_size.height / 2,
+                       window->initial_size.width, window->initial_size.height,
+                       GLFW_DONT_CARE);
 }

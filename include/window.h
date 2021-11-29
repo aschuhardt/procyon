@@ -29,6 +29,9 @@ typedef struct procy_window_t {
     struct procy_frame_shader_program_t *frame;
     struct procy_sprite_shader_program_t **sprite;
   } shaders;
+  struct {
+    int width, height;
+  } initial_size;
   float ortho[4][4];
   float scale;
   bool quitting, high_fps;
@@ -87,10 +90,8 @@ void procy_set_mouse_hidden(procy_window_t *window);
 
 void procy_get_mouse_position(procy_window_t *window, double *x, double *y);
 
-/*
 void procy_set_fullscreen(procy_window_t *window);
 
 void procy_set_windowed(procy_window_t *window);
-*/
 
 #endif
