@@ -157,6 +157,11 @@ static int plane_set(lua_State *L) {
   int width;
   int height;
   unsigned char *buffer = get_plane_buffer(L, 1, &width, &height);
+  if (buffer == NULL) {
+    LOG_SCRIPT_ERROR(L, "Invalid plane buffer at %s", lua_tostring(L, 1));
+    return 0;
+  }
+
   if (x < 0 || x > width || y < 0 || y > height) {
     LOG_SCRIPT_ERROR(L, "Plane index (%d, %d) is out-of-bounds", x, y);
     return 0;
