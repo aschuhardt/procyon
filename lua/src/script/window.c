@@ -1,3 +1,5 @@
+#include "window.h"
+
 #include <lauxlib.h>
 #include <log.h>
 #include <lua.h>
@@ -22,6 +24,8 @@
 #define FUNC_SET_SCALE "set_scale"
 #define FUNC_GET_SCALE "get_scale"
 #define FUNC_RESET_SCALE "reset_scale"
+#define FUNC_SET_FULLSCREEN "set_fullscreen"
+#define FUNC_SET_WINDOWED "set_windowed"
 
 static int close_window(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
@@ -216,6 +220,24 @@ static int reset_window_scale(lua_State *L) {
   return 0;
 }
 
+static int set_window_fullscreen(lua_State *L) {
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
+
+  procy_set_fullscreen(window);
+
+  return 0;
+}
+
+static int set_window_windowed(lua_State *L) {
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
+
+  procy_set_windowed(window);
+
+  return 0;
+}
+
 void add_window(lua_State *L, script_env_t *env) {
   env->state->on_draw = perform_draw;
   env->state->on_resize = handle_window_resized;
@@ -233,6 +255,8 @@ void add_window(lua_State *L, script_env_t *env) {
                         {FUNC_GET_SCALE, get_window_scale},
                         {FUNC_RESET_SCALE, reset_window_scale},
                         {FUNC_SET_TITLE, set_window_title},
+                        {FUNC_SET_FULLSCREEN, set_window_fullscreen},
+                        {FUNC_SET_WINDOWED, set_window_windowed},
                         {NULL, NULL}};
   luaL_newlib(L, methods);
   lua_setglobal(L, TBL_WINDOW);

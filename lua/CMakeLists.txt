@@ -36,3 +36,8 @@ add_custom_target(script_test
   COMMAND procyon-lua --debug -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/test.lua"
   DEPENDS procyon-lua copy_spritesheet_for_script_test
   USES_TERMINAL)
+
+add_custom_target(mouse_test
+  COMMAND procyon-lua --debug -e "${CMAKE_CURRENT_SOURCE_DIR}/sample/mouse.lua"
+  DEPENDS procyon-lua
+  USES_TERMINAL)

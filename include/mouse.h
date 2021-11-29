@@ -16,15 +16,6 @@ typedef enum procy_mouse_button_t {
   MOUSE_BUTTON_MIDDLE = MOUSE_BUTTON_3
 } procy_mouse_button_t;
 
-typedef enum procy_mouse_mod_t {
-  MOUSE_MOD_NONE = 0,
-  MOUSE_MOD_SHIFT = 1,
-  MOUSE_MOD_CTRL = 1 << 1,
-  MOUSE_MOD_ALT = 1 << 2
-} procy_mouse_mod_t;
-
 procy_mouse_button_t procy_map_glfw_mouse_button(int button);
-
-procy_mouse_mod_t procy_map_glfw_mouse_modifier(int mod);
 
 #endif

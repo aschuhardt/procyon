@@ -47,6 +47,8 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 - `window.reload()` - Returns nothing.  Causes the window and script environment to be disposed-of and reloaded (functionally "restarts" the app).
 - `window.set_color(color)` - Returns nothing.  Sets the "clear" color used for the window background.
 - `window.set_high_fps(enabled)` - Returns nothing.  Enables or enables "high-fps mode", in which the window will attempt to update with a frequency that matches the display refresh rate.  Otherwise, when high-fps mode is disabled, the window only updates every full second  or when input events are triggered.
+- `window.set_fullscreen()` - Returns nothing.  Switches from windowed mode to fullscreen.
+- `window.set_windowed()` - Returns nothing.  Switches from fullscreen mode to windowed.
 
 #### Fields
 - `window.on_draw` - If assigned, `on_draw` is called before each new frame is drawn.  Perform any drawing routines here.
@@ -77,12 +79,11 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 #### Fields
 - `input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed. It is passed a single argument, a table with the following fields:
     - `value` - An integer indicating the scancode of the key that was entered.  Comparable to the `KEY_...` global values.
-    - `name` - A string indicating the name of the key that was pressed.  The same name is used as the names of the `KEY_...` global values.
-    - `ctrl`, `alt`, `shift` - Boolean flags indicating whether one of these modifier was pressed at the time the event was raised.
+    - `ctrl`, `alt`, `shift` - Boolean flags indicating whether one of these modifiers was pressed at the time the event was raised.
 ```lua
 input.on_key_pressed = function(key)
   if key.value == KEY_ESCAPE then
-    log.info(string.format('%s was pressed!', key.name))
+    log.info(string.format('Goodbye!'))
     window.close()
   end
 end
@@ -91,7 +92,11 @@ end
 - `input.on_key_released` - Same as `on_key_pressed` above, but called when a key is released.
 - `input.on_char_entered` - If assigned, `on_char_entered` is called when the user enters text via the keyboard.
 - `KEY_A ...` - Named key objects.  See `script/keys.h` for a complete list.
-- `keys[k].name`, `keys[k].value` - In addition to named objects, data pertaining to each key is stored in the `keys` table indexed by the key values themselves.
+- `input.on_mouse_pressed` - If assigned, `on_mouse_pressed is called when a mouse button is pressed.  It is passed a single argument, a table with the following fields:
+  - `value` - An integer representing the button that was pressed.  One of `MOUSE_LEFT`, `MOUSE_RIGHT`, `MOUSE_MIDDLE`, or `MOUSE_[0,8]`.
+  - `ctrl`, `alt`, `shift` - Boolean flags indicating whether one of these modifiers was pressed at the time the event was raised.
+- `input.on_mouse_released` - Same as `on_mouse_pressed` above, but called when the button is released.
+- `input.on_mouse_moved` - If assigned, `on_mouse_moved` is called when the mouse has moved.  It is passed two floating-point arguments, `x` and `y`, which represent the new position in screen coordinates of the mouse cursor.
 
 ---
 
@@ -109,7 +114,7 @@ Continuous noise is useful for all kinds of things.
 
 ### Plane
 
-A plane is a 2D bitmap data structure.  Elements in the plane consist of 8-bit integers, and are accessed by an (X, Y) index.  Planes have a fixed width and height which are exposed to the developer.
+A plane is a 2D bitmap data structure.  Elements in the plane consist of byte values, and are accessed by an (X, Y) index.  Planes have a fixed width and height which are exposed to the developer.
 
 #### Functions
 - `plane.from(w, h, value)` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to `value`.  The dimensions are made accessible via the `width` and `height` fields in the resulting table.

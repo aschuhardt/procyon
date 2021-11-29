@@ -24,21 +24,3 @@ procy_mouse_button_t procy_map_glfw_mouse_button(int button) {
       return MOUSE_BUTTON_0;
   }
 }
-
-procy_mouse_mod_t procy_map_glfw_mouse_modifier(int mod) {
-  procy_mouse_mod_t result = MOUSE_MOD_NONE;
-
-  if ((mod & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT) {
-    result |= MOUSE_MOD_SHIFT;
-  }
-
-  if ((mod & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL) {
-    result |= MOUSE_MOD_CTRL;
-  }
-
-  if ((mod & GLFW_MOD_ALT) == GLFW_MOD_ALT) {
-    result |= MOUSE_MOD_ALT;
-  }
-
-  return result;
-}

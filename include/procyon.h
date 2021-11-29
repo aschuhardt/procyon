@@ -19,6 +19,7 @@
 #include "color.h"
 #include "drawing.h"
 #include "keys.h"
+#include "mouse.h"
 #include "state.h"
 #include "window.h"
 

@@ -126,10 +126,6 @@ const key_info_t KEYS[] = {{"KEY_SPACE", KEY_SPACE},
                            {"KEY_RIGHT_SUPER", KEY_RIGHT_SUPER},
                            {"KEY_MENU", KEY_MENU}};
 
-/* --------------------------- */
-/* Public interface definition */
-/* --------------------------- */
-
 void procy_get_keys(key_info_t **buffer, size_t *len) {
   *len = sizeof(KEYS) / sizeof(key_info_t);
   *buffer = malloc(*len * sizeof(key_info_t));

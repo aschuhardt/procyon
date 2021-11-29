@@ -5,7 +5,6 @@
 
 struct procy_state_t;
 struct procy_key_info_t;
-enum procy_mouse_mod_t;
 enum procy_mouse_button_t;
 
 typedef void (*procy_on_load_callback_t)(struct procy_state_t *);
@@ -24,10 +23,10 @@ typedef void (*procy_on_mouse_moved_callback_t)(struct procy_state_t *, double,
                                                 double);
 typedef void (*procy_on_mouse_pressed_callback_t)(struct procy_state_t *,
                                                   enum procy_mouse_button_t,
-                                                  enum procy_mouse_mod_t);
+                                                  bool, bool, bool);
 typedef void (*procy_on_mouse_released_callback_t)(struct procy_state_t *,
                                                    enum procy_mouse_button_t,
-                                                   enum procy_mouse_mod_t);
+                                                   bool, bool, bool);
 
 typedef struct procy_state_t {
   void *data;

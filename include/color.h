@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#define COLOR_TO_INT(r, g, b) (b | g << 8 | r << 16)
+#define COLOR_TO_INT(r, g, b) ((b) | (g) << 8 | (r) << 16)
 
 typedef struct procy_color_t {
   int value;

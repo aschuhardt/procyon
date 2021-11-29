@@ -117,11 +117,13 @@ static void mouse_action(GLFWwindow *w, int button, int action, int mods) {
   window_t *window = (window_t *)glfwGetWindowUserPointer(w);
   state_t *state = window->state;
   procy_mouse_button_t mapped_button = procy_map_glfw_mouse_button(button);
-  procy_mouse_mod_t mapped_mods = procy_map_glfw_mouse_modifier(mods);
+  bool shift = (mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT;
+  bool ctrl = (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL;
+  bool alt = (mods & GLFW_MOD_ALT) == GLFW_MOD_ALT;
   if (action == GLFW_PRESS && state->on_mouse_pressed != NULL) {
-    state->on_mouse_pressed(state, mapped_button, mapped_mods);
+    state->on_mouse_pressed(state, mapped_button, shift, ctrl, alt);
   } else if (action == GLFW_RELEASE && state->on_mouse_released != NULL) {
-    state->on_mouse_released(state, mapped_button, mapped_mods);
+    state->on_mouse_released(state, mapped_button, shift, ctrl, alt);
   }
 }
 
