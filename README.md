@@ -12,11 +12,13 @@ See the `lua` directory for a sample implementation that adds a runtime scriptin
 
 TODO:
 - [x] Creating a window
-- [x] Event-based input handling (keyboard only for now)
+- [x] Event-based input handling (keyboard and mouse)
 - [x] Compile-time asset embedding (currently done in CMakeLists.txt)
 - [ ] More flexible non-cmake asset pipeline
 - [x] Bitmap font rendering
 - [x] Colored text
 - [x] Graphics primitives
 - [x] (Lua only) API calls for generating continuous 3D noise (via stb_perlin.h)
-
+- [ ] Runtime framebuffer shader loading
+- [ ] High-DPI monitor support
+- [ ] Blinking effect for glyphs and sprites
