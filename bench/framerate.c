@@ -125,7 +125,7 @@ void on_draw(procy_state_t* state, double time) {
 int main(int argc, const char** argv) {
   bench_state_t data;
   procy_state_t* state = procy_create_callback_state(
-      on_load, on_unload, on_draw, NULL, NULL, NULL, NULL);
+      on_load, on_unload, on_draw, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
   state->data = &data;
   procy_window_t* window =
       procy_create_window(800, 600, "Framerate Benchmark", state);
