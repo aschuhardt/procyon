@@ -26,7 +26,7 @@
 #define FUNC_LOADSPRITESHEET "load"
 #define FUNC_CREATESPRITE "sprite"
 #define FUNC_DRAWSPRITE "draw"
-#define FUNC_SETOFFSET "set_layer"
+#define FUNC_SETLAYER "set_layer"
 #define FIELD_SPRITESHEET_PTR "ptr"
 #define FIELD_SPRITESHEET_WIDTH "width"
 #define FIELD_SPRITESHEET_HEIGHT "height"
@@ -117,6 +117,17 @@ static int draw_string(lua_State *L) {
         contents[i], bold);
     procy_append_draw_op_text(window, &op);
   }
+
+  return 0;
+}
+
+static int set_layer(lua_State *L) {
+  lua_settop(L, 1);
+
+  int z = (int)luaL_optinteger(L, 1, 0);
+
+  lua_pushinteger(L, z);
+  lua_setfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
 
   return 0;
 }
@@ -413,10 +424,13 @@ static void add_spritesheet(lua_State *L) {
 }
 
 static void add_draw_ops(lua_State *L) {
-  luaL_Reg methods[] = {
-      {FUNC_DRAWSTRING, draw_string}, {FUNC_DRAWRECT, draw_rect},
-      {FUNC_DRAWLINE, draw_line},     {FUNC_DRAWPOLY, draw_polygon},
-      {FUNC_DRAWCHAR, draw_char},     {NULL, NULL}};
+  luaL_Reg methods[] = {{FUNC_DRAWSTRING, draw_string},
+                        {FUNC_DRAWRECT, draw_rect},
+                        {FUNC_DRAWLINE, draw_line},
+                        {FUNC_DRAWPOLY, draw_polygon},
+                        {FUNC_DRAWCHAR, draw_char},
+                        {FUNC_SETLAYER, set_layer},
+                        {NULL, NULL}};
   luaL_newlib(L, methods);
   lua_setglobal(L, TBL_DRAWING);
 
