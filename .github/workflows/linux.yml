@@ -51,6 +51,14 @@ jobs:
     - name: Cleanup
       run: rm ${{env.OUTPUT_DIR}}/genhexer
       
+    - name: Copy Misc. Files
+      run: mkdir ${{env.OUTPUT_DIR}}/scripts && \
+        cp lua/sample/main.lua ${{env.OUTPUT_DIR}}/script/main.lua && \
+        cp lua/sample/util.lua ${{env.OUTPUT_DIR}}/script/util.lua && \
+        cp lua/sample/sprites.png ${{env.OUTPUT_DIR}}/script/sprites.png && \
+        cp lua/sample/CREDIT ${{env.OUTPUT_DIR}}/script/CREDIT && \
+        cp lua/README.md ${{env.OUTPUT_DIR}}/README
+
     - name: Set-Executable
       run: chmod +x ${{env.OUTPUT_DIR}}/procyon-lua
     
