@@ -434,7 +434,7 @@ static void add_draw_ops(lua_State *L) {
   luaL_newlib(L, methods);
   lua_setglobal(L, TBL_DRAWING);
 
-  lua_pushinteger(L, 0);
+  lua_pushinteger(L, 1);
   lua_setfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
 }
 

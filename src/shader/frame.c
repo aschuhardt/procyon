@@ -15,6 +15,8 @@
 #define ATTR_FRAME_POSITION 0
 #define ATTR_FRAME_TEXCOORDS 1
 
+#define DEPTH_RANGE 0.01, 100.0
+
 typedef procy_frame_shader_program_t frame_shader_program_t;
 typedef procy_shader_program_t shader_program_t;
 typedef procy_window_t window_t;
@@ -56,7 +58,7 @@ procy_frame_shader_program_t *procy_create_frame_shader(window_t *window) {
   GL_CHECK(glGenTextures(1, &shader->texture));
   GL_CHECK(glBindTexture(GL_TEXTURE_2D, shader->texture));
 
-  // set texture parameters and unbind
+  // set color buffer parameters and unbind
   int width;
   int height;
   procy_get_window_size(window, &width, &height);
@@ -69,6 +71,15 @@ procy_frame_shader_program_t *procy_create_frame_shader(window_t *window) {
   // attach the texture to the framebuffer and unbind
   GL_CHECK(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                   GL_TEXTURE_2D, shader->texture, 0));
+
+  // set depth/stencil buffer parameters and unbind
+  glGenRenderbuffers(1, &shader->depth);
+  glBindRenderbuffer(GL_RENDERBUFFER, shader->depth);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                            GL_RENDERBUFFER, shader->depth);
+  glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // time to set up shader program stuff...
@@ -95,6 +106,10 @@ void procy_destroy_frame_shader(frame_shader_program_t *shader) {
     glDeleteTextures(1, &shader->texture);
   }
 
+  if (glIsRenderbuffer(shader->depth)) {
+    glDeleteRenderbuffers(1, &shader->depth);
+  }
+
   if (glIsFramebuffer(shader->framebuffer)) {
     glDeleteFramebuffers(1, &shader->framebuffer);
   }
@@ -104,12 +119,16 @@ void procy_destroy_frame_shader(frame_shader_program_t *shader) {
 
 void procy_frame_shader_begin(frame_shader_program_t *shader) {
   GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, shader->framebuffer));
-  GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
+  GL_CHECK(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+  GL_CHECK(glEnable(GL_DEPTH_TEST));
+  GL_CHECK(glDepthRange(DEPTH_RANGE));
+  GL_CHECK(glDepthFunc(GL_LESS));
 }
 
 void procy_frame_shader_end(frame_shader_program_t *shader) {
   GL_CHECK(glBindFramebuffer(GL_FRAMEBUFFER, 0));
   GL_CHECK(glClear(GL_COLOR_BUFFER_BIT));
+  GL_CHECK(glDisable(GL_DEPTH_TEST));
 }
 
 void procy_frame_shader_resized(frame_shader_program_t *shader, int width,
@@ -119,6 +138,12 @@ void procy_frame_shader_resized(frame_shader_program_t *shader, int width,
   GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB,
                         GL_UNSIGNED_BYTE, NULL));
   GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+
+  // regenerate the depth/stencil buffer
+  GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, shader->depth));
+  GL_CHECK(glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width,
+                                 height));
+  GL_CHECK(glBindRenderbuffer(GL_RENDERBUFFER, 0));
 }
 
 void procy_draw_frame_shader(frame_shader_program_t *shader) {
@@ -150,6 +175,7 @@ void procy_draw_frame_shader(frame_shader_program_t *shader) {
                         &FRAME_QUAD_INDICES, GL_STATIC_DRAW));
 
   // draw to the screen
+  GL_CHECK(glActiveTexture(GL_TEXTURE0));
   GL_CHECK(glBindTexture(GL_TEXTURE_2D, shader->texture));
   GL_CHECK(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
   GL_CHECK(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0));

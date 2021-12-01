@@ -6,6 +6,7 @@ in vec2 f_TexCoords;
 flat in int f_ForeColor;
 flat in int f_BackColor;
 in float f_Bold;
+in float f_Depth;
 
 void main(void) {
   vec3 fg = vec3(
@@ -19,4 +20,5 @@ void main(void) {
 
   float value = floor(texture(u_GlyphTexture, vec3(f_TexCoords, f_Bold)).r);
   gl_FragColor = vec4(mix(bg, fg, value), 1.0);
+  gl_FragDepth = f_Depth;
 }

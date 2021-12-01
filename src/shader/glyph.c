@@ -126,11 +126,9 @@ static void load_glyph_font(glyph_shader_program_t *shader) {
         memcpy(&combined_buffer[bitmap_size], bitmap_bold, bitmap_size);
 
         // create font texture array from bitmaps
-        GL_CHECK(glGenTextures(0, &shader->font_texture));
+        GL_CHECK(glGenTextures(1, &shader->font_texture));
 
-        GL_CHECK(glActiveTexture(GL_TEXTURE0));
         GL_CHECK(glBindTexture(GL_TEXTURE_2D_ARRAY, shader->font_texture));
-
         GL_CHECK(glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RED,
                               shader->texture_bounds.width,
                               shader->texture_bounds.height, 2, 0, GL_RED,
@@ -142,6 +140,9 @@ static void load_glyph_font(glyph_shader_program_t *shader) {
                                  GL_NEAREST));
         GL_CHECK(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER,
                                  GL_NEAREST));
+
+        log_debug("Combined glyph bitmap size: %zu", bitmap_size * 2);
+        log_debug("Glyph texture ID: %u", shader->font_texture);
       } else {
         log_error(
             "Failed to allocate enough memory for combined glyph texture");
@@ -211,14 +212,14 @@ glyph_shader_program_t *procy_create_glyph_shader() {
 
   shader_program_t *program = &shader->program;
 
+  // load font texture and codepoints
+  load_glyph_font(shader);
+
   if (procy_compile_and_link_shader(program, (char *)&embed_glyph_vert[0],
                                     (char *)&embed_glyph_frag[0])) {
     shader->u_ortho =
         GL_CHECK(glGetUniformLocation(program->program, "u_Ortho"));
   }
-
-  // load font texture and codepoints
-  load_glyph_font(shader);
 
   // create vertex array
   GL_CHECK(glGenVertexArrays(1, &program->vao));

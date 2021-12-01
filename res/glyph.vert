@@ -12,11 +12,13 @@ out vec2 f_TexCoords;
 flat out int f_ForeColor;
 flat out int f_BackColor;
 out float f_Bold;
+out float f_Depth;
 
 void main(void) {
   f_TexCoords = i_TexCoords;
   f_ForeColor = i_ForeColor;
   f_BackColor = i_BackColor;
   f_Bold = i_Bold;
-  gl_Position = vec4(i_Position, 1.0) * u_Ortho;
+  f_Depth = i_Position.z * 0.1;
+  gl_Position = vec4(i_Position.xy, 0.0, 1.0) * u_Ortho;
 }

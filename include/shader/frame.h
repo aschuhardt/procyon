@@ -5,7 +5,7 @@
 
 typedef struct procy_frame_shader_program_t {
   procy_shader_program_t program;
-  unsigned int texture, framebuffer;
+  unsigned int texture, depth, framebuffer;
 } procy_frame_shader_program_t;
 
 procy_frame_shader_program_t *procy_create_frame_shader(

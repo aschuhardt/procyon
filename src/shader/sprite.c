@@ -103,9 +103,7 @@ static bool load_sprite_texture(sprite_shader_program_t *shader,
     // create font texture array from bitmaps
     GL_CHECK(glGenTextures(1, &shader->texture));
 
-    GL_CHECK(glActiveTexture(GL_TEXTURE0));
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, shader->texture));
-
     GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, shader->texture_w,
                           shader->texture_h, 0, GL_RED, GL_UNSIGNED_BYTE,
                           bitmap));
