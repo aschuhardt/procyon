@@ -78,7 +78,7 @@ jobs:
  
     - name: Copy Misc. Files
       run: |
-        mkdir ${{env.OUTPUT_DIR}}/scripts && \
+        mkdir ${{env.OUTPUT_DIR}}/script && \
         cp lua/sample/main.lua ${{env.OUTPUT_DIR}}/script/main.lua && \
         cp lua/sample/util.lua ${{env.OUTPUT_DIR}}/script/util.lua && \
         cp lua/sample/sprites.png ${{env.OUTPUT_DIR}}/script/sprites.png && \
