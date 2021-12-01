@@ -51,6 +51,9 @@ jobs:
     - name: Cleanup
       run: rm ${{env.OUTPUT_DIR}}/genhexer
       
+    - name: Strip Executables
+      run: strip --strip-unneeded ${{env.OUTPUT_DIR}}/*
+
     - name: Copy Misc. Files
       run: |
         mkdir ${{env.OUTPUT_DIR}}/script && \
