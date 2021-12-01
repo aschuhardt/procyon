@@ -59,7 +59,7 @@ jobs:
         mkdir ${{env.OUTPUT_DIR}}/script && \
         cp lua/sample/main.lua ${{env.OUTPUT_DIR}}/script/main.lua && \
         cp lua/sample/util.lua ${{env.OUTPUT_DIR}}/script/util.lua && \
-        cp lua/sample/sprites.png ${{env.OUTPUT_DIR}}/script/sprites.png && \
+        cp lua/sample/sprites.png ${{env.OUTPUT_DIR}}/sprites.png && \
         cp lua/sample/CREDIT ${{env.OUTPUT_DIR}}/script/CREDIT && \
         cp lua/README.md ${{env.OUTPUT_DIR}}/README
 
