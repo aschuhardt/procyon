@@ -62,6 +62,7 @@ High-level objects are grouped into global tables that I refer to as "modules". 
 ### Drawing
 
 #### Functions
+- `draw.set_layer(z)` - Returns nothing.  Sets the current drawing layer to the provided integer value, which should be greater than zero.  Higher values of `z` are further-back relative to the window, with a value of 1 being the effective "top layer" that will always be visible.
 - `draw.string(x, y, contents [, color [, background]])` - Draws `contents` at screen coordinates `(x, y)` on the window. 
 - `draw.rect(x, y, width, height [, color])` - Draws a rectangle with the provided integer bounds and optional color.
 - `draw.line(x1, y1, x2, y2 [, color])` - Draws a line from the pixel coordinates `(x1, y1)` to `(x2, y2)`.
