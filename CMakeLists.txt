@@ -58,6 +58,11 @@ target_include_directories(${SU_LIBRARY_STATIC}
 target_link_libraries(${SU_LIBRARY_STATIC} PRIVATE glad glfw)
 target_link_libraries(${SU_LIBRARY_STATIC} PUBLIC log)
 
+if (MINGW)
+  target_link_libraries(${SU_LIBRARY} PUBLIC -static gcc stdc++ winpthread -dynamic)
+  target_link_libraries(${SU_LIBRARY_STATIC} PUBLIC -static gcc stdc++ winpthread -dynamic)
+endif()
+
 # Compile a small program that will convert files into
 # C header files
 add_executable(genhexer util/genhexer.c)
