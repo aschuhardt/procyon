@@ -24,7 +24,7 @@ void add_globals(lua_State *L, script_env_t *env, const char *path) {
   char abs_path[PATH_MAX] = {0};
   
 #ifdef __MINGW32__
-  _fullpath(path, &abs_path[0], sizeof(abs_path));
+  _fullpath(&abs_path[0], path, sizeof(abs_path));
 #else
   realpath(path, &abs_path[0]);
 #endif
