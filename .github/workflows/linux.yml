@@ -60,8 +60,9 @@ jobs:
         cp lua/sample/main.lua ${{env.OUTPUT_DIR}}/script/main.lua && \
         cp lua/sample/util.lua ${{env.OUTPUT_DIR}}/script/util.lua && \
         cp lua/sample/sprites.png ${{env.OUTPUT_DIR}}/sprites.png && \
-        cp lua/sample/CREDIT ${{env.OUTPUT_DIR}}/script/CREDIT && \
-        cp lua/README.md ${{env.OUTPUT_DIR}}/README
+        cp lua/sample/CREDIT ${{env.OUTPUT_DIR}}/CREDIT && \
+        cp lua/README.md ${{env.OUTPUT_DIR}}/README.md && \
+        cp -r include ${{env.OUTPUT_DIR}}/include
 
     - name: Set-Executable
       run: chmod +x ${{env.OUTPUT_DIR}}/procyon-lua
