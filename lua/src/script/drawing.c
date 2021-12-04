@@ -26,6 +26,7 @@
 #define FUNC_LOADSPRITESHEET "load"
 #define FUNC_CREATESPRITE "sprite"
 #define FUNC_DRAWSPRITE "draw"
+#define FUNC_SPRITE_GETSIZE "get_size"
 #define FUNC_SETLAYER "set_layer"
 #define FIELD_SPRITESHEET_PTR "ptr"
 #define FIELD_SPRITESHEET_WIDTH "width"
@@ -292,8 +293,8 @@ static int get_sprite_size(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
-  lua_pushinteger(L, (int)((float)sprite->width * window->scale));
-  lua_pushinteger(L, (int)((float)sprite->height * window->scale));
+  lua_pushinteger(L, (int)((float)sprite->width /* * window->scale.x*/));
+  lua_pushinteger(L, (int)((float)sprite->height /* * window->scale.y*/));
 
   return 2;
 }
@@ -371,9 +372,6 @@ static int load_spritesheet_raw(lua_State *L) {
   lua_pushinteger(L, shader->texture_h);
   lua_setfield(L, -2, FIELD_SPRITESHEET_HEIGHT);
 
-  lua_pushcfunction(L, create_sprite);
-  lua_setfield(L, -2, FUNC_CREATESPRITE);
-
   return 1;
 }
 
@@ -419,7 +417,19 @@ static void add_spritesheet(lua_State *L) {
 
   // register metatable for sprite garbage collection
   luaL_Reg metamethods[] = {{"__gc", destroy_sprite}, {NULL, NULL}};
-  luaL_newlib(L, metamethods);
+
+  lua_newtable(L);  // metatable
+
+  lua_pushcfunction(L, destroy_sprite);
+  lua_setfield(L, -2, "__gc");
+
+  // index method table with sprite methods
+  luaL_Reg index[] = {{FUNC_SPRITE_GETSIZE, get_sprite_size},
+                      {FUNC_DRAWSPRITE, draw_sprite},
+                      {NULL, NULL}};
+  luaL_newlib(L, index);
+  lua_setfield(L, -2, "__index");
+
   lua_setfield(L, LUA_REGISTRYINDEX, TBL_SPRITE_META);
 }
 

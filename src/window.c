@@ -25,8 +25,6 @@
 #include "shader/sprite.h"
 #include "state.h"
 
-#define DEFAULT_SCALE 1.0f
-
 typedef procy_window_t window_t;
 typedef procy_glyph_shader_program_t glyph_shader_program_t;
 typedef procy_rect_shader_program_t rect_shader_program_t;
@@ -80,9 +78,9 @@ static void set_ortho_projection(window_t *window, int width, int height) {
   memset(&window->ortho[3][0], 0, 4 * sizeof(float));
 
   // build orthographic projection based on window dimensions
-  window->ortho[0][0] = 2.0F / (float)width;
+  window->ortho[0][0] = 2.0F / ((float)width / window->scale.x);
   window->ortho[0][3] = -1.0F;
-  window->ortho[1][1] = 2.0F / -(float)height;
+  window->ortho[1][1] = 2.0F / (-(float)height / window->scale.y);
   window->ortho[1][3] = 1.0F;
   window->ortho[2][2] = -2.0F;
   window->ortho[2][3] = -1.0F;
@@ -109,7 +107,7 @@ static void mouse_moved(GLFWwindow *w, double x, double y) {
   window_t *window = (window_t *)glfwGetWindowUserPointer(w);
   state_t *state = window->state;
   if (state->on_mouse_moved != NULL) {
-    state->on_mouse_moved(state, x, y);
+    state->on_mouse_moved(state, x / window->scale.x, y / window->scale.y);
   }
 }
 
@@ -231,15 +229,14 @@ static void set_dpi_scale(window_t *window) {
   GLFWmonitor *monitor = glfwGetWindowMonitor(window->glfw_win);
   if (monitor != NULL) {
     // full-screen mode; use the monitor's DPI
-    glfwGetMonitorContentScale(monitor, &window->dpi_scale.x,
-                               &window->dpi_scale.y);
+    glfwGetMonitorContentScale(monitor, &window->scale.x, &window->scale.y);
   } else {
     // windowed; use the window DPI
-    glfwGetWindowContentScale(window->glfw_win, &window->dpi_scale.x,
-                              &window->dpi_scale.y);
+    glfwGetWindowContentScale(window->glfw_win, &window->scale.x,
+                              &window->scale.y);
   }
 
-  log_debug("DPI scale: %0.2fx%0.2f", window->dpi_scale.x, window->dpi_scale.y);
+  log_debug("DPI scale: %0.2fx%0.2f", window->scale.x, window->scale.y);
 }
 
 window_t *procy_create_window(int width, int height, const char *title,
@@ -254,7 +251,6 @@ window_t *procy_create_window(int width, int height, const char *title,
     window->initial_size.height = height;
 
     window->state = state;
-    window->scale = DEFAULT_SCALE;
 
     init_shaders(window);
     init_key_table(window);
@@ -351,11 +347,11 @@ void procy_get_glyph_size(procy_window_t *window, int *width, int *height) {
   procy_get_glyph_bounds(window->shaders.glyph, width, height);
 
   if (width != NULL) {
-    *width = (int)((float)*width * window->scale);
+    *width = (int)((float)*width /* * window->scale.x*/);
   }
 
   if (height != NULL) {
-    *height = (int)((float)*height * window->scale);
+    *height = (int)((float)*height /* * window->scale.y*/);
   }
 }
 
@@ -436,8 +432,10 @@ void procy_set_window_title(procy_window_t *window, const char *title) {
   glfwSetWindowTitle(window->glfw_win, title);
 }
 
-void procy_set_scale(window_t *window, float scale) {
-  window->scale = scale;
+void procy_set_scale(window_t *window, float x, float y) {
+  window->scale.x = x;
+  window->scale.y = y;
+
   int width;
   int height;
   procy_get_window_size(window, &width, &height);
@@ -445,7 +443,8 @@ void procy_set_scale(window_t *window, float scale) {
 }
 
 void procy_reset_scale(procy_window_t *window) {
-  window->scale = DEFAULT_SCALE;
+  set_dpi_scale(window);
+
   int width;
   int height;
   procy_get_window_size(window, &width, &height);

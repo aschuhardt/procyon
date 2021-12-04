@@ -194,19 +194,22 @@ static int get_window_scale(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
-  lua_pushnumber(L, window->scale);
+  lua_pushnumber(L, window->scale.x);
+  lua_pushnumber(L, window->scale.y);
 
-  return 1;
+  return 2;
 }
 
 static int set_window_scale(lua_State *L) {
-  lua_settop(L, 1);
-  float scale = (float)luaL_checknumber(L, 1);
+  lua_settop(L, 2);
+
+  float x = (float)luaL_checknumber(L, 1);
+  float y = (float)luaL_checknumber(L, 2);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
-  procy_set_scale(window, scale);
+  procy_set_scale(window, x, y);
 
   return 0;
 }

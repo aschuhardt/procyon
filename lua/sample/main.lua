@@ -77,8 +77,6 @@ window.on_draw = function(seconds)
 
   draw.set_layer(2) -- draw behind the text (higher layer values are further back)
 
-  local scale = window.get_scale()
-
   -- iterate over each value in the bitmap, drawing tree sprites on most of them 
   local threshold = 128 
   tree_map:foreach(
@@ -88,7 +86,7 @@ window.on_draw = function(seconds)
         local tree_color = pick_color(x, y)
 
         -- sprite size, position
-        local sw, sh = tree_sprite.width * scale, tree_sprite.height * scale
+        local sw, sh = tree_sprite:get_size();
         local sx = x * sw + ww // 2 - sw * tree_map.width  / 2
         local sy = y * sh + wh // 2 - sh * tree_map.height / 2
 
@@ -127,8 +125,6 @@ end
 
 
 input.on_key_pressed = function(key) 
-  local scale = window.get_scale()
-
   if key.value == KEY_F2 then
     window.reload()
   elseif key.value == KEY_F3 then
@@ -137,9 +133,11 @@ input.on_key_pressed = function(key)
   elseif key.value == KEY_ESCAPE then
     window.close()
   elseif key.value == KEY_Z then
-    window.set_scale(scale - 1.0)
+    local x, y = window.get_scale()
+    window.set_scale(x - 0.1, y - 0.1)
   elseif key.value == KEY_A then
-    window.set_scale(scale + 1.0)
+    local x, y = window.get_scale()
+    window.set_scale(x + 0.1, y + 0.1)
   elseif key.value == KEY_F11 then
     fullscreen = not fullscreen -- doesn't need to exist beforehand; Lua treats null values as falsey
     if fullscreen then

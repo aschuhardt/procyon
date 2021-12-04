@@ -238,15 +238,14 @@ static void compute_glyph_vertices(glyph_shader_program_t *shader,
                                    window_t *window) {
   unsigned char c = op->character;
 
-  float scale = window->scale;
-  float gw = (float)shader->glyph_bounds.width * window->dpi_scale.x;
-  float gh = (float)shader->glyph_bounds.height * window->dpi_scale.y;
+  float gw = (float)shader->glyph_bounds.width;
+  float gh = (float)shader->glyph_bounds.height;
   float tw = shader->glyph_bounds.tex_width;
   float th = shader->glyph_bounds.tex_height;
 
   // screen coordinates
-  float x = (float)op->x * window->dpi_scale.x;
-  float y = (float)op->y * window->dpi_scale.y;
+  float x = (float)op->x;
+  float y = (float)op->y;
   float z = (float)op->z;
 
   // texture coordinates
@@ -260,13 +259,11 @@ static void compute_glyph_vertices(glyph_shader_program_t *shader,
   int bg = op->background.value;
   float bold = op->bold ? 1.0F : 0.0F;
 
-  // clang-format off
   vertices[0] = (glyph_vertex_t){x, y, z, tx, ty, fg, bg, bold};
-  vertices[1] = (glyph_vertex_t){x + (float)gw * scale, y, z, tx + tw, ty, fg, bg, bold};
-  vertices[2] = (glyph_vertex_t){x, y + (float)gh * scale, z, tx, ty + th, fg, bg, bold};
-  vertices[3] = (glyph_vertex_t){x + (float)gw * scale, y + (float)gh * scale,
-                                 z, tx + tw, ty + th, fg, bg, bold};
-  // clang-format on
+  vertices[1] = (glyph_vertex_t){x + gw, y, z, tx + tw, ty, fg, bg, bold};
+  vertices[2] = (glyph_vertex_t){x, y + gh, z, tx, ty + th, fg, bg, bold};
+  vertices[3] =
+      (glyph_vertex_t){x + gw, y + gh, z, tx + tw, ty + th, fg, bg, bold};
 }
 
 void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window,

@@ -34,9 +34,8 @@ typedef struct procy_window_t {
   } initial_size;
   struct {
     float x, y;
-  } dpi_scale;
+  } scale;
   float ortho[4][4];
-  float scale;
   bool quitting, high_fps;
   struct procy_draw_op_text_t *draw_ops_text;
   struct procy_draw_op_rect_t *draw_ops_rect;
@@ -81,7 +80,7 @@ void procy_close_window(procy_window_t *window);
 
 void procy_set_high_fps_mode(procy_window_t *window, bool high_fps);
 
-void procy_set_scale(procy_window_t *window, float scale);
+void procy_set_scale(procy_window_t *window, float x, float y);
 
 void procy_reset_scale(procy_window_t *window);
 

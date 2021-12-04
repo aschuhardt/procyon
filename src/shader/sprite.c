@@ -231,7 +231,7 @@ sprite_shader_program_t *procy_create_sprite_shader(const char *path) {
 
 static void compute_sprite_vertices(sprite_shader_program_t *shader,
                                     procy_draw_op_sprite_t *op,
-                                    sprite_vertex_t *vertices, float scale) {
+                                    sprite_vertex_t *vertices) {
   sprite_t *sprite = op->ptr;
 
   // screen coordinates
@@ -250,11 +250,10 @@ static void compute_sprite_vertices(sprite_shader_program_t *shader,
   int bg = op->background.value;
 
   vertices[0] = (sprite_vertex_t){x, y, z, tx, ty, fg, bg};
-  vertices[1] = (sprite_vertex_t){x + width * scale, y, z, tx + tw, ty, fg, bg};
-  vertices[2] =
-      (sprite_vertex_t){x, y + height * scale, z, tx, ty + th, fg, bg};
-  vertices[3] = (sprite_vertex_t){
-      x + width * scale, y + height * scale, z, tx + tw, ty + th, fg, bg};
+  vertices[1] = (sprite_vertex_t){x + width, y, z, tx + tw, ty, fg, bg};
+  vertices[2] = (sprite_vertex_t){x, y + height, z, tx, ty + th, fg, bg};
+  vertices[3] =
+      (sprite_vertex_t){x + width, y + height, z, tx + tw, ty + th, fg, bg};
 }
 
 void procy_draw_sprite_shader(procy_sprite_shader_program_t *shader,
@@ -285,7 +284,7 @@ void procy_draw_sprite_shader(procy_sprite_shader_program_t *shader,
 
     // compute the sprite's 4 vertices
     sprite_vertex_t temp_vertex_buffer[VERTICES_PER_SPRITE];
-    compute_sprite_vertices(shader, &op, &temp_vertex_buffer[0], window->scale);
+    compute_sprite_vertices(shader, &op, &temp_vertex_buffer[0]);
 
     // specify the indices of the vertices in the order they're to be drawn
     unsigned short temp_index_buffer[] = {vert_index,     vert_index + 1,
