@@ -64,7 +64,7 @@ jobs:
       run: cmake --build build --target procyon-lua
     
     - name: Clean Up
-      run: rm ${{env.OUTPUT_DIR}}/genhexer ${{env.OUTPUT_DIR}}/*ltrans* ${{env.OUTPUT_DIR}}*wpa*
+      run: rm ${{env.OUTPUT_DIR}}/genhexer ${{env.OUTPUT_DIR}}/*ltrans* ${{env.OUTPUT_DIR}}/*wpa*
  
     - name: Strip Binaries
       run: strip --strip-unneeded ${{env.OUTPUT_DIR}}/*
