@@ -9,9 +9,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   OUTPUT_DIR: output
-  LUA_BUILDDIR: .lua_build
-  LUA_VERSION: 5.4.3
-  
+
 jobs:
   build:
     runs-on: windows-latest
@@ -19,7 +17,7 @@ jobs:
     strategy:
       matrix:
         msystem: [MINGW32, MINGW64]
-        build-type: [Release, Debug]
+        build-type: [Release]
         include:
           - msystem: MINGW32
             arch: i686
@@ -44,17 +42,13 @@ jobs:
       run: |
         pacman -S --noconfirm \
         mingw-w64-${{matrix.arch}}-cmake \
+        mingw-w64-${{matrix.arch}}-luajit \
         mingw-w64-${{matrix.arch}}-gcc
     
     - uses: actions/checkout@v2
     - name: Checkout Submodules
       run: git submodule update --init --recursive
       
-    - name: Install Lua/LuaJIT
-      uses: leafo/gh-actions-lua@v8.0.0
-      with:
-        luaVersion: "luajit-2.1.0-beta3"
-
     - name: Create Output Directory
       run: mkdir $(realpath ${{env.OUTPUT_DIR}})
       
