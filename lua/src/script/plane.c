@@ -64,13 +64,13 @@ static unsigned char *get_plane_buffer(lua_State *L, int index, int *width,
                                        int *height) {
   if (width != NULL) {
     lua_getfield(L, index, FIELD_PLANE_WIDTH);
-    *width = lua_isinteger(L, -1) ? (int)lua_tointeger(L, -1) : -1;
+    *width = luaL_optinteger(L, -1, -1);
     lua_pop(L, 1);
   }
 
   if (height != NULL) {
     lua_getfield(L, index, FIELD_PLANE_HEIGHT);
-    *height = lua_isinteger(L, -1) ? (int)lua_tointeger(L, -1) : -1;
+    *height = luaL_optinteger(L, -1, -1);
     lua_pop(L, 1);
   }
 
@@ -116,7 +116,7 @@ static int plane_fill(lua_State *L) {
   unsigned char *buffer = get_plane_buffer(L, 1, &width, &height);
   size_t buffer_len = width * height;
 
-  if (lua_isinteger(L, 2)) {
+  if (lua_isnumber(L, 2)) {
     int value = lua_tointeger(L, 2) % (UCHAR_MAX + 1);
     memset(buffer, value, buffer_len);
   } else if (lua_isfunction(L, 2)) {
@@ -131,7 +131,7 @@ static int plane_fill(lua_State *L) {
         break;
       }
 
-      if (lua_isinteger(L, -1)) {
+      if (lua_isnumber(L, -1)) {
         buffer[i] = luaL_checkinteger(L, -1) % (UCHAR_MAX + 1);
       }
 
@@ -168,7 +168,7 @@ static int plane_set(lua_State *L) {
   }
 
   unsigned char *cursor = &buffer[y * width + x];
-  if (lua_isinteger(L, 4)) {
+  if (lua_isnumber(L, 4)) {
     *cursor = (unsigned char)(lua_tointeger(L, 4) % (UCHAR_MAX + 1));
   } else if (lua_isstring(L, 4)) {
     // store each byte in the string consecutively
@@ -217,22 +217,6 @@ static unsigned char *push_new_plane(int width, int height, size_t *len,
 
   lua_pushlightuserdata(L, (void *)buffer);
   lua_setfield(L, -2, FIELD_PLANE_PTR);
-
-  // TODO: move these methods into an __index table
-  lua_pushcfunction(L, plane_at);
-  lua_setfield(L, -2, FUNC_PLANE_AT);
-
-  lua_pushcfunction(L, plane_set);
-  lua_setfield(L, -2, FUNC_PLANE_SET);
-
-  lua_pushcfunction(L, plane_sub);
-  lua_setfield(L, -2, FUNC_PLANE_SUB);
-
-  lua_pushcfunction(L, plane_fill);
-  lua_setfield(L, -2, FUNC_PLANE_FILL);
-
-  lua_pushcfunction(L, plane_fill);
-  lua_setfield(L, -2, FUNC_PLANE_FOREACH);
 
   return buffer;
 }
@@ -295,7 +279,7 @@ static int plane_from(lua_State *L) {
     return 0;
   }
 
-  if (lua_isinteger(L, 3)) {
+  if (lua_isnumber(L, 3)) {
     memset(buffer, lua_tointeger(L, 3), buffer_len);
   } else if (lua_isfunction(L, 3)) {
     apply_func_to_plane(L, 3, width, height, buffer);
@@ -306,15 +290,21 @@ static int plane_from(lua_State *L) {
 
 void add_plane(lua_State *L) {
   // initialize library table
-  luaL_Reg methods[] = {
-      {FUNC_PLANE_FROM, plane_from},    {FUNC_PLANE_AT, plane_at},
-      {FUNC_PLANE_SET, plane_set},      {FUNC_PLANE_FILL, plane_fill},
-      {FUNC_PLANE_FOREACH, plane_fill}, {NULL, NULL}};
-  luaL_newlib(L, methods);
+  luaL_Reg create_methods[] = {{FUNC_PLANE_FROM, plane_from}, {NULL, NULL}};
+  luaL_newlib(L, create_methods);
   lua_setglobal(L, TBL_PLANE);
 
   // initialize metatable
   luaL_Reg metamethods[] = {{"__gc", plane_destroy_buffer}, {NULL, NULL}};
   luaL_newlib(L, metamethods);
+  luaL_Reg index_methods[] = {{FUNC_PLANE_FROM, plane_from},
+                              {FUNC_PLANE_AT, plane_at},
+                              {FUNC_PLANE_SET, plane_set},
+                              {FUNC_PLANE_FILL, plane_fill},
+                              {FUNC_PLANE_FOREACH, plane_fill},
+                              {FUNC_PLANE_SUB, plane_sub},
+                              {NULL, NULL}};
+  luaL_newlib(L, index_methods);
+  lua_setfield(L, -2, "__index");
   lua_setfield(L, LUA_REGISTRYINDEX, TBL_PLANE_META);
 }

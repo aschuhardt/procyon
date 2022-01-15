@@ -4,6 +4,7 @@
 #include <libgen.h>
 #include <log.h>
 #include <lua.h>
+#include <luajit.h>
 #include <lualib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -60,11 +61,6 @@ static void add_package_path_from_entry(lua_State *L, char *path) {
   lua_pop(L, 1);
 }
 
-static void script_log_warning(void *ud, const char *msg, int tocont) {
-  (void)ud;
-  log_warn("%s", msg);
-}
-
 script_env_t *create_script_env(procy_window_t *window, procy_state_t *state) {
   script_env_t *env = malloc(sizeof(script_env_t));
   env->L = luaL_newstate();
@@ -84,10 +80,11 @@ void destroy_script_env(script_env_t *env) {
 
 bool load_scripts(script_env_t *env, char *path) {
   lua_State *L = (lua_State *)env->L;
-  lua_setwarnf(L, script_log_warning, NULL);
   luaL_openlibs(L);
 
-  if (luaL_loadfile(L, path) != LUA_OK) {
+  luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_ON);
+
+  if (luaL_loadfile(L, path)) {
     log_error("Error loading file %s: %s", path, lua_tostring(L, -1));
     return false;
   }
@@ -102,7 +99,7 @@ bool load_scripts(script_env_t *env, char *path) {
   add_plane(L);
   add_noise(L);
 
-  if (lua_pcall(L, 0, LUA_MULTRET, 0) != LUA_OK) {
+  if (lua_pcall(L, 0, LUA_MULTRET, 0)) {
     log_error("Error running file %s: %s", path, lua_tostring(L, -1));
     return false;
   }

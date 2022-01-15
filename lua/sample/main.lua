@@ -7,6 +7,12 @@ local util = require "util"
 -- for the developer to use.
 window.on_load = function()
 
+  if jit.status() then
+    log.debug("JIT is enabled!")
+  else
+    log.debug("JIT is disabled!")
+  end
+
   -- build a couple of 2D bitmaps filled with continuous noise values
   -- for our somewhat natural-looking map generation
   color_map  = plane.from(80, 80, util.make_scaled_noise(0.1,   1.2))
@@ -87,8 +93,8 @@ window.on_draw = function(seconds)
 
         -- sprite size, position
         local sw, sh = tree_sprite:get_size();
-        local sx = x * sw + ww // 2 - sw * tree_map.width  / 2
-        local sy = y * sh + wh // 2 - sh * tree_map.height / 2
+        local sx = x * sw + ww / 2 - sw * tree_map.width  / 2
+        local sy = y * sh + wh / 2 - sh * tree_map.height / 2
 
         -- if the mouse cursor is intersecting with this sprite, color it red
         if cursor_position and 

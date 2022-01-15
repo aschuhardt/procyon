@@ -50,22 +50,18 @@ jobs:
     - name: Checkout Submodules
       run: git submodule update --init --recursive
       
-    - name: Build Lua
-      run: |
-        mkdir -p $(realpath ${{env.LUA_BUILDDIR}}) && \
-        wget https://www.lua.org/ftp/lua-${{env.LUA_VERSION}}.tar.gz -O lua.tar.gz && \
-        tar -C $(realpath ${{env.LUA_BUILDDIR}}) -xvzf lua.tar.gz && \
-        make -C $(realpath ${{env.LUA_BUILDDIR}})/lua-${{env.LUA_VERSION}} -j mingw MYCFLAGS="-O3"
-        
+    - name: Install Lua/LuaJIT
+      uses: leafo/gh-actions-lua@v8.0.0
+      with:
+        luaVersion: "luajit-2.1.0-beta3"
+
     - name: Create Output Directory
       run: mkdir $(realpath ${{env.OUTPUT_DIR}})
       
     - name: Configure CMake
       run: |
-        LUA_ROOT=$(realpath ${{env.LUA_BUILDDIR}}/lua-${{env.LUA_VERSION}}/src) && \
         OUT_DIR=$(realpath ${{env.OUTPUT_DIR}}) && \
         cmake -B build -G "MSYS Makefiles" \
-        -DLua_ROOT=$LUA_ROOT \
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=$OUT_DIR \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$OUT_DIR \
         -DCMAKE_BUILD_TYPE=${{matrix.build-type}}

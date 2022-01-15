@@ -122,7 +122,7 @@ static void perform_draw(procy_state_t *const state, double seconds) {
     procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
     if (!window->high_fps) {
-      lua_gc(L, LUA_GCCOLLECT);
+      lua_gc(L, LUA_GCCOLLECT, 0);
     }
   }
 
@@ -142,7 +142,7 @@ static void handle_window_resized(procy_state_t *const state, int w, int h) {
                        lua_tostring(L, -1));
     }
 
-    lua_gc(L, LUA_GCCOLLECT);
+    lua_gc(L, LUA_GCCOLLECT, 0);
   }
 
   lua_pop(L, lua_gettop(L));
@@ -159,7 +159,7 @@ static void handle_window_loaded(procy_state_t *const state) {
                        lua_tostring(L, -1));
     }
 
-    lua_gc(L, LUA_GCCOLLECT);
+    lua_gc(L, LUA_GCCOLLECT, 0);
   }
 
   lua_pop(L, lua_gettop(L));
@@ -176,7 +176,7 @@ static void handle_window_unloaded(procy_state_t *const state) {
                        lua_tostring(L, -1));
     }
 
-    lua_gc(L, LUA_GCCOLLECT);
+    lua_gc(L, LUA_GCCOLLECT, 0);
   }
 
   lua_pop(L, lua_gettop(L));

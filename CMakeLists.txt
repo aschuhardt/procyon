@@ -48,6 +48,7 @@ target_include_directories(${SU_LIBRARY}
   ${STB_INCLUDE_DIR})
 target_link_libraries(${SU_LIBRARY} PRIVATE glad glfw)
 target_link_libraries(${SU_LIBRARY} PUBLIC log)
+target_compile_options(${SU_LIBRARY} PRIVATE -fPIC)
 
 add_library(${SU_LIBRARY_STATIC} STATIC ${SU_SOURCE})
 target_include_directories(${SU_LIBRARY_STATIC}

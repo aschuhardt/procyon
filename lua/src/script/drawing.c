@@ -199,10 +199,10 @@ static int draw_line(lua_State *L) {
 static int draw_polygon(lua_State *L) {
   lua_settop(L, 5);
 
-  int x = lua_tointeger(L, 1);
-  int y = lua_tointeger(L, 2);
-  float radius = lua_tonumber(L, 3);
-  int n = lua_tointeger(L, 4);
+  int x = (int)lua_tointeger(L, 1);
+  int y = (int)lua_tointeger(L, 2);
+  float radius = (float)lua_tonumber(L, 3);
+  int n = (int)lua_tointeger(L, 4);
 
   procy_color_t color = luaL_opt(L, get_color, 5, WHITE);
 
