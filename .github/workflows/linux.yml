@@ -26,6 +26,9 @@ jobs:
       uses: leafo/gh-actions-lua@v8.0.0
       with:
         luaVersion: "luajit-2.1.0-beta3"
+
+    - name: Add LuaJIT Symlink
+      run: ln -sf luajit-2.1.0-beta3 /home/runner/work/procyon/procyon/.lua/bin/luajit
       
     - name: Install Dependencies
       run: sudo apt-get install libc6-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libgl-dev
@@ -39,7 +42,6 @@ jobs:
     - name: Configure CMake
       run: |
         cmake -B ${{github.workspace}}/build \
-        -DLua_ROOT=.lua/ \
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
