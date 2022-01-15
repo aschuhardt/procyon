@@ -22,22 +22,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
-    - name: Install Lua
-      uses: leafo/gh-actions-lua@v8.0.0
-      with:
-        luaVersion: 5.2
-
+    - name: Install Dependencies
+      run: sudo apt-get install libc6-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libgl-dev liblua5.1.0-dev
+    
     - name: Install LuaJIT
       uses: leafo/gh-actions-lua@v8.0.0
       with:
-        luaVersion: "luajit-2.1.0-beta3"
+        luaVersion: "luajit-2.1.0-beta3"  
 
-    - name: Add LuaJIT Symlink
-      run: ln -sf luajit-2.1.0-beta3 /home/runner/work/procyon/procyon/.lua/bin/luajit
-      
-    - name: Install Dependencies
-      run: sudo apt-get install libc6-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libgl-dev
-      
     - name: Create Output Directory
       run: mkdir ${{env.OUTPUT_DIR}}
       
