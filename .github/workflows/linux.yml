@@ -23,7 +23,7 @@ jobs:
     - uses: actions/checkout@v2
     
     - name: Install Dependencies
-      run: sudo apt-get install libc6-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libgl-dev libluajit5.1-dev
+      run: sudo apt-get install libc6-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libgl-dev libluajit-5.1-dev
     
     - name: Create Output Directory
       run: mkdir ${{env.OUTPUT_DIR}}
