@@ -16,6 +16,7 @@
 #define TBL_COLOR "color"
 #define TBL_SPRITESHEET "spritesheet"
 #define TBL_SPRITE_META "procyon_sprite_meta"
+#define TBL_SPRITESHEET_META "procyon_spritesheet_meta"
 
 #define FUNC_DRAWSTRING "string"
 #define FUNC_DRAWCHAR "char"
@@ -337,6 +338,22 @@ static int create_sprite(lua_State *L) {
   return 1;
 }
 
+static void push_spritesheet_table(lua_State *L,
+                                   procy_sprite_shader_program_t *shader) {
+  lua_newtable(L);
+
+  lua_pushlightuserdata(L, shader);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_PTR);
+
+  lua_pushinteger(L, shader->texture_w);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_WIDTH);
+
+  lua_pushinteger(L, shader->texture_h);
+  lua_setfield(L, -2, FIELD_SPRITESHEET_HEIGHT);
+
+  luaL_setmetatable(L, TBL_SPRITESHEET_META);
+}
+
 static int load_spritesheet_raw(lua_State *L) {
   // accepts a table
   // the table has a "buffer" field and a "length" field
@@ -361,16 +378,7 @@ static int load_spritesheet_raw(lua_State *L) {
     return 0;
   }
 
-  lua_newtable(L);
-
-  lua_pushlightuserdata(L, shader);
-  lua_setfield(L, -2, FIELD_SPRITESHEET_PTR);
-
-  lua_pushinteger(L, shader->texture_w);
-  lua_setfield(L, -2, FIELD_SPRITESHEET_WIDTH);
-
-  lua_pushinteger(L, shader->texture_h);
-  lua_setfield(L, -2, FIELD_SPRITESHEET_HEIGHT);
+  push_spritesheet_table(L, shader);
 
   return 1;
 }
@@ -393,35 +401,15 @@ static int load_spritesheet(lua_State *L) {
     return 0;
   }
 
-  lua_newtable(L);
-
-  lua_pushlightuserdata(L, shader);
-  lua_setfield(L, -2, FIELD_SPRITESHEET_PTR);
-
-  lua_pushinteger(L, shader->texture_w);
-  lua_setfield(L, -2, FIELD_SPRITESHEET_WIDTH);
-
-  lua_pushinteger(L, shader->texture_h);
-  lua_setfield(L, -2, FIELD_SPRITESHEET_HEIGHT);
-
-  lua_pushcfunction(L, create_sprite);
-  lua_setfield(L, -2, FUNC_CREATESPRITE);
+  push_spritesheet_table(L, shader);
 
   return 1;
 }
 
-static void add_spritesheet(lua_State *L) {
-  luaL_Reg methods[] = {{FUNC_LOADSPRITESHEET, load_spritesheet}, {NULL, NULL}};
-  luaL_newlib(L, methods);
-  lua_setglobal(L, TBL_SPRITESHEET);
-
-  // register metatable for sprite garbage collection
+static void add_sprite(lua_State *L) {
+  // register sprite GC method
   luaL_Reg metamethods[] = {{"__gc", destroy_sprite}, {NULL, NULL}};
-
-  lua_newtable(L);  // metatable
-
-  lua_pushcfunction(L, destroy_sprite);
-  lua_setfield(L, -2, "__gc");
+  luaL_newlib(L, metamethods);
 
   // index method table with sprite methods
   luaL_Reg index[] = {{FUNC_SPRITE_GETSIZE, get_sprite_size},
@@ -431,6 +419,21 @@ static void add_spritesheet(lua_State *L) {
   lua_setfield(L, -2, "__index");
 
   lua_setfield(L, LUA_REGISTRYINDEX, TBL_SPRITE_META);
+}
+
+static void add_spritesheet(lua_State *L) {
+  luaL_Reg methods[] = {{FUNC_LOADSPRITESHEET, load_spritesheet}, {NULL, NULL}};
+  luaL_newlib(L, methods);
+  lua_setglobal(L, TBL_SPRITESHEET);
+
+  lua_newtable(L);
+
+  // index method table with spritesheet methods
+  luaL_Reg index[] = {{FUNC_CREATESPRITE, create_sprite}, {NULL, NULL}};
+  luaL_newlib(L, index);
+  lua_setfield(L, -2, "__index");
+
+  lua_setfield(L, LUA_REGISTRYINDEX, TBL_SPRITESHEET_META);
 }
 
 static void add_draw_ops(lua_State *L) {
@@ -458,4 +461,5 @@ void add_drawing(lua_State *L, script_env_t *env) {
   add_draw_ops(L);
   add_color(L);
   add_spritesheet(L);
+  add_sprite(L);
 }
