@@ -1,5 +1,6 @@
 #include "script.h"
 
+#include <lauxlib.h>
 #include <libgen.h>
 #include <log.h>
 #include <lua.h>
