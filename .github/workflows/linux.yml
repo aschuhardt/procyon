@@ -23,13 +23,8 @@ jobs:
     - uses: actions/checkout@v2
     
     - name: Install Dependencies
-      run: sudo apt-get install libc6-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libgl-dev liblua5.2-dev
+      run: sudo apt-get install libc6-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxext-dev libgl-dev libluajit5.1-dev
     
-    - name: Install LuaJIT
-      uses: leafo/gh-actions-lua@v8.0.0
-      with:
-        luaVersion: "luajit-2.1.0-beta3"  
-
     - name: Create Output Directory
       run: mkdir ${{env.OUTPUT_DIR}}
       
