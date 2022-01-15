@@ -10,9 +10,3 @@
 [submodule "lib/stb"]
 	path = lib/stb
 	url = https://github.com/nothings/stb.git
-[submodule "lib/luajit-cmake"]
-	path = lib/luajit-cmake
-	url = https://github.com/zhaozg/luajit-cmake.git
-[submodule "lib/luajit"]
-	path = lib/luajit
-	url = https://github.com/LuaJIT/LuaJIT.git
