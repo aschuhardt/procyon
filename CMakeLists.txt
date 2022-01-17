@@ -5,7 +5,10 @@ project(procyon-engine VERSION 0.1.0 LANGUAGES C)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
+set(CMAKE_C_FLAGS_DEBUG 
+  "${CMAKE_C_FLAGS_DEBUG} -ggdb")
+set(CMAKE_C_FLAGS_RELEASE 
+  "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -Os -fmerge-all-constants -fdata-sections")
 
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type provided; defaulting to Release")

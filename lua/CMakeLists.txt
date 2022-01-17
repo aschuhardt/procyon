@@ -14,7 +14,7 @@ set(SU_LUA_SOURCE
 
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
 set(CMAKE_C_FLAGS_RELEASE 
-  "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -O2 -fmerge-all-constants -fdata-sections")
+  "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -Os -fmerge-all-constants -fdata-sections")
 
 find_package(PkgConfig)
 if (PKG_CONFIG_FOUND)
