@@ -119,14 +119,29 @@ A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit 
 
 #### Functions
 - `plane.from(w, h, value)` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to `value`.  The dimensions are made accessible via the `width` and `height` fields in the resulting table.
-- `plane.from(w, h, function(x, y))` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to the value returned by the function `func`, which is passed arguments `x, y` corresponding to the index being initialized.
+- `plane.from(w, h, function(x, y, cur))` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to the value returned by the function `func`, which is passed arguments `x, y` corresponding to the index being initialized.  `func` is also passed a third value, `cur`, which is always zero and can be ignored.
 - `plane:at(x, y)` - Returns the value of the element at the index `(X, Y)`.
 - `plane:set(x, y, n)` - Sets the value of the element in the plane at index `(X, Y)` to `n`.
-- `plane:set(x, y, str)` - Sets the values of elements starting at `(X, Y)` and continuing on to `(X + 1, Y), ...` for each character in the provided ASCII string.
 - `plane:fill(n)` - Sets the value of each element in the plane to `n`.
 - `plane:fill(function(x, y, cur))` - Sets the value of each element in the plane to the return value of the provided function, to which is passed the current position as well as the current value of each element in the plane.
 - `plane:foreach(function(x, y, cur))` - An alias for `plane:fill` intended to be passed a function that doesn't return anything.
 - `plane:sub(x, y, w, h)` - Returns a new plane with dimensions `w` and `h`, having its values copied from the plane on which this method is called starting at position `(X, Y)`.  In other words, this returns a copied region from within the target.
+- `plane:mask4(x, y [, filter])` - Returns an integer representing a four-directional bitmask of elements surrounding `(X, Y)`, using an optional filter mask.
+  - These bitmasks are useful for rendering tilesets, as the resulting bitmasks can be used as keys or indices for a given tile or tiles.
+  - The layout is as follows:
+  ```
+      1
+    2   8
+      4
+  ```
+  - Example: if there are neighbors to the north (1) and east (8), then the resulting bitmask is 9 (i.e. 1 + 8).
+- `plane:mask8(x, y [, filter])` - Returns an integer representing an eight-directional bitmask of elements surrounding `(X, Y)`, using an optional filter mask.
+  - The layout is as follows:
+  ```
+    1   128  64
+    2        32
+    4   8    16
+  ```
 
 ---
 
