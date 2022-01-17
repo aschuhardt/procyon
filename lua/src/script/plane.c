@@ -23,7 +23,7 @@ static int plane_sub(lua_State *L);
 static int plane_destroy_buffer(lua_State *L) {
   lua_getfield(L, 1, FIELD_PLANE_PTR);
   if (!lua_isnoneornil(L, -1)) {
-    unsigned char *buffer = (unsigned char *)lua_touserdata(L, -1);
+    int *buffer = (int *)lua_touserdata(L, -1);
     if (buffer != NULL) {
       free(buffer);
     }
@@ -33,7 +33,7 @@ static int plane_destroy_buffer(lua_State *L) {
 }
 
 static bool apply_func_to_plane(lua_State *L, int func_index, int width,
-                                int height, unsigned char *const buffer) {
+                                int height, int *const buffer) {
   for (int x = 0; x < width; ++x) {
     for (int y = 0; y < height; ++y) {
       // push a copy of the function to be called, since lua_pcall will pop it
@@ -50,7 +50,7 @@ static bool apply_func_to_plane(lua_State *L, int func_index, int width,
       }
 
       // verify that we received a value return value
-      buffer[y * width + x] = luaL_optinteger(L, -1, 0) % (UCHAR_MAX + 1);
+      buffer[y * width + x] = luaL_optinteger(L, -1, 0);
 
       // clear the return value off the stack
       lua_pop(L, 1);
@@ -60,8 +60,7 @@ static bool apply_func_to_plane(lua_State *L, int func_index, int width,
   return true;
 }
 
-static unsigned char *get_plane_buffer(lua_State *L, int index, int *width,
-                                       int *height) {
+static int *get_plane_buffer(lua_State *L, int index, int *width, int *height) {
   if (width != NULL) {
     lua_getfield(L, index, FIELD_PLANE_WIDTH);
     *width = luaL_optinteger(L, -1, -1);
@@ -79,7 +78,7 @@ static unsigned char *get_plane_buffer(lua_State *L, int index, int *width,
     return NULL;
   }
 
-  unsigned char *buffer = (unsigned char *)lua_touserdata(L, -1);
+  int *buffer = (int *)lua_touserdata(L, -1);
   lua_pop(L, 1);
 
   return buffer;
@@ -93,7 +92,7 @@ static int plane_at(lua_State *L) {
 
   int width;
   int height;
-  unsigned char *buffer = get_plane_buffer(L, 1, &width, &height);
+  int *buffer = get_plane_buffer(L, 1, &width, &height);
   if (x < 0 || x > width || y < 0 || y > height) {
     LOG_SCRIPT_ERROR(L, "Plane index (%d, %d) is out-of-bounds", x, y);
     return 0;
@@ -113,18 +112,18 @@ static int plane_fill(lua_State *L) {
 
   int width;
   int height;
-  unsigned char *buffer = get_plane_buffer(L, 1, &width, &height);
+  int *buffer = get_plane_buffer(L, 1, &width, &height);
   size_t buffer_len = width * height;
 
   if (lua_isnumber(L, 2)) {
-    int value = lua_tointeger(L, 2) % (UCHAR_MAX + 1);
+    int value = lua_tointeger(L, 2);
     memset(buffer, value, buffer_len);
   } else if (lua_isfunction(L, 2)) {
-    for (long long i = 0; i < buffer_len; ++i) {
+    for (size_t i = 0; i < buffer_len; ++i) {
       lua_pushvalue(L, 2);
       lua_pushinteger(L, i % width);
       lua_pushinteger(L, i / width);
-      lua_pushinteger(L, (int)buffer[i]);
+      lua_pushinteger(L, buffer[i]);
       if (lua_pcall(L, 3, LUA_MULTRET, 0) != LUA_OK) {
         LOG_SCRIPT_ERROR(L, "Plane fill/foreach function failed: %s",
                          lua_tostring(L, -1));
@@ -132,7 +131,7 @@ static int plane_fill(lua_State *L) {
       }
 
       if (lua_isnumber(L, -1)) {
-        buffer[i] = luaL_checkinteger(L, -1) % (UCHAR_MAX + 1);
+        buffer[i] = luaL_checkinteger(L, -1);
       }
 
       if (lua_gettop(L) == 3) {
@@ -151,12 +150,12 @@ static int plane_fill(lua_State *L) {
 static int plane_set(lua_State *L) {
   lua_settop(L, 4);
 
-  int x = (int)luaL_checkinteger(L, 2);
-  int y = (int)luaL_checkinteger(L, 3);
+  int x = luaL_checkinteger(L, 2);
+  int y = luaL_checkinteger(L, 3);
 
   int width;
   int height;
-  unsigned char *buffer = get_plane_buffer(L, 1, &width, &height);
+  int *buffer = get_plane_buffer(L, 1, &width, &height);
   if (buffer == NULL) {
     LOG_SCRIPT_ERROR(L, "Invalid plane buffer at %s", lua_tostring(L, 1));
     return 0;
@@ -167,23 +166,22 @@ static int plane_set(lua_State *L) {
     return 0;
   }
 
-  unsigned char *cursor = &buffer[y * width + x];
+  int *cursor = &buffer[y * width + x];
   if (lua_isnumber(L, 4)) {
-    *cursor = (unsigned char)(lua_tointeger(L, 4) % (UCHAR_MAX + 1));
+    *cursor = lua_tointeger(L, 4);
   } else if (lua_isstring(L, 4)) {
     // store each byte in the string consecutively
     size_t len = 0;
     const char *text = lua_tolstring(L, 4, &len);
     for (size_t i = 0; i < len && cursor - buffer < width * height; ++i) {
-      *(cursor++) = (unsigned char)text[i];
+      *(cursor++) = (int)text[i];
     }
   }
 
   return 0;
 }
 
-static unsigned char *push_new_plane(int width, int height, size_t *len,
-                                     lua_State *L) {
+static int *push_new_plane(int width, int height, size_t *len, lua_State *L) {
   // ensure dimensions are sane
   if (width <= 0 || height <= 0) {
     LOG_SCRIPT_ERROR(L, "Invalid plane dimensions (%d, %d)", width, height);
@@ -192,7 +190,7 @@ static unsigned char *push_new_plane(int width, int height, size_t *len,
 
   // attempt to allocate a zeroed-out buffer using those dimensions
   size_t buffer_len = (size_t)width * (size_t)height;
-  unsigned char *buffer = calloc(buffer_len, sizeof(unsigned char));
+  int *buffer = calloc(buffer_len, sizeof(int));
   if (buffer == NULL) {
     // if something went wrong, log a stack trace and bail
     LOG_SCRIPT_ERROR(L,
@@ -232,15 +230,13 @@ static int plane_sub(lua_State *L) {
 
   int source_width = 0;
   int source_height = 0;
-  unsigned char *source_buffer =
-      get_plane_buffer(L, 1, &source_width, &source_height);
+  int *source_buffer = get_plane_buffer(L, 1, &source_width, &source_height);
 
   if (source_buffer == NULL) {
     return 0;
   }
 
-  unsigned char *target_buffer =
-      push_new_plane(target_width, target_height, NULL, L);
+  int *target_buffer = push_new_plane(target_width, target_height, NULL, L);
 
   if (target_buffer == NULL) {
     return 0;
@@ -274,7 +270,7 @@ static int plane_from(lua_State *L) {
   int height = lua_tointeger(L, 2);
 
   size_t buffer_len;
-  unsigned char *buffer = push_new_plane(width, height, &buffer_len, L);
+  int *buffer = push_new_plane(width, height, &buffer_len, L);
   if (buffer == NULL) {
     return 0;
   }

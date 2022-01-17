@@ -115,7 +115,7 @@ Continuous noise is useful for all kinds of things.
 
 ### Plane
 
-A plane is a 2D bitmap data structure.  Elements in the plane consist of byte values, and are accessed by an (X, Y) index.  Planes have a fixed width and height which are exposed to the developer.
+A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit integer values, and are accessed by an (X, Y) index.  Planes have a fixed width and height which are exposed to the developer.
 
 #### Functions
 - `plane.from(w, h, value)` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to `value`.  The dimensions are made accessible via the `width` and `height` fields in the resulting table.
