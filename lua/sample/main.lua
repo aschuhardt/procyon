@@ -90,7 +90,7 @@ window.on_draw = function(seconds)
         local tree_color = pick_color(x, y)
         local bg_color = tree_background
 
-        if tree_map:mask8(x, y) < 10 then
+        if tree_map:mask4(x, y) < 15 then
           bg_color = yellow
         end
 
