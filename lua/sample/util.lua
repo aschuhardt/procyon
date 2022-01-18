@@ -21,4 +21,16 @@ function util.make_scaled_noise(scale, offset)
   end
 end
 
+-- returns a function that will return `value` (or 0 if value is nil) if 
+-- the value of the element at X, Y is less than the provided threshold
+function util.minimum(threshold, value)
+  return function(x, y, cur)
+    if cur >= threshold then
+      return cur
+    else
+      return value or 0
+    end
+  end
+end
+
 return util

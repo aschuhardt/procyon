@@ -42,22 +42,23 @@ procy_color_t get_color(lua_State *L, int index);
 #define PROCY_SCRIPT_PATH_SEPARATOR '/'
 #endif
 
-#define LOG_SCRIPT(L, fmt, type, ...)                                         \
-  {                                                                           \
-    lua_Debug debug;                                                          \
-    if (lua_getstack(L, 1, &debug) != 0 &&                                    \
-        lua_getinfo(L, "nSl", &debug) != 0) {                                 \
-      char *filename =                                                        \
-          strrchr(debug.short_src, PROCY_SCRIPT_PATH_SEPARATOR) + 1;          \
-      if (debug.name == NULL) {                                               \
-        log_##type("[%s:%d] " fmt, filename, debug.currentline, __VA_ARGS__); \
-      } else {                                                                \
-        log_##type("[%s:%d (%s)] " fmt, filename, debug.currentline,          \
-                   debug.name, __VA_ARGS__);                                  \
-      }                                                                       \
-    } else {                                                                  \
-      log_##type(fmt, __VA_ARGS__);                                           \
-    }                                                                         \
+#define LOG_SCRIPT(L, fmt, type, ...)                                \
+  {                                                                  \
+    lua_Debug debug;                                                 \
+    if (lua_getstack(L, 1, &debug) != 0 &&                           \
+        lua_getinfo(L, "nSl", &debug) != 0) {                        \
+      char *filename =                                               \
+          strrchr(debug.short_src, PROCY_SCRIPT_PATH_SEPARATOR) + 1; \
+      if (debug.name == NULL) {                                      \
+        log_##type("[%s:%d] " fmt, filename, debug.currentline,      \
+                   ##__VA_ARGS__);                                   \
+      } else {                                                       \
+        log_##type("[%s:%d (%s)] " fmt, filename, debug.currentline, \
+                   debug.name, ##__VA_ARGS__);                       \
+      }                                                              \
+    } else {                                                         \
+      log_##type(fmt, ##__VA_ARGS__);                                \
+    }                                                                \
   }
 
 #define LOG_SCRIPT_ERROR(L, fmt, ...) LOG_SCRIPT(L, fmt, error, ##__VA_ARGS__)

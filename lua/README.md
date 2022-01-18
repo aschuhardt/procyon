@@ -122,8 +122,8 @@ A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit 
 - `plane.from(w, h, function(x, y, cur))` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to the value returned by the function `func`, which is passed arguments `x, y` corresponding to the index being initialized.  `func` is also passed a third value, `cur`, which is always zero and can be ignored.
 - `plane:at(x, y)` - Returns the value of the element at the index `(X, Y)`.
 - `plane:set(x, y, n)` - Sets the value of the element in the plane at index `(X, Y)` to `n`.
-- `plane:fill(n)` - Sets the value of each element in the plane to `n`.
-- `plane:fill(function(x, y, cur))` - Sets the value of each element in the plane to the return value of the provided function, to which is passed the current position as well as the current value of each element in the plane.
+- `plane:fill(n)` - Returns a reference to the plane. Sets the value of each element in the plane to `n`.
+- `plane:fill(function(x, y, cur))` - Returns a reference to the plane. Sets the value of each element in the plane to the return value of the provided function, to which is passed the current position as well as the current value of each element in the plane.
 - `plane:foreach(function(x, y, cur))` - An alias for `plane:fill` intended to be passed a function that doesn't return anything.
 - `plane:sub(x, y, w, h)` - Returns a new plane with dimensions `w` and `h`, having its values copied from the plane on which this method is called starting at position `(X, Y)`.  In other words, this returns a copied region from within the target.
 - `plane:mask4(x, y [, filter])` - Returns an integer representing a four-directional bitmask of elements surrounding `(X, Y)`, using an optional filter mask.
@@ -142,6 +142,10 @@ A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit 
     2        32
     4   8    16
   ```
+- `plane:foreach_mask4(function(x, y, mask) [, filter])` - Same as `plane:foreach` but passes the four-direction bitmask to the function call instead of the element value.  See `plane:mask4`.
+- `plane:foreach_mask8(function(x, y, mask) [, filter])` - Same as `plane:foreach` but passes the eight-direction bitmask to the function call instead of the element value.  See `plane:mask8`.
+- `plane:copy()` - Returns a copy of the plane.
+- `plane:blit(x, y, src)` - Copies or 'blits' the contents of the plane `src` onto the target plane at position `(X, Y)`. Useful for 'stamping' a pre-defined pattern onto a plane, for example.
 
 ---
 

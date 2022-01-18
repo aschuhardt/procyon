@@ -18,6 +18,7 @@ window.on_load = function()
   color_map  = plane.from(80, 80, util.make_scaled_noise(0.1,   1.2))
   sprite_map = plane.from(80, 80, util.make_scaled_noise(0.3,  -10.0))
   tree_map   = plane.from(80, 80, util.make_scaled_noise(0.08, -0.3))
+    :foreach(util.minimum(128))
   ocean_map  = plane.from(80, 80, util.make_scaled_noise(0.15,  7.1))
 
   -- load a spritesheet from a PNG file
@@ -53,8 +54,6 @@ window.on_load = function()
     util.hex_to_color("#374e4a"),
     util.hex_to_color("#239063")
   }
-
-  window.set_color(water_colors.base)
 end
 
 
@@ -84,12 +83,16 @@ window.on_draw = function(seconds)
   draw.set_layer(2) -- draw behind the text (higher layer values are further back)
 
   -- iterate over each value in the bitmap, drawing tree sprites on most of them 
-  local threshold = 128 
   tree_map:foreach(
     function(x, y, value)
-      if value > threshold then
+      if value > 0 then
         local tree_sprite = pick_sprite(x, y)
         local tree_color = pick_color(x, y)
+        local bg_color = tree_background
+
+        if tree_map:mask8(x, y) < 10 then
+          bg_color = yellow
+        end
 
         -- sprite size, position
         local sw, sh = tree_sprite:get_size();
@@ -110,7 +113,7 @@ window.on_draw = function(seconds)
           tree_color = yellow
         end
 
-        tree_sprite:draw(sx, sy, tree_color, tree_background)
+        tree_sprite:draw(sx, sy, tree_color, bg_color)
       end
     end)
 end
