@@ -12,6 +12,7 @@ set(SU_LUA_SOURCE
   src/script/plane.c
   src/script/environment.c)
 
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mpopcnt")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
 set(CMAKE_C_FLAGS_RELEASE 
   "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -Os -fmerge-all-constants -fdata-sections")

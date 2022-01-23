@@ -153,6 +153,7 @@ A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit 
 
 #### Functions
 - `script.run(contents)` - Returns nothing.  Runs the script value in the global environment.  Use caution when executing arbitrary code.  TODO: create a sandboxed environment for this.
+- `util.popcount(value)` - Returns the number of '1' bits in the integer parameter.
 - `log.info(contents)`
 - `log.error(contents)`
 - `log.warn(contents)`

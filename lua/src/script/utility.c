@@ -6,6 +6,7 @@
 
 #define TBL_LOG "log"
 #define TBL_SCRIPT "script"
+#define TBL_UTIL "util"
 
 #define FUNC_LOG_INFO "info"
 #define FUNC_LOG_ERROR "error"
@@ -13,6 +14,15 @@
 #define FUNC_LOG_DEBUG "debug"
 
 #define FUNC_SCRIPT_RUN "run"
+
+#define FUNC_UTIL_POPCOUNT "popcount"
+
+static int popcount(lua_State *L) {
+  lua_settop(L, 1);
+  int value = luaL_checkinteger(L, 1);
+  lua_pushinteger(L, __builtin_popcount(value));
+  return 1;
+}
 
 static int write_log_info(lua_State *L) {
   log_info("%s", luaL_checkstring(L, 1));
@@ -40,6 +50,12 @@ static int run_script(lua_State *L) {
   return 0;
 }
 
+static void add_util(lua_State *L) {
+  luaL_Reg methods[] = {{FUNC_UTIL_POPCOUNT, popcount}, {NULL, NULL}};
+  luaL_newlib(L, methods);
+  lua_setglobal(L, TBL_UTIL);
+}
+
 static void add_logging(lua_State *L) {
   luaL_Reg methods[] = {{FUNC_LOG_INFO, write_log_info},
                         {FUNC_LOG_ERROR, write_log_error},
@@ -59,4 +75,5 @@ static void add_script(lua_State *L) {
 void add_utilities(lua_State *L) {
   add_logging(L);
   add_script(L);
+  add_util(L);
 }
