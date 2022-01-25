@@ -16,6 +16,10 @@
 
 // #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "color.h"
 #include "drawing.h"
 #include "keys.h"
@@ -28,6 +32,10 @@
 // re-export logging library as a part of this header
 #include <log.h>
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif
