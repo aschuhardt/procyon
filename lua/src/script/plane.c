@@ -14,15 +14,13 @@
 #define FUNC_PLANE_AT "at"
 #define FUNC_PLANE_SET "set"
 #define FUNC_PLANE_SUB "sub"
-#define FUNC_PLANE_MASK4 "mask4"
-#define FUNC_PLANE_MASK8 "mask8"
-#define FUNC_PLANE_FOREACH_MASK4 "foreach_mask4"
-#define FUNC_PLANE_FOREACH_MASK8 "foreach_mask8"
 #define FUNC_PLANE_COPY "copy"
 #define FUNC_PLANE_BLIT "blit"
 #define FIELD_PLANE_WIDTH "width"
 #define FIELD_PLANE_HEIGHT "height"
 #define FIELD_PLANE_PTR "ptr"
+
+#define DEFAULT_MASK_FILTER (~0)
 
 static int plane_sub(lua_State *L);
 
@@ -38,9 +36,14 @@ static int plane_destroy_buffer(lua_State *L) {
   return 0;
 }
 
-static int try_get(int x, int y, int width, int height, int *const buffer) {
+static inline int try_get(int x, int y, int width, int height,
+                          int *const buffer) {
   return (x >= 0 && x < width && y >= 0 && y < height) ? buffer[y * width + x]
                                                        : 0;
+}
+
+static inline int get(int x, int y, int width, int *const buffer) {
+  return buffer[y * width + x];
 }
 
 static bool apply_func_to_plane(lua_State *L, int func_index, int width,
@@ -74,13 +77,13 @@ static bool apply_func_to_plane(lua_State *L, int func_index, int width,
 static int *get_plane_buffer(lua_State *L, int index, int *width, int *height) {
   if (width != NULL) {
     lua_getfield(L, index, FIELD_PLANE_WIDTH);
-    *width = luaL_optinteger(L, -1, -1);
+    *width = luaL_checkinteger(L, -1);
     lua_pop(L, 1);
   }
 
   if (height != NULL) {
     lua_getfield(L, index, FIELD_PLANE_HEIGHT);
-    *height = luaL_optinteger(L, -1, -1);
+    *height = luaL_checkinteger(L, -1);
     lua_pop(L, 1);
   }
 
@@ -244,185 +247,6 @@ static int plane_sub(lua_State *L) {
   return 1;
 }
 
-static int compute_mask4(int x, int y, int width, int height, int filter,
-                         int *const buffer) {
-  int mask = 0;
-  mask |= (try_get(x, y - 1, width, height, buffer) & filter) ? 1 : 0;
-  mask |= (try_get(x - 1, y, width, height, buffer) & filter) ? 1 << 1 : 0;
-  mask |= (try_get(x, y + 1, width, height, buffer) & filter) ? 1 << 2 : 0;
-  mask |= (try_get(x + 1, y, width, height, buffer) & filter) ? 1 << 3 : 0;
-
-  return mask;
-}
-
-static int compute_mask8(int x, int y, int width, int height, int filter,
-                         int *const buffer) {
-  int mask = 0;
-
-  // clang-format off
-  
-  mask |= (try_get(x - 1, y - 1, width, height, buffer) & filter)   ? 1 : 0;
-  mask |= (try_get(x - 1, y, width, height, buffer) & filter)       ? 1 << 1 : 0;
-  mask |= (try_get(x - 1, y + 1, width, height, buffer) & filter)   ? 1 << 2 : 0;
-  mask |= (try_get(x, y + 1, width, height, buffer) & filter)       ? 1 << 3 : 0;
-  mask |= (try_get(x + 1, y + 1, width, height, buffer) & filter)   ? 1 << 4 : 0;
-  mask |= (try_get(x + 1, y, width, height, buffer) & filter)       ? 1 << 5 : 0;
-  mask |= (try_get(x + 1, y - 1, width, height, buffer) & filter)   ? 1 << 6 : 0;
-  mask |= (try_get(x, y - 1, width, height, buffer) & filter)       ? 1 << 7 : 0;
-
-  // clang-format on
-
-  return mask;
-}
-
-// plane:mask4(x, y, filter)
-//
-//       1
-//     2 c 8
-//       4
-static int plane_mask_4_directions(lua_State *L) {
-  lua_settop(L, 4);
-
-  int x = (int)luaL_checkinteger(L, 2);
-  int y = (int)luaL_checkinteger(L, 3);
-  int filter = (int)luaL_optinteger(L, 4, 0xFFFFFFFF);
-
-  int width = 0;
-  int height = 0;
-  int *buffer = get_plane_buffer(L, 1, &width, &height);
-  if (buffer == NULL) {
-    LOG_SCRIPT_ERROR(L, "Invalid plane buffer");
-    return 0;
-  }
-
-  lua_pushinteger(L, compute_mask4(x, y, width, height, filter, buffer));
-
-  lua_insert(L, 1);
-  lua_settop(L, 1);
-
-  return 1;
-}
-
-// plane:mask8(x, y, filter)
-//
-//     1   128  64
-//     2   c    32
-//     4   8    16
-static int plane_mask_8_directions(lua_State *L) {
-  lua_settop(L, 4);
-
-  int x = (int)luaL_checkinteger(L, 2);
-  int y = (int)luaL_checkinteger(L, 3);
-  int filter = (int)luaL_optinteger(L, 4, 0xFFFFFFFF);
-
-  int width = 0;
-  int height = 0;
-  int *buffer = get_plane_buffer(L, 1, &width, &height);
-  if (buffer == NULL) {
-    LOG_SCRIPT_ERROR(L, "Invalid plane buffer");
-    return 0;
-  }
-
-  lua_pushinteger(L, compute_mask4(x, y, width, height, filter, buffer));
-
-  lua_insert(L, 1);
-  lua_settop(L, 1);
-
-  return 1;
-}
-
-// plane:foreach_mask4(func(x, y mask), filter)
-static int plane_foreach_mask4(lua_State *L) {
-  lua_settop(L, 3);
-
-  int filter = (int)luaL_optinteger(L, 3, 0xFFFFFFFF);
-
-  int width = 0;
-  int height = 0;
-  int *buffer = get_plane_buffer(L, 1, &width, &height);
-  if (buffer == NULL) {
-    LOG_SCRIPT_ERROR(L, "Invalid plane buffer");
-    return 0;
-  }
-
-  if (!lua_isfunction(L, 2)) {
-    LOG_SCRIPT_ERROR(L, "Expected a function argument at position 2");
-    return 0;
-  }
-
-  for (size_t i = 0; i < (size_t)(width * height); ++i) {
-    int x = (int)(i % width);
-    int y = (int)(i / width);
-    int mask = compute_mask4(x, y, width, height, filter, buffer);
-
-    lua_pushvalue(L, 2);
-    lua_pushinteger(L, x);
-    lua_pushinteger(L, y);
-    lua_pushinteger(L, mask);
-
-    if (lua_pcall(L, 3, 1, 0) != LUA_OK) {
-      LOG_SCRIPT_ERROR(L, "%s", lua_tostring(L, -1));
-      return 0;
-    }
-
-    if (lua_isnumber(L, -1)) {
-      buffer[i] = (int)lua_tointeger(L, -1);
-    }
-
-    lua_pop(L, 1);
-  }
-
-  lua_settop(L, 1);
-
-  return 1;
-}
-
-// plane:foreach_mask8(func(x, y mask), filter)
-static int plane_foreach_mask8(lua_State *L) {
-  lua_settop(L, 3);
-
-  int filter = (int)luaL_optinteger(L, 3, 0xFFFFFFFF);
-
-  int width = 0;
-  int height = 0;
-  int *buffer = get_plane_buffer(L, 1, &width, &height);
-  if (buffer == NULL) {
-    LOG_SCRIPT_ERROR(L, "Invalid plane buffer");
-    return 0;
-  }
-
-  if (!lua_isfunction(L, 2)) {
-    LOG_SCRIPT_ERROR(L, "Expected a function argument at position 2");
-    return 0;
-  }
-
-  for (size_t i = 0; i < (size_t)(width * height); ++i) {
-    int x = (int)(i % width);
-    int y = (int)(i / width);
-    int mask = compute_mask8(x, y, width, height, filter, buffer);
-
-    lua_pushvalue(L, 2);
-    lua_pushinteger(L, x);
-    lua_pushinteger(L, y);
-    lua_pushinteger(L, mask);
-
-    if (lua_pcall(L, 3, 1, 0) != LUA_OK) {
-      LOG_SCRIPT_ERROR(L, "%s", lua_tostring(L, -1));
-      return 0;
-    }
-
-    if (lua_isnumber(L, -1)) {
-      buffer[i] = (int)lua_tointeger(L, -1);
-    }
-
-    lua_pop(L, 1);
-  }
-
-  lua_settop(L, 1);
-
-  return 1;
-}
-
 // plane:copy()
 static int plane_copy(lua_State *L) {
   lua_settop(L, 2);
@@ -530,18 +354,11 @@ void add_plane(lua_State *L) {
   // initialize metatable
   luaL_Reg metamethods[] = {{"__gc", plane_destroy_buffer}, {NULL, NULL}};
   luaL_newlib(L, metamethods);
-  luaL_Reg index_methods[] = {{FUNC_PLANE_AT, plane_at},
-                              {FUNC_PLANE_SET, plane_set},
-                              {FUNC_PLANE_FILL, plane_fill},
-                              {FUNC_PLANE_FOREACH, plane_fill},
-                              {FUNC_PLANE_SUB, plane_sub},
-                              {FUNC_PLANE_MASK4, plane_mask_4_directions},
-                              {FUNC_PLANE_MASK8, plane_mask_8_directions},
-                              {FUNC_PLANE_FOREACH_MASK4, plane_foreach_mask4},
-                              {FUNC_PLANE_FOREACH_MASK8, plane_foreach_mask8},
-                              {FUNC_PLANE_COPY, plane_copy},
-                              {FUNC_PLANE_BLIT, plane_blit},
-                              {NULL, NULL}};
+  luaL_Reg index_methods[] = {
+      {FUNC_PLANE_AT, plane_at},     {FUNC_PLANE_SET, plane_set},
+      {FUNC_PLANE_FILL, plane_fill}, {FUNC_PLANE_FOREACH, plane_fill},
+      {FUNC_PLANE_SUB, plane_sub},   {FUNC_PLANE_COPY, plane_copy},
+      {FUNC_PLANE_BLIT, plane_blit}, {NULL, NULL}};
   luaL_newlib(L, index_methods);
   lua_setfield(L, -2, "__index");
   lua_setfield(L, LUA_REGISTRYINDEX, TBL_PLANE_META);

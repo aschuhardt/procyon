@@ -90,10 +90,6 @@ window.on_draw = function(seconds)
         local tree_color = pick_color(x, y)
         local bg_color = tree_background
 
-        if tree_map:mask4(x, y) < 15 then
-          bg_color = yellow
-        end
-
         -- sprite size, position
         local sw, sh = tree_sprite:get_size();
         local sx = x * sw + ww / 2 - sw * tree_map.width  / 2
