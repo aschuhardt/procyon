@@ -102,12 +102,8 @@ static int set_window_title(lua_State *L) {
 static void perform_draw(procy_state_t *const state, double seconds) {
   lua_State *L = ((script_env_t *)state->data)->L;
 
-  lua_getglobal(L, TBL_WINDOW);
-  if (lua_isnoneornil(L, -1)) {
-    log_warn("on_draw was called before the window table was initialized");
-    return;
-  }
-
+  push_library_table(L);
+  lua_getfield(L, -1, TBL_WINDOW);
   lua_getfield(L, -1, FUNC_ON_DRAW);
   if (lua_isfunction(L, -1)) {
     lua_pushnumber(L, seconds);
@@ -132,7 +128,8 @@ static void perform_draw(procy_state_t *const state, double seconds) {
 static void handle_window_resized(procy_state_t *const state, int w, int h) {
   lua_State *L = ((script_env_t *)state->data)->L;
 
-  lua_getglobal(L, TBL_WINDOW);
+  push_library_table(L);
+  lua_getfield(L, -1, TBL_WINDOW);
   lua_getfield(L, -1, FUNC_ON_RESIZE);
   if (lua_isfunction(L, -1)) {
     lua_pushinteger(L, w);
@@ -151,7 +148,8 @@ static void handle_window_resized(procy_state_t *const state, int w, int h) {
 static void handle_window_loaded(procy_state_t *const state) {
   lua_State *L = ((script_env_t *)state->data)->L;
 
-  lua_getglobal(L, TBL_WINDOW);
+  push_library_table(L);
+  lua_getfield(L, -1, TBL_WINDOW);
   lua_getfield(L, -1, FUNC_ON_LOAD);
   if (lua_isfunction(L, -1)) {
     if (lua_pcall(L, 0, 0, 0) == LUA_ERRRUN) {
@@ -168,7 +166,8 @@ static void handle_window_loaded(procy_state_t *const state) {
 static void handle_window_unloaded(procy_state_t *const state) {
   lua_State *L = ((script_env_t *)state->data)->L;
 
-  lua_getglobal(L, TBL_WINDOW);
+  push_library_table(L);
+  lua_getfield(L, -1, TBL_WINDOW);
   lua_getfield(L, -1, FUNC_ON_UNLOAD);
   if (lua_isfunction(L, -1)) {
     if (lua_pcall(L, 0, 0, 0) == LUA_ERRRUN) {
@@ -262,5 +261,5 @@ void add_window(lua_State *L, script_env_t *env) {
                         {FUNC_SET_WINDOWED, set_window_windowed},
                         {NULL, NULL}};
   luaL_newlib(L, methods);
-  lua_setglobal(L, TBL_WINDOW);
+  lua_setfield(L, 1, TBL_WINDOW);
 }

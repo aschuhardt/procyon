@@ -20,7 +20,6 @@ typedef struct lua_State lua_State;
 typedef struct script_env_t script_env_t;
 typedef struct state_t state_t;
 
-void add_globals(lua_State *L, script_env_t *env, const char *path);
 void add_input(lua_State *L, script_env_t *env);
 void add_drawing(lua_State *L, script_env_t *env);
 void add_window(lua_State *L, script_env_t *env);

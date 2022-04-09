@@ -93,5 +93,5 @@ void add_noise(lua_State *L) {
                         {FUNC_NOISE_TURBULENCE, noise_turbulence},
                         {NULL, NULL}};
   luaL_newlib(L, methods);
-  lua_setglobal(L, TBL_NOISE);
+  lua_setfield(L, 1, TBL_NOISE);
 }

@@ -55,6 +55,40 @@
 #define M_PI_2 1.57079632679
 #endif
 
+#define FIELD_COLOR_R "r"
+#define FIELD_COLOR_G "g"
+#define FIELD_COLOR_B "b"
+
+procy_color_t get_color(lua_State *L, int index) {
+  lua_getfield(L, index, FIELD_COLOR_R);
+  double r = luaL_optnumber(L, -1, 0.0F);
+  lua_pop(L, 1);
+
+  lua_getfield(L, index, FIELD_COLOR_G);
+  double g = luaL_optnumber(L, -1, 0.0F);
+  lua_pop(L, 1);
+
+  lua_getfield(L, index, FIELD_COLOR_B);
+  double b = luaL_optnumber(L, -1, 0.0F);
+  lua_pop(L, 1);
+
+  return procy_create_color((unsigned char)floor(r * 255.0),
+                            (unsigned char)floor(g * 255.0),
+                            (unsigned char)floor(b * 255.0));
+}
+
+void push_color(lua_State *L, float r, float g, float b) {
+  lua_newtable(L);
+
+  lua_pushnumber(L, r);
+  lua_setfield(L, -2, FIELD_COLOR_R);
+
+  lua_pushnumber(L, g);
+  lua_setfield(L, -2, FIELD_COLOR_G);
+
+  lua_pushnumber(L, b);
+  lua_setfield(L, -2, FIELD_COLOR_B);
+}
 static int draw_string(lua_State *L) {
   lua_settop(L, 5);
 
@@ -424,7 +458,7 @@ static void add_sprite(lua_State *L) {
 static void add_spritesheet(lua_State *L) {
   luaL_Reg methods[] = {{FUNC_LOADSPRITESHEET, load_spritesheet}, {NULL, NULL}};
   luaL_newlib(L, methods);
-  lua_setglobal(L, TBL_SPRITESHEET);
+  lua_setfield(L, 1, TBL_SPRITESHEET);
 
   lua_newtable(L);
 
@@ -445,7 +479,7 @@ static void add_draw_ops(lua_State *L) {
                         {FUNC_SETLAYER, set_layer},
                         {NULL, NULL}};
   luaL_newlib(L, methods);
-  lua_setglobal(L, TBL_DRAWING);
+  lua_setfield(L, 1, TBL_DRAWING);
 
   lua_pushinteger(L, 1);
   lua_setfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
@@ -454,7 +488,7 @@ static void add_draw_ops(lua_State *L) {
 static void add_color(lua_State *L) {
   luaL_Reg methods[] = {{FUNC_FROMRGB, from_rgb}, {NULL, NULL}};
   luaL_newlib(L, methods);
-  lua_setglobal(L, TBL_COLOR);
+  lua_setfield(L, 1, TBL_COLOR);
 }
 
 void add_drawing(lua_State *L, script_env_t *env) {

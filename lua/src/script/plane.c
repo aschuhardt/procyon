@@ -349,7 +349,7 @@ void add_plane(lua_State *L) {
   // initialize library table
   luaL_Reg create_methods[] = {{FUNC_PLANE_FROM, plane_from}, {NULL, NULL}};
   luaL_newlib(L, create_methods);
-  lua_setglobal(L, TBL_PLANE);
+  lua_setfield(L, 1, TBL_PLANE);
 
   // initialize metatable
   luaL_Reg metamethods[] = {{"__gc", plane_destroy_buffer}, {NULL, NULL}};

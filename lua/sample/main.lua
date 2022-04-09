@@ -5,24 +5,24 @@ local util = require "util"
 --
 -- At this point all of the engine's resources will be available
 -- for the developer to use.
-window.on_load = function()
+pr.window.on_load = function()
 
   if jit.status() then
-    log.debug("JIT is enabled!")
+    pr.log.debug("JIT is enabled!")
   else
-    log.debug("JIT is disabled!")
+    pr.log.debug("JIT is disabled!")
   end
 
   -- build a couple of 2D bitmaps filled with continuous noise values
   -- for our somewhat natural-looking map generation
-  color_map  = plane.from(80, 80, util.make_scaled_noise(0.1,   1.2))
-  sprite_map = plane.from(80, 80, util.make_scaled_noise(0.3,  -10.0))
-  tree_map   = plane.from(80, 80, util.make_scaled_noise(0.08, -0.3))
+  color_map  = pr.plane.from(80, 80, util.make_scaled_noise(0.1,   1.2))
+  sprite_map = pr.plane.from(80, 80, util.make_scaled_noise(0.3,  -10.0))
+  tree_map   = pr.plane.from(80, 80, util.make_scaled_noise(0.08, -0.3))
     :foreach(util.minimum(128))
-  ocean_map  = plane.from(80, 80, util.make_scaled_noise(0.15,  7.1))
+  ocean_map  = pr.plane.from(80, 80, util.make_scaled_noise(0.15,  7.1))
 
   -- load a spritesheet from a PNG file
-  sheet = spritesheet.load("sprites.png")
+  sheet = pr.spritesheet.load("sprites.png")
 
   -- load some sprites from the spritesheet
   tree_sprites = {
@@ -40,8 +40,8 @@ window.on_load = function()
   }
 
   -- specify some colors to use for drawing sprites
-  red = color.from_rgb(1.0, 0.0, 0.0)
-  yellow = color.from_rgb(0.85, 0.85, 0.0)
+  red = pr.color.from_rgb(1.0, 0.0, 0.0)
+  yellow = pr.color.from_rgb(0.85, 0.85, 0.0)
   tree_background = util.hex_to_color("#313638")
   water_colors = {
     base = util.hex_to_color("#0b5e65"),
@@ -60,27 +60,27 @@ end
 -- All rendering logic should be implemented in window.on_draw.
 --
 -- This is called once per frame.
-window.on_draw = function(seconds)
-  draw.set_layer(1)
+pr.window.on_draw = function(seconds)
+  pr.draw.set_layer(1)
 
-  local ww, wh = window.size()
-  local gw, gh = window.glyph_size()
+  local ww, wh = pr.window.size()
+  local gw, gh = pr.window.glyph_size()
 
-  draw.string(0, 10,
+  pr.draw.string(0, 10,
     "%bA%b: scale-up; %bZ%b: scale-down; %bF11%b: toggle fullscreen; %bF2%b: reload; %bESC%b: quit")
 
   if high_fps then
-    draw.string(0, 30,
+    pr.draw.string(0, 30,
       "%bF3%b: toggle high-fps mode (currently %benabled%b)", red);
-    draw.string(0, wh - gh, string.format("%%iFPS: %.2f", 1.0 / seconds))
+    pr.draw.string(0, wh - gh, string.format("%%iFPS: %.2f", 1.0 / seconds))
   else
-    draw.string(0, 30,
+    pr.draw.string(0, 30,
       "%bF3%b: toggle high-fps mode (currently %bdisabled%b)", yellow);
   end
 
-  draw.string(0, 60, "click a sprite to highlight it")
+  pr.draw.string(0, 60, "click a sprite to highlight it")
 
-  draw.set_layer(2) -- draw behind the text (higher layer values are further back)
+  pr.draw.set_layer(2) -- draw behind the text (higher layer values are further back)
 
   -- iterate over each value in the bitmap, drawing tree sprites on most of them 
   tree_map:foreach(
@@ -118,37 +118,37 @@ end
 -- Input events, if defined, are called in response to various
 -- kinds of user-input.
 
-input.on_mouse_moved = function(x, y)
+pr.input.on_mouse_moved = function(x, y)
   cursor_position = { x = x, y = y }
 end
 
-input.on_mouse_pressed = function(button)
-  if hovered and button.value == MOUSE_LEFT then
+pr.input.on_mouse_pressed = function(button)
+  if hovered and button.value == pr.MOUSE_LEFT then
     selection = { x = hovered.x, y = hovered.y }
   end
 end
 
 
-input.on_key_pressed = function(key) 
-  if key.value == KEY_F2 then
-    window.reload()
-  elseif key.value == KEY_F3 then
+pr.input.on_key_pressed = function(key) 
+  if key.value == pr.KEY_F2 then
+    pr.window.reload()
+  elseif key.value == pr.KEY_F3 then
     high_fps = not high_fps
-    window.set_high_fps(high_fps)
-  elseif key.value == KEY_ESCAPE then
-    window.close()
-  elseif key.value == KEY_Z then
+    pr.window.set_high_fps(high_fps)
+  elseif key.value == pr.KEY_ESCAPE then
+    pr.window.close()
+  elseif key.value == pr.KEY_Z then
     local x, y = window.get_scale()
-    window.set_scale(x - 0.1, y - 0.1)
-  elseif key.value == KEY_A then
+    pr.window.set_scale(x - 0.1, y - 0.1)
+  elseif key.value == pr.KEY_A then
     local x, y = window.get_scale()
-    window.set_scale(x + 0.1, y + 0.1)
-  elseif key.value == KEY_F11 then
+    pr.window.set_scale(x + 0.1, y + 0.1)
+  elseif key.value == pr.KEY_F11 then
     fullscreen = not fullscreen -- doesn't need to exist beforehand; Lua treats null values as falsey
     if fullscreen then
-      window.set_fullscreen()
+      pr.window.set_fullscreen()
     else
-      window.set_windowed()
+      pr.window.set_windowed()
     end
   end
 end

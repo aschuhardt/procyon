@@ -19,6 +19,8 @@
 #endif
 #endif
 
+#define TBL_LIBRARY "pr"
+
 static const char *get_lua_alloc_type_name(size_t t) {
   switch (t) {
     case LUA_TSTRING:
@@ -83,15 +85,19 @@ bool load_scripts(script_env_t *env, char *path) {
   luaL_openlibs(L);
 
   luaJIT_setmode(L, 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_ON);
-
-  if (luaL_loadfile(L, path)) {
-    log_error("Error loading file %s: %s", path, lua_tostring(L, -1));
-    return false;
-  }
-
   add_package_path_from_entry(L, path);
 
-  add_globals(L, env, path);
+  lua_pushlightuserdata(L, env);
+  lua_setfield(L, LUA_REGISTRYINDEX, GLOBAL_ENV_PTR);
+
+  lua_pushlightuserdata(L, env->window);
+  lua_setfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
+
+  // ensure that the lib table will be at index 1
+  // lua_pop(L, lua_gettop(L));
+
+  lua_newtable(L);
+
   add_utilities(L);
   add_input(L, env);
   add_window(L, env);
@@ -99,11 +105,15 @@ bool load_scripts(script_env_t *env, char *path) {
   add_plane(L);
   add_noise(L);
 
-  if (lua_pcall(L, 0, LUA_MULTRET, 0)) {
-    log_error("Error running file %s: %s", path, lua_tostring(L, -1));
+  lua_setglobal(L, TBL_LIBRARY);
+
+  if (luaL_dofile(L, path)) {
+    log_error("Error loading file %s: %s", path, lua_tostring(L, -1));
     return false;
   }
 
   // script is loaded without errors
   return true;
 }
+
+void push_library_table(lua_State *L) { lua_getglobal(L, TBL_LIBRARY); }

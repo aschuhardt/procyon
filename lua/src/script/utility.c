@@ -53,7 +53,7 @@ static int run_script(lua_State *L) {
 static void add_util(lua_State *L) {
   luaL_Reg methods[] = {{FUNC_UTIL_POPCOUNT, popcount}, {NULL, NULL}};
   luaL_newlib(L, methods);
-  lua_setglobal(L, TBL_UTIL);
+  lua_setfield(L, 1, TBL_UTIL);
 }
 
 static void add_logging(lua_State *L) {
@@ -63,13 +63,13 @@ static void add_logging(lua_State *L) {
                         {FUNC_LOG_DEBUG, write_log_debug},
                         {NULL, NULL}};
   luaL_newlib(L, methods);
-  lua_setglobal(L, TBL_LOG);
+  lua_setfield(L, 1, TBL_LOG);
 }
 
 static void add_script(lua_State *L) {
   luaL_Reg methods[] = {{FUNC_SCRIPT_RUN, run_script}, {NULL, NULL}};
   luaL_newlib(L, methods);
-  lua_setglobal(L, TBL_SCRIPT);
+  lua_setfield(L, 1, TBL_SCRIPT);
 }
 
 void add_utilities(lua_State *L) {

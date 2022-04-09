@@ -64,7 +64,8 @@ static void key_pressed(procy_state_t *state, procy_key_info_t key, bool shift,
                         bool ctrl, bool alt) {
   lua_State *L = ((script_env_t *)state->data)->L;
 
-  lua_getglobal(L, TBL_INPUT);
+  push_library_table(L);
+  lua_getfield(L, -1, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_KEYPRESS);
   if (lua_isfunction(L, -1)) {
     push_key_arg(L, &key, shift, ctrl, alt);
@@ -81,7 +82,8 @@ static void key_released(procy_state_t *state, procy_key_info_t key, bool shift,
                          bool ctrl, bool alt) {
   lua_State *L = ((script_env_t *)state->data)->L;
 
-  lua_getglobal(L, TBL_INPUT);
+  push_library_table(L);
+  lua_getfield(L, -1, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_KEYRELEASE);
   if (lua_isfunction(L, -1)) {
     push_key_arg(L, &key, shift, ctrl, alt);
@@ -103,7 +105,8 @@ static void char_entered(procy_state_t *state, unsigned int codepoint) {
 
   lua_State *L = ((script_env_t *)state->data)->L;
 
-  lua_getglobal(L, TBL_INPUT);
+  push_library_table(L);
+  lua_getfield(L, -1, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_CHAR);
   if (lua_isfunction(L, -1)) {
     char buffer[2] = {(char)codepoint,
@@ -122,7 +125,8 @@ static void char_entered(procy_state_t *state, unsigned int codepoint) {
 static void mouse_moved(procy_state_t *state, double x, double y) {
   lua_State *L = ((script_env_t *)state->data)->L;
 
-  lua_getglobal(L, TBL_INPUT);
+  push_library_table(L);
+  lua_getfield(L, -1, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_MOUSE_MOVED);
   if (lua_isfunction(L, -1)) {
     lua_pushnumber(L, x);
@@ -140,7 +144,8 @@ static void mouse_released(procy_state_t *state, procy_mouse_button_t button,
                            bool shift, bool ctrl, bool alt) {
   lua_State *L = ((script_env_t *)state->data)->L;
 
-  lua_getglobal(L, TBL_INPUT);
+  push_library_table(L);
+  lua_getfield(L, -1, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_MOUSE_RELEASE);
   if (lua_isfunction(L, -1)) {
     push_mouse_button_arg(L, button, shift, ctrl, alt);
@@ -157,7 +162,8 @@ static void mouse_pressed(procy_state_t *state, procy_mouse_button_t button,
                           bool shift, bool ctrl, bool alt) {
   lua_State *L = ((script_env_t *)state->data)->L;
 
-  lua_getglobal(L, TBL_INPUT);
+  push_library_table(L);
+  lua_getfield(L, -1, TBL_INPUT);
   lua_getfield(L, -1, FUNC_EVENTS_MOUSE_PRESS);
   if (lua_isfunction(L, -1)) {
     push_mouse_button_arg(L, button, shift, ctrl, alt);
@@ -172,7 +178,7 @@ static void mouse_pressed(procy_state_t *state, procy_mouse_button_t button,
 
 static void add_event_handler_table(lua_State *L) {
   lua_newtable(L);
-  lua_setglobal(L, TBL_INPUT);
+  lua_setfield(L, 1, TBL_INPUT);
 }
 
 static void add_keys(lua_State *L) {
@@ -185,7 +191,7 @@ static void add_keys(lua_State *L) {
     procy_key_info_t key = keys[i];
 
     lua_pushinteger(L, key.value);
-    lua_setglobal(L, key.name);
+    lua_setfield(L, 1, key.name);
   }
 
   free(keys);
@@ -193,40 +199,40 @@ static void add_keys(lua_State *L) {
 
 static void add_mouse_values(lua_State *L) {
   lua_pushinteger(L, MOUSE_BUTTON_0);
-  lua_setglobal(L, "MOUSE_0");
+  lua_setfield(L, 1, "MOUSE_0");
 
   lua_pushinteger(L, MOUSE_BUTTON_1);
-  lua_setglobal(L, "MOUSE_1");
+  lua_setfield(L, 1, "MOUSE_1");
 
   lua_pushinteger(L, MOUSE_BUTTON_2);
-  lua_setglobal(L, "MOUSE_2");
+  lua_setfield(L, 1, "MOUSE_2");
 
   lua_pushinteger(L, MOUSE_BUTTON_3);
-  lua_setglobal(L, "MOUSE_3");
+  lua_setfield(L, 1, "MOUSE_3");
 
   lua_pushinteger(L, MOUSE_BUTTON_4);
-  lua_setglobal(L, "MOUSE_4");
+  lua_setfield(L, 1, "MOUSE_4");
 
   lua_pushinteger(L, MOUSE_BUTTON_5);
-  lua_setglobal(L, "MOUSE_5");
+  lua_setfield(L, 1, "MOUSE_5");
 
   lua_pushinteger(L, MOUSE_BUTTON_6);
-  lua_setglobal(L, "MOUSE_6");
+  lua_setfield(L, 1, "MOUSE_6");
 
   lua_pushinteger(L, MOUSE_BUTTON_7);
-  lua_setglobal(L, "MOUSE_7");
+  lua_setfield(L, 1, "MOUSE_7");
 
   lua_pushinteger(L, MOUSE_BUTTON_8);
-  lua_setglobal(L, "MOUSE_8");
+  lua_setfield(L, 1, "MOUSE_8");
 
   lua_pushinteger(L, MOUSE_BUTTON_LEFT);
-  lua_setglobal(L, "MOUSE_LEFT");
+  lua_setfield(L, 1, "MOUSE_LEFT");
 
   lua_pushinteger(L, MOUSE_BUTTON_RIGHT);
-  lua_setglobal(L, "MOUSE_RIGHT");
+  lua_setfield(L, 1, "MOUSE_RIGHT");
 
   lua_pushinteger(L, MOUSE_BUTTON_MIDDLE);
-  lua_setglobal(L, "MOUSE_MIDDLE");
+  lua_setfield(L, 1, "MOUSE_MIDDLE");
 }
 
 void add_input(lua_State *L, script_env_t *env) {

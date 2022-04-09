@@ -6,11 +6,9 @@ set(SU_LUA_SOURCE
   src/script/drawing.c
   src/script/window.c
   src/script/utility.c
-  src/script/globals.c
   src/script/input.c
   src/script/noise.c
-  src/script/plane.c
-  src/script/environment.c)
+  src/script/plane.c)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mpopcnt")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")

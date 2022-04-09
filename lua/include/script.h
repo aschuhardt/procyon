@@ -22,4 +22,6 @@ void destroy_script_env(script_env_t *env);
 
 bool load_scripts(script_env_t *env, char *path);
 
+void push_library_table(struct lua_State *L);
+
 #endif
