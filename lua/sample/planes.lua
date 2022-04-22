@@ -12,7 +12,7 @@ pr.window.on_draw = function(seconds)
     return value
   end)
 
-  local gw, gh = pr.window.glyph_size()
+  local gw, gh = pr.window.get_glyph_size()
   for y = 0, text_buffer.height - 1 do
     for x = 0, text_buffer.width - 1 do
       pr.draw.char(x * gh, y * gh, text_buffer:at(x, y))

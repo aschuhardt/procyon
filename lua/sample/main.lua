@@ -63,8 +63,8 @@ end
 pr.window.on_draw = function(seconds)
   pr.draw.set_layer(1)
 
-  local ww, wh = pr.window.size()
-  local gw, gh = pr.window.glyph_size()
+  local ww, wh = pr.window.get_size()
+  local gw, gh = pr.window.get_glyph_size()
 
   pr.draw.string(0, 10,
     "%bA%b: scale-up; %bZ%b: scale-down; %bF11%b: toggle fullscreen; %bF2%b: reload; %bESC%b: quit")

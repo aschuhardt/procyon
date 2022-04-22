@@ -12,9 +12,9 @@
 
 #define FUNC_CLOSE "close"
 #define FUNC_RELOAD "reload"
-#define FUNC_SIZE "size"
+#define FUNC_SIZE "get_size"
 #define FUNC_SET_TITLE "set_title"
-#define FUNC_GLYPH_SIZE "glyph_size"
+#define FUNC_GLYPH_SIZE "get_glyph_size"
 #define FUNC_ON_DRAW "on_draw"
 #define FUNC_ON_RESIZE "on_resize"
 #define FUNC_ON_LOAD "on_load"

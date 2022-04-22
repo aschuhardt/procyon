@@ -39,8 +39,8 @@ Methods and constants are grouped into tables within a global 'pr' table.
 
 #### Functions
 - `pr.window.close()` - Returns nothing.  Closes the window.
-- `pr.window.size()` - Returns two integers (width and height), representing the dimensions of the window in pixels.
-- `pr.window.glyph_size()` - Returns two integers (width and height), representing the *scaled* dimensions of text glyphs.
+- `pr.window.get_size()` - Returns two integers (width and height), representing the dimensions of the window in pixels.
+- `pr.window.get_glyph_size()` - Returns two integers (width and height), representing the *scaled* dimensions of text glyphs.
 - `pr.window.get_scale()` - Returns a floating-point number representing the window's current visual scale.  The default is 1.0.
 - `pr.window.set_scale(scale)` - Returns nothing.  Sets the scale of the visuals presented in the window (controlled via orthographic projection matrix).
 - `pr.window.reset_scale()` - Returns nothing.  Sets the scale of the visuals presented in the window to the default value, which is 1.0.
