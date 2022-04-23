@@ -26,9 +26,9 @@ end
 function util.minimum(threshold, value)
   return function(x, y, cur)
     if cur >= threshold then
-      return cur
+      return 1
     else
-      return value or 0
+      return 0
     end
   end
 end

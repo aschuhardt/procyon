@@ -156,9 +156,9 @@ static void handle_window_loaded(procy_state_t *const state) {
       LOG_SCRIPT_ERROR(L, "Error calling %s.%s: %s", TBL_WINDOW, FUNC_ON_LOAD,
                        lua_tostring(L, -1));
     }
-
-    lua_gc(L, LUA_GCCOLLECT, 0);
   }
+
+  lua_gc(L, LUA_GCCOLLECT, 0);
 
   lua_pop(L, lua_gettop(L));
 }
@@ -174,9 +174,9 @@ static void handle_window_unloaded(procy_state_t *const state) {
       LOG_SCRIPT_ERROR(L, "Error calling %s.%s: %s", TBL_WINDOW, FUNC_ON_UNLOAD,
                        lua_tostring(L, -1));
     }
-
-    lua_gc(L, LUA_GCCOLLECT, 0);
   }
+
+  lua_gc(L, LUA_GCCOLLECT, 0);
 
   lua_pop(L, lua_gettop(L));
 }

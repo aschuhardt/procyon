@@ -15,11 +15,13 @@ pr.window.on_load = function()
 
   -- build a couple of 2D bitmaps filled with continuous noise values
   -- for our somewhat natural-looking map generation
-  color_map  = pr.plane.from(80, 80, util.make_scaled_noise(0.1,   1.2))
-  sprite_map = pr.plane.from(80, 80, util.make_scaled_noise(0.3,  -10.0))
-  tree_map   = pr.plane.from(80, 80, util.make_scaled_noise(0.08, -0.3))
+  color_map  = pr.plane.from(100, 100, util.make_scaled_noise(0.1,   1.2))
+  sprite_map = pr.plane.from(100, 100, util.make_scaled_noise(0.3,  -10.0))
+  tree_map   = pr.plane.from(100, 100, util.make_scaled_noise(0.08, -0.3))
     :foreach(util.minimum(128))
-  ocean_map  = pr.plane.from(80, 80, util.make_scaled_noise(0.15,  7.1))
+  ocean_map  = pr.plane.from(100, 100, util.make_scaled_noise(0.15,  7.1))
+
+  pr.log.debug(tree_map:encode())
 
   -- load a spritesheet from a PNG file
   sheet = pr.spritesheet.load("sprites.png")
@@ -90,10 +92,10 @@ pr.window.on_draw = function(seconds)
         local tree_color = pick_color(x, y)
         local bg_color = tree_background
 
-        -- sprite size, position
-        local sw, sh = tree_sprite:get_size();
-        local sx = x * sw + ww / 2 - sw * tree_map.width  / 2
-        local sy = y * sh + wh / 2 - sh * tree_map.height / 2
+        local sw, sh = tree_sprite.width, tree_sprite.height
+        local mw, mh = tree_map.width, tree_map.height
+        local sx = x * sw + ww / 2 - sw * mw  / 2
+        local sy = y * sh + wh / 2 - sh * mh / 2
 
         -- if the mouse cursor is intersecting with this sprite, color it red
         if cursor_position and 

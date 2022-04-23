@@ -27,16 +27,17 @@
 #define FUNC_LOADSPRITESHEET "load"
 #define FUNC_CREATESPRITE "sprite"
 #define FUNC_DRAWSPRITE "draw"
-#define FUNC_SPRITE_GETSIZE "get_size"
 #define FUNC_SETLAYER "set_layer"
 #define FIELD_SPRITESHEET_PTR "ptr"
 #define FIELD_SPRITESHEET_WIDTH "width"
 #define FIELD_SPRITESHEET_HEIGHT "height"
-#define FIELD_SPRITE_PTR "ptr"
 #define FIELD_SPRITE_COLOR "color"
 #define FIELD_SPRITE_BACKGROUND "background"
 #define FIELD_SPRITE_WIDTH "width"
 #define FIELD_SPRITE_HEIGHT "height"
+#define FIELD_SPRITE_X "x"
+#define FIELD_SPRITE_Y "y"
+#define FIELD_SPRITE_DATA "_data"
 #define FIELD_RAWDATA_LENGTH "length"
 #define FIELD_RAWDATA_BUFFER "buffer"
 
@@ -278,18 +279,10 @@ static int from_rgb(lua_State *L) {
   return 1;
 }
 
-static int destroy_sprite(lua_State *L) {
-  lua_getfield(L, 1, FIELD_SPRITE_PTR);
-  if (lua_islightuserdata(L, -1)) {
-    procy_sprite_t *sprite = lua_touserdata(L, -1);
-    procy_destroy_sprite(sprite);
-  }
-
-  return 0;
-}
-
 static int draw_sprite(lua_State *L) {
   lua_settop(L, 5);
+  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
+  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
   short x = (short)(luaL_checkinteger(L, 2) % SHRT_MAX);
   short y = (short)(luaL_checkinteger(L, 3) % SHRT_MAX);
@@ -299,10 +292,7 @@ static int draw_sprite(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
   short z = (short)(lua_tointeger(L, -1) % SHRT_MAX);
 
-  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
-  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
-
-  lua_getfield(L, 1, FIELD_SPRITE_PTR);
+  lua_getfield(L, 1, FIELD_SPRITE_DATA);
   procy_sprite_t *sprite = (procy_sprite_t *)lua_touserdata(L, -1);
 
   procy_draw_sprite(window, x, y, z, forecolor, backcolor, sprite);
@@ -319,21 +309,6 @@ static void push_color_or_default(lua_State *L, int index, float r, float g,
   }
 }
 
-static int get_sprite_size(lua_State *L) {
-  lua_settop(L, 1);
-
-  lua_getfield(L, 1, FIELD_SPRITE_PTR);
-  procy_sprite_t *sprite = (procy_sprite_t *)lua_touserdata(L, -1);
-
-  lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
-  procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
-
-  lua_pushinteger(L, (int)((float)sprite->width /* * window->scale.x*/));
-  lua_pushinteger(L, (int)((float)sprite->height /* * window->scale.y*/));
-
-  return 2;
-}
-
 static int create_sprite(lua_State *L) {
   lua_settop(L, 5);
 
@@ -346,19 +321,18 @@ static int create_sprite(lua_State *L) {
   short width = (short)(luaL_checkinteger(L, 4) % SHRT_MAX);
   short height = (short)(luaL_checkinteger(L, 5) % SHRT_MAX);
 
-  procy_sprite_t *sprite = procy_create_sprite(shader, x, y, width, height);
-  if (sprite == NULL) {
-    LOG_SCRIPT_ERROR(L, "Failed to create sprite at (%s, %s)", x, y);
+  if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
+      x + width >= shader->texture_w || y + height >= shader->texture_h) {
+    LOG_SCRIPT_ERROR(L, "Invalid sprite bounds");
     return 0;
   }
-
   lua_newtable(L);
 
-  lua_pushlightuserdata(L, sprite);
-  lua_setfield(L, -2, FIELD_SPRITE_PTR);
+  lua_pushinteger(L, x);
+  lua_setfield(L, -2, FIELD_SPRITE_X);
 
-  lua_pushcfunction(L, draw_sprite);
-  lua_setfield(L, -2, FUNC_DRAWSPRITE);
+  lua_pushinteger(L, y);
+  lua_setfield(L, -2, FIELD_SPRITE_Y);
 
   lua_pushinteger(L, width);
   lua_setfield(L, -2, FIELD_SPRITE_WIDTH);
@@ -366,7 +340,15 @@ static int create_sprite(lua_State *L) {
   lua_pushinteger(L, height);
   lua_setfield(L, -2, FIELD_SPRITE_HEIGHT);
 
-  // set metadata field so that sprites are cleaned up on gc
+  procy_sprite_t *sprite =
+      (procy_sprite_t *)lua_newuserdata(L, sizeof(procy_sprite_t));
+  sprite->x = x;
+  sprite->y = y;
+  sprite->width = width;
+  sprite->height = height;
+  sprite->shader = shader;
+  lua_setfield(L, -2, FIELD_SPRITE_DATA);
+
   luaL_setmetatable(L, TBL_SPRITE_META);
 
   return 1;
@@ -441,18 +423,12 @@ static int load_spritesheet(lua_State *L) {
 }
 
 static void add_sprite(lua_State *L) {
-  // register sprite GC method
-  luaL_Reg metamethods[] = {{"__gc", destroy_sprite}, {NULL, NULL}};
-  luaL_newlib(L, metamethods);
-
-  // index method table with sprite methods
-  luaL_Reg index[] = {{FUNC_SPRITE_GETSIZE, get_sprite_size},
-                      {FUNC_DRAWSPRITE, draw_sprite},
-                      {NULL, NULL}};
-  luaL_newlib(L, index);
-  lua_setfield(L, -2, "__index");
-
-  lua_setfield(L, LUA_REGISTRYINDEX, TBL_SPRITE_META);
+  if (luaL_newmetatable(L, TBL_SPRITE_META)) {
+    luaL_Reg index[] = {{FUNC_DRAWSPRITE, draw_sprite}, {NULL, NULL}};
+    luaL_newlib(L, index);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);
+  }
 }
 
 static void add_spritesheet(lua_State *L) {
@@ -460,14 +436,12 @@ static void add_spritesheet(lua_State *L) {
   luaL_newlib(L, methods);
   lua_setfield(L, 1, TBL_SPRITESHEET);
 
-  lua_newtable(L);
-
-  // index method table with spritesheet methods
-  luaL_Reg index[] = {{FUNC_CREATESPRITE, create_sprite}, {NULL, NULL}};
-  luaL_newlib(L, index);
-  lua_setfield(L, -2, "__index");
-
-  lua_setfield(L, LUA_REGISTRYINDEX, TBL_SPRITESHEET_META);
+  if (luaL_newmetatable(L, TBL_SPRITESHEET_META)) {
+    luaL_Reg index[] = {{FUNC_CREATESPRITE, create_sprite}, {NULL, NULL}};
+    luaL_newlib(L, index);
+    lua_setfield(L, -2, "__index");
+    lua_pop(L, 1);
+  }
 }
 
 static void add_draw_ops(lua_State *L) {
