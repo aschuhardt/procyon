@@ -10,3 +10,9 @@
 [submodule "lib/stb"]
 	path = lib/stb
 	url = https://github.com/nothings/stb.git
+[submodule "lib/simdcomp"]
+	path = lib/simdcomp
+	url = https://github.com/lemire/simdcomp.git
+[submodule "lib/base64"]
+	path = lib/base64
+	url = https://github.com/badzong/base64.git
