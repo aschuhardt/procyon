@@ -21,7 +21,7 @@ if (PKG_CONFIG_FOUND)
 endif()
 
 add_executable(procyon-lua ${SU_LUA_SOURCE})
-target_link_libraries(procyon-lua PUBLIC ${SU_LIBRARY} argparse ${LUAJIT_LIBRARIES} m)
+target_link_libraries(procyon-lua PUBLIC ${SU_LIBRARY} argparse ${LUAJIT_LIBRARIES} m simdcomp base64)
 
 if(UNIX)
   target_link_libraries(procyon-lua PUBLIC dl)
@@ -29,7 +29,7 @@ endif()
 
 target_include_directories(procyon-lua
   PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include"
-  ${STB_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${LOG_INCLUDE_DIR} ${SU_INCLUDE} ${LUAJIT_INCLUDE_DIRS}) 
+  ${STB_INCLUDE_DIR} ${ARGPARSE_INCLUDE_DIR} ${LOG_INCLUDE_DIR} ${SU_INCLUDE} ${LUAJIT_INCLUDE_DIRS} ${SIMDCOMP_INCLUDE_DIR} ${BASE64_INCLUDE_DIR}) 
 set_property(TARGET procyon-lua PROPERTY EXCLUDE_FROM_ALL TRUE)
 
 add_custom_target(copy_spritesheet_for_script_test
