@@ -2,6 +2,7 @@
 #include <lauxlib.h>
 #include <log.h>
 #include <lua.h>
+#include <simdbitpacking.h>
 #include <simdcomp.h>
 #include <stdlib.h>
 
@@ -255,7 +256,68 @@ static int plane_copy(lua_State *L) {
   return 1;
 }
 
-static int plane_decode(lua_State *L) { return 0; }
+static size_t store_at_offset(uint8_t *buffer, size_t offset, int value) {
+  // store the provided integer in a buffer at offset, return the next available
+  // offset
+  buffer[offset++] = (value >> 24) & 0xFF;
+  buffer[offset++] = (value >> 16) & 0xFF;
+  buffer[offset++] = (value >> 8) & 0xFF;
+  buffer[offset++] = value & 0xFF;
+  return offset;
+}
+
+static int read_from_offset(uint8_t *buffer, size_t *offset) {
+  int value = ((int)buffer[(*offset)++] & 0xFF) << 24;
+  value |= ((int)buffer[(*offset)++] & 0xFF) << 16;
+  value |= ((int)buffer[(*offset)++] & 0xFF) << 8;
+  value |= ((int)buffer[(*offset)++] & 0xFF);
+
+  return value;
+}
+
+// plane.decode(<base64>)
+static int plane_decode(lua_State *L) {
+  lua_settop(L, 1);
+
+  const char *encoded = luaL_checkstring(L, 1);
+  if (encoded == NULL) {
+    LOG_SCRIPT_ERROR(L, "Invalid encoded plane string");
+    return 0;
+  }
+
+  int buffer_size;
+  uint8_t *buffer = base64_dec_malloc((char *)encoded, &buffer_size);
+  if (buffer == NULL) {
+    LOG_SCRIPT_ERROR(L, "Failed to decode base64 in plane string");
+    return 0;
+  }
+
+  // pull metadata from the end of the decoded buffer
+  size_t meta_offset = buffer_size - 3 * sizeof(int);
+  int width = read_from_offset(buffer, &meta_offset);
+  int height = read_from_offset(buffer, &meta_offset);
+  uint32_t maxbit = read_from_offset(buffer, &meta_offset);
+
+  log_info("width: %d height: %d maxbit: %d", width, height, maxbit);
+
+  // create a new plane and...
+  size_t uncompressed_length = width * height;
+  plane_t *plane = push_new_plane(width, height, NULL, L);
+  if (plane == NULL) {
+    return 0;
+  }
+
+  // ...decompress the buffer directly into it
+  if (simdunpack_length((__m128i *)buffer, uncompressed_length,
+                        (uint32_t *)plane->buffer, maxbit) == NULL) {
+    LOG_SCRIPT_ERROR(L, "Failed to decompress plane data");
+    memset(plane->buffer, 0, uncompressed_length * sizeof(int));
+  }
+
+  free(buffer);
+
+  return 1;
+}
 
 static int plane_encode(lua_State *L) {
   lua_settop(L, 1);
@@ -267,7 +329,6 @@ static int plane_encode(lua_State *L) {
   }
 
   const uint32_t *planebuf = (uint32_t *)plane->buffer;
-
   if (planebuf == NULL) {
     LOG_SCRIPT_ERROR(L, "Invalid plane buffer");
     return 0;
@@ -277,7 +338,6 @@ static int plane_encode(lua_State *L) {
 
   // compress the plane's buffer with SIMD magic
   unsigned int maxbit = maxbits_length(planebuf, planebuf_length);
-  log_warn("bit: %u", maxbit);
   uint8_t *compressed =
       malloc(simdpack_compressedbytes(planebuf_length, maxbit));
   if (compressed == NULL) {
@@ -297,7 +357,18 @@ static int plane_encode(lua_State *L) {
       ((float)compressed_size / (float)(planebuf_length * sizeof(int)) *
        100.0F));
 
-  char *encoded = base64_enc_malloc(compressed, compressed_size);
+  // resize the compressed buffer to hold only its data plus 3 ints (w, h,
+  // maxbit)
+  size_t buffer_size = compressed_size + 3 * sizeof(int);
+  compressed = realloc(compressed, buffer_size);
+
+  // store metadata after the compressed data
+  size_t meta_offset =
+      store_at_offset(compressed, compressed_size, plane->width);
+  meta_offset = store_at_offset(compressed, meta_offset, plane->height);
+  meta_offset = store_at_offset(compressed, meta_offset, maxbit);
+
+  char *encoded = base64_enc_malloc(compressed, buffer_size);
   free(compressed);
 
   if (encoded == NULL) {
@@ -401,7 +472,9 @@ static int plane_get_size(lua_State *L) {
 
 void add_plane(lua_State *L) {
   // initialize library table
-  luaL_Reg create_methods[] = {{FUNC_PLANE_FROM, plane_from}, {NULL, NULL}};
+  luaL_Reg create_methods[] = {{FUNC_PLANE_FROM, plane_from},
+                               {FUNC_PLANE_DECODE, plane_decode},
+                               {NULL, NULL}};
   luaL_newlib(L, create_methods);
   lua_setfield(L, 1, TBL_PLANE);
 
@@ -414,7 +487,7 @@ void add_plane(lua_State *L) {
                                 {FUNC_PLANE_SUB, plane_sub},
                                 {FUNC_PLANE_COPY, plane_copy},
                                 {FUNC_PLANE_ENCODE, plane_encode},
-                                {FUNC_PLANE_DECODE, plane_decode},
+
                                 {FUNC_PLANE_GETSIZE, plane_get_size},
                                 {FUNC_PLANE_BLIT, plane_blit},
                                 {NULL, NULL}};
