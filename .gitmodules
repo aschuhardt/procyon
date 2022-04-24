@@ -13,3 +13,6 @@
 [submodule "lib/simdcomp"]
 	path = lib/simdcomp
 	url = https://github.com/lemire/simdcomp.git
+[submodule "lib/base64"]
+	path = lib/base64
+	url = https://github.com/aschuhardt/base64.git
