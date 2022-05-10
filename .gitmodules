@@ -16,3 +16,6 @@
 [submodule "lib/base64"]
 	path = lib/base64
 	url = https://github.com/aschuhardt/base64.git
+[submodule "lib/wfc"]
+	path = lib/wfc
+	url = https://github.com/krychu/wfc.git

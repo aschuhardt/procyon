@@ -6,12 +6,24 @@
 #include <simdcomp.h>
 #include <stdlib.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image.h>
+#include <stb_image_write.h>
+
+#define WFC_IMPLEMENTATION
+#define WFC_USE_STB
+#include <wfc.h>
+
 #include "script/environment.h"
 
 #define TBL_PLANE "plane"
 #define TBL_PLANE_META "procyon_plane_meta"
 
 #define FUNC_PLANE_FROM "from"
+#define FUNC_PLANE_FROM_WFC "from_wfc"
+#define FUNC_PLANE_IMPORT "import"
+#define FUNC_PLANE_EXPORT "export"
 #define FUNC_PLANE_FILL "fill"
 #define FUNC_PLANE_FOREACH "foreach"
 #define FUNC_PLANE_AT "at"
@@ -455,6 +467,72 @@ static int plane_from(lua_State *L) {
   return 1;
 }
 
+static int plane_from_wfc(lua_State *L) { return 1; }
+
+// plane:export('output.png')
+static int plane_export_image(lua_State *L) {
+  lua_settop(L, 2);
+
+  plane_t *plane = get_plane(L, 1);
+  if (plane == NULL) {
+    LOG_SCRIPT_ERROR(L, "Invalid plane");
+    return 0;
+  }
+
+  size_t pixel_count = plane->width * plane->height;
+  uint32_t *pixels = malloc(pixel_count * sizeof(uint32_t));
+  memcpy(pixels, plane->buffer, pixel_count * sizeof(uint32_t));
+  for (size_t i = 0; i < pixel_count; ++i) {
+    pixels[i] |= 0xFF000000;  // set alpha to 255
+  }
+
+  const char *path = luaL_checkstring(L, 2);
+
+  if (stbi_write_png(path, plane->width, plane->height, 4, pixels,
+                     plane->width * sizeof(uint32_t)) == 0) {
+    LOG_SCRIPT_ERROR(L, "Failed to export the plane");
+  }
+
+  log_debug("Exported plane to %s", path);
+
+  free(pixels);
+
+  return 0;
+}
+
+// p = plane.import('myplane.png')
+static int plane_import_image(lua_State *L) {
+  lua_settop(L, 1);
+
+  const char *path = luaL_checkstring(L, 1);
+
+  int width, height, comp;
+  uint8_t *pixels = stbi_load(path, &width, &height, &comp, 4);
+  if (pixels == NULL) {
+    LOG_SCRIPT_ERROR(L, "Failed to import image");
+    return 0;
+  }
+
+  size_t buffer_len;
+  plane_t *plane = push_new_plane(width, height, &buffer_len, L);
+
+  if (plane == NULL) {
+    LOG_SCRIPT_ERROR(L, "Create plane for image import");
+  } else {
+    memcpy((uint32_t *)plane->buffer, (uint32_t *)pixels,
+           buffer_len * sizeof(uint32_t));
+    for (size_t i = 0; i < buffer_len; ++i) {
+      plane->buffer[i] &= 0x00FFFFFF;  // zero-out the 'alpha'
+    }
+  }
+
+  log_debug("Imported plane from %s", path);
+
+  stbi_image_free(pixels);
+
+  return plane != NULL ? 1 : 0;
+}
+
 static int plane_get_size(lua_State *L) {
   lua_settop(L, 1);
 
@@ -473,6 +551,8 @@ static int plane_get_size(lua_State *L) {
 void add_plane(lua_State *L) {
   // initialize library table
   luaL_Reg create_methods[] = {{FUNC_PLANE_FROM, plane_from},
+                               {FUNC_PLANE_FROM_WFC, plane_from_wfc},
+                               {FUNC_PLANE_IMPORT, plane_import_image},
                                {FUNC_PLANE_DECODE, plane_decode},
                                {NULL, NULL}};
   luaL_newlib(L, create_methods);
@@ -487,7 +567,7 @@ void add_plane(lua_State *L) {
                                 {FUNC_PLANE_SUB, plane_sub},
                                 {FUNC_PLANE_COPY, plane_copy},
                                 {FUNC_PLANE_ENCODE, plane_encode},
-
+                                {FUNC_PLANE_EXPORT, plane_export_image},
                                 {FUNC_PLANE_GETSIZE, plane_get_size},
                                 {FUNC_PLANE_BLIT, plane_blit},
                                 {NULL, NULL}};
