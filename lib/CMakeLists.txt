@@ -32,3 +32,5 @@ target_compile_options(simdcomp PRIVATE -std=c89)
 set(BASE64_DIR "${CMAKE_CURRENT_SOURCE_DIR}/base64")
 set(BASE64_INCLUDE_DIR ${BASE64_DIR} PARENT_SCOPE)
 add_library(base64 STATIC "${BASE64_DIR}/base64.c")
+
+set(WFC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/wfc" PARENT_SCOPE)
