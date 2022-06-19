@@ -6,13 +6,14 @@
 #include <simdcomp.h>
 #include <stdlib.h>
 
+#include "luaconf.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image.h>
 #include <stb_image_write.h>
 
 #define WFC_IMPLEMENTATION
-#define WFC_USE_STB
 #include <wfc.h>
 
 #include "script/environment.h"
@@ -38,6 +39,8 @@
 #define FIELD_PLANE_DATA "_data"
 #define FIELD_PLANE_WIDTH "width"
 #define FIELD_PLANE_HEIGHT "height"
+
+#define WFC_DEFAULT_TILE_SIZE 3
 
 typedef struct plane_t {
   int *buffer;
@@ -467,8 +470,6 @@ static int plane_from(lua_State *L) {
   return 1;
 }
 
-static int plane_from_wfc(lua_State *L) { return 1; }
-
 // plane:export('output.png')
 static int plane_export_image(lua_State *L) {
   lua_settop(L, 2);
@@ -500,12 +501,7 @@ static int plane_export_image(lua_State *L) {
   return 0;
 }
 
-// p = plane.import('myplane.png')
-static int plane_import_image(lua_State *L) {
-  lua_settop(L, 1);
-
-  const char *path = luaL_checkstring(L, 1);
-
+static plane_t *push_plane_from_image(lua_State *L, const char *path) {
   int width, height, comp;
   uint8_t *pixels = stbi_load(path, &width, &height, &comp, 4);
   if (pixels == NULL) {
@@ -517,20 +513,92 @@ static int plane_import_image(lua_State *L) {
   plane_t *plane = push_new_plane(width, height, &buffer_len, L);
 
   if (plane == NULL) {
-    LOG_SCRIPT_ERROR(L, "Create plane for image import");
+    LOG_SCRIPT_ERROR(L, "Failed to create plane for image import");
   } else {
     memcpy((uint32_t *)plane->buffer, (uint32_t *)pixels,
            buffer_len * sizeof(uint32_t));
     for (size_t i = 0; i < buffer_len; ++i) {
       plane->buffer[i] &= 0x00FFFFFF;  // zero-out the 'alpha'
     }
-  }
 
-  log_debug("Imported plane from %s", path);
+    log_debug("Imported plane from %s", path);
+  }
 
   stbi_image_free(pixels);
 
-  return plane != NULL ? 1 : 0;
+  return plane;
+}
+
+// p = plane.import('myplane.png')
+static int plane_import_image(lua_State *L) {
+  lua_settop(L, 1);
+
+  const char *path = luaL_checkstring(L, 1);
+  return push_plane_from_image(L, path) != NULL ? 1 : 0;
+}
+
+// plane.from_wfc(128, 128, "input.png", [flipx], [flipy], [nrot], [tilew],
+// [tileh]) plane.from_wfc(128, 128, tile_plane)
+static int plane_from_wfc(lua_State *L) {
+  lua_settop(L, 8);
+
+  int width = luaL_checkinteger(L, 1);
+  int height = luaL_checkinteger(L, 2);
+  bool flip_on_y = lua_toboolean(L, 5);
+  bool flip_on_x = lua_toboolean(L, 4);
+  int rotations = luaL_optint(L, 6, 0);
+  int tile_width = luaL_optint(L, 7, WFC_DEFAULT_TILE_SIZE);
+  int tile_height = luaL_optint(L, 8, WFC_DEFAULT_TILE_SIZE);
+
+  // two ways to obtain the tile; either import it from a file path if arg
+  // is a string, or use it directly if the arg is a plane
+  plane_t *tile;
+  if (lua_isstring(L, 3)) {
+    tile = push_plane_from_image(L, lua_tostring(L, 3));
+    if (tile == NULL) {
+      LOG_SCRIPT_ERROR(L, "Failed to import WFC tile");
+      return 0;
+    }
+  } else if (lua_istable(L, 3)) {
+    tile = get_plane(L, 3);
+    if (tile == NULL) {
+      LOG_SCRIPT_ERROR(L, "Invalid tile plane");
+      return 0;
+    }
+  } else {
+    LOG_SCRIPT_ERROR(L, "Invalid WFC source, must be a plane or an image path");
+    return 0;
+  }
+
+  // run the WFC iterations
+  struct wfc_image tile_image = {(unsigned char *)tile->buffer, 4, tile->width,
+                                 tile->height};
+  struct wfc *wfc =
+      wfc_overlapping(width, height, &tile_image, tile_width, tile_height, 1,
+                      flip_on_x, flip_on_y, rotations);
+  wfc_init(wfc);
+  if (!wfc_run(wfc, -1)) {
+    LOG_SCRIPT_ERROR(L, "WFC failed");
+  } else {
+    struct wfc_image *result = wfc_output_image(wfc);
+    if (result == NULL) {
+      LOG_SCRIPT_ERROR(L, "WFC resulted in no data");
+    } else {
+      // copy the resulting image into a new plane buffer
+      size_t buffer_len;
+      plane_t *plane =
+          push_new_plane(result->width, result->height, &buffer_len, L);
+      lua_insert(L, 1);
+      lua_settop(L, 1);
+      memcpy((uint8_t *)plane->buffer, (uint8_t *)result->data,
+             buffer_len * sizeof(int));
+      wfc_img_destroy(result);
+    }
+  }
+
+  wfc_destroy(wfc);
+
+  return 1;
 }
 
 static int plane_get_size(lua_State *L) {
