@@ -1,4 +1,6 @@
 #include <log.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "config.h"
 #include "procyon.h"
@@ -11,6 +13,8 @@ int main(int argc, const char **argv) {
   }
 
   procy_state_t *state = procy_create_state();
+
+  srand(time(NULL));
 
   bool reload = false;
   do {
