@@ -1,6 +1,7 @@
 This is a wrapper around `libprocyon` that adds Lua scripting and some other useful features.
 
 ## Usage
+
 The engine is run via the `procyon-lua` executable.
 
 By default, the engine will attempt to load a file called `script/main.lua`.  This, along with several other settings, can be overridden via command-line options:
@@ -38,6 +39,7 @@ Methods and constants are grouped into tables within a global 'pr' table.
 ### Window
 
 #### Functions
+
 - `pr.window.close()` - Returns nothing.  Closes the window.
 - `pr.window.get_size()` - Returns two integers (width and height), representing the dimensions of the window in pixels.
 - `pr.window.get_glyph_size()` - Returns two integers (width and height), representing the *scaled* dimensions of text glyphs.
@@ -62,6 +64,7 @@ Methods and constants are grouped into tables within a global 'pr' table.
 ### Drawing
 
 #### Functions
+
 - `pr.draw.set_layer(z)` - Returns nothing.  Sets the current drawing layer to the provided integer value, which should be greater than zero.  Higher values of `z` are further-back relative to the window, with a value of 1 being the effective "top layer" that will always be visible.
 - `pr.draw.string(x, y, contents [, color [, background]])` - Draws `contents` at screen coordinates `(x, y)` on the window. 
 - `pr.draw.rect(x, y, width, height [, color])` - Draws a rectangle with the provided integer bounds and optional color.
@@ -78,6 +81,7 @@ Methods and constants are grouped into tables within a global 'pr' table.
 ### Input
 
 #### Fields
+
 - `pr.input.on_key_pressed` - If assigned, `on_key_pressed` is called when a key is pressed. It is passed a single argument, a table with the following fields:
     - `value` - An integer indicating the scancode of the key that was entered.  Comparable to the `KEY_...` global values.
     - `ctrl`, `alt`, `shift` - Boolean flags indicating whether one of these modifiers was pressed at the time the event was raised.
@@ -106,6 +110,7 @@ end
 Continuous noise is useful for all kinds of things.
 
 #### Functions
+
 - `pr.noise.perlin(x, y, z [, seed])` - Returns a floating-point value.  Only the lower 8 bits of `seed` are used.  Refer to `stb_perlin.h` for more information.
 - `pr.noise.ridge(x, y, z [, lacunarity, gain, offset, octaves])` - Returns a floating-point value.  Refer to `stb_perlin.h` for more information.
 - `pr.noise.fbm(x, y, z [, lacunarity, gain, octaves])` - Returns a floating-point value.  Refer to `stb_perlin.h` for more information.
@@ -118,27 +123,33 @@ Continuous noise is useful for all kinds of things.
 A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit signed integer values, and are accessed by an (X, Y) index.  Planes have a fixed `width` and `height` which are exposed to the developer.
 
 #### Functions
-- `pr.plane.from(w, h, value)` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to `value`.  The dimensions are made accessible via the `width` and `height` fields in the resulting table.
-- `pr.plane.from(w, h, function(x, y, cur))` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to the value returned by the function `func`, which is passed arguments `x, y` corresponding to the index being initialized.  `func` is also passed a third value, `cur`, which is always zero and can be ignored.
-- `plane:at(x, y)` - Returns the value of the element at the index `(X, Y)`.
-- `plane:set(x, y, n)` - Sets the value of the element in the plane at index `(X, Y)` to `n`.
-- `plane:fill(n)` - Returns a reference to the plane. Sets the value of each element in the plane to `n`.
-- `plane:fill(function(x, y, cur))` - Returns a reference to the plane. Sets the value of each element in the plane to the return value of the provided function, to which is passed the current position as well as the current value of each element in the plane.
-- `plane:foreach(function(x, y, cur))` - An alias for `plane:fill` intended to be passed a function that doesn't return anything.
-- `plane:sub(x, y, w, h)` - Returns a new plane with dimensions `w` and `h`, having its values copied from the plane on which this method is called starting at position `(X, Y)`.  In other words, this returns a copied region from within the target.
-- `plane:copy()` - Returns a copy of the plane.
-- `plane:blit(x, y, src)` - Copies or 'blits' the contents of the plane `src` onto the target plane at position `(X, Y)`. Useful for 'stamping' a pre-defined pattern onto a plane, for example.
-- `plane:export(path)` - Exports the plane to a PNG image.  Only the lower three bytes of each element in the plane are exported, with the highest byte being mapped to the alpha channel and being set to 255.  The pixel format is (A)RGB.
-- `pr.plane.import(path)` - Imports a plane from a PNG image.  See `export` above.
-- `plane:encode()` - Returns a base-64 string consisting of the plane data, packed using the very fast [https://github.com/lemire/simdcomp](the SIMDComp library).
-- `pr.plane.decode(encoded_str)` - Returns a plane decoded from a base-64 string as created by `plane:encode()`.  See `encode` above.
-- `pr.plane.from_wfc(w, h, (path|tile_plane), [flipx], [flipy], [nrot], [tilew], [tileh])` - Returns a new plane object with dimensions `w` and `h`, with its contents being the result of running [https://github.com/mxgmn/WaveFunctionCollapse](the WafeFunctionCollapse algorithm) to completion based on the provided input plane (either an image on-disk or another plane; for the former see `import`).  The WFC algorithm works by breaking the source plane up into a number of smaller tiles.  The behavior of the algorithm can be customized by specifying whether or not to flip each tile on the X or Y axes (booleans `flipx` and `flipy`), the maximum number of tile rotations to perform (`nrot`), and the dimensions of each tile (`tilew` and `tileh`, default is 3).
+
+- Creation
+  - `pr.plane.from(w, h, value)` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to `value`.  The dimensions are made accessible via the `width` and `height` fields in the resulting table.
+  - `pr.plane.from(w, h, function(x, y, cur))` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to the value returned by the function `func`, which is passed arguments `x, y` corresponding to the index being initialized.  `func` is also passed a third value, `cur`, which is always zero and can be ignored.
+  - `plane:sub(x, y, w, h)` - Returns a new plane with dimensions `w` and `h`, having its values copied from the plane on which this method is called starting at position `(X, Y)`.  In other words, this returns a copied region from within the target.
+  - `pr.plane.from_wfc(w, h, (path|tile_plane), [flipx], [flipy], [nrot], [tilew], [tileh])` - Returns a new plane object with dimensions `w` and `h`, with its contents being the result of running [https://github.com/mxgmn/WaveFunctionCollapse](the WafeFunctionCollapse algorithm) to completion based on the provided input plane (either an image on-disk or another plane; for the former see `import`).  The WFC algorithm works by breaking the source plane up into a number of smaller tiles.  The behavior of the algorithm can be customized by specifying whether or not to flip each tile on the X or Y axes (booleans `flipx` and `flipy`), the maximum number of tile rotations to perform (`nrot`), and the dimensions of each tile (`tilew` and `tileh`, default is 3).
+- Reading
+  - `plane:at(x, y)` - Returns the value of the element at the index `(X, Y)`.
+- Serialization
+  - `plane:export(path)` - Exports the plane to a PNG image.  Only the lower three bytes of each element in the plane are exported, with the highest byte being mapped to the alpha channel and being set to 255.  The pixel format is (A)RGB.
+  - `pr.plane.import(path)` - Imports a plane from a PNG image.  See `export`.
+  - `plane:encode()` - Returns a base-64 string consisting of the plane data, packed using the very fast [https://github.com/lemire/simdcomp](the SIMDComp library).
+  - `pr.plane.decode(encoded_str)` - Returns a plane decoded from a base-64 string as created by `plane:encode()`.  See `encode` above.
+- Modification
+  - `plane:set(x, y, n)` - Sets the value of the element in the plane at index `(X, Y)` to `n`.
+  - `plane:fill(n)` - Returns a reference to the plane. Sets the value of each element in the plane to `n`.
+  - `plane:fill(function(x, y, cur))` - Returns a reference to the plane. Sets the value of each element in the plane to the return value of the provided function, to which is passed the current position as well as the current value of each element in the plane.
+  - `plane:copy()` - Returns a copy of the plane.
+  - `plane:blit(x, y, src)` - Copies or 'blits' the contents of the plane `src` onto the target plane at position `(X, Y)`. Useful for 'stamping' a pre-defined pattern onto a plane, for example.
+  - `plane:foreach(function(x, y, cur))` - An alias for `plane:fill` intended to be passed a function that doesn't return anything.
 
 ---
 
 ### Utility
 
 #### Functions
+
 - `pr.script.run(contents)` - Returns nothing.  Runs the script value in the global environment.  Use caution when executing arbitrary code.  TODO: create a sandboxed environment for this.
 - `pr.util.popcount(value)` - Returns the number of '1' bits in the integer parameter.
 - `pr.log.info(contents)`
