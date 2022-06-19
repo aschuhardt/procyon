@@ -115,7 +115,7 @@ Continuous noise is useful for all kinds of things.
 
 ### Plane
 
-A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit signed integer values, and are accessed by an (X, Y) index.  Planes have a fixed width and height which are exposed to the developer.
+A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit signed integer values, and are accessed by an (X, Y) index.  Planes have a fixed `width` and `height` which are exposed to the developer.
 
 #### Functions
 - `pr.plane.from(w, h, value)` - Returns a new plane object with dimensions `w` and `h`, having each of its elements initialized to `value`.  The dimensions are made accessible via the `width` and `height` fields in the resulting table.
@@ -128,6 +128,11 @@ A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit 
 - `plane:sub(x, y, w, h)` - Returns a new plane with dimensions `w` and `h`, having its values copied from the plane on which this method is called starting at position `(X, Y)`.  In other words, this returns a copied region from within the target.
 - `plane:copy()` - Returns a copy of the plane.
 - `plane:blit(x, y, src)` - Copies or 'blits' the contents of the plane `src` onto the target plane at position `(X, Y)`. Useful for 'stamping' a pre-defined pattern onto a plane, for example.
+- `plane:export(path)` - Exports the plane to a PNG image.  Only the lower three bytes of each element in the plane are exported, with the highest byte being mapped to the alpha channel and being set to 255.  The pixel format is (A)RGB.
+- `pr.plane.import(path)` - Imports a plane from a PNG image.  See `export` above.
+- `plane:encode()` - Returns a base-64 string consisting of the plane data, packed using the very fast [https://github.com/lemire/simdcomp](the SIMDComp library).
+- `pr.plane.decode(encoded_str)` - Returns a plane decoded from a base-64 string as created by `plane:encode()`.  See `encode` above.
+- `pr.plane.from_wfc(w, h, (path|tile_plane), [flipx], [flipy], [nrot], [tilew], [tileh])` - Returns a new plane object with dimensions `w` and `h`, with its contents being the result of running [https://github.com/mxgmn/WaveFunctionCollapse](the WafeFunctionCollapse algorithm) to completion based on the provided input plane (either an image on-disk or another plane; for the former see `import`).  The WFC algorithm works by breaking the source plane up into a number of smaller tiles.  The behavior of the algorithm can be customized by specifying whether or not to flip each tile on the X or Y axes (booleans `flipx` and `flipy`), the maximum number of tile rotations to perform (`nrot`), and the dimensions of each tile (`tilew` and `tileh`, default is 3).
 
 ---
 
