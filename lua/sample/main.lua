@@ -19,9 +19,13 @@ pr.window.on_load = function()
   sprite_map = pr.plane.from(100, 100, util.make_scaled_noise(0.3,  -10.0))
   tree_map   = pr.plane.from(100, 100, util.make_scaled_noise(0.08, -0.3))
     :foreach(util.minimum(128))
-  ocean_map  = pr.plane.from(100, 100, util.make_scaled_noise(0.15,  7.1))
+  -- tree_map = pr.plane.import("output.png")
+  ocean_map  = pr.plane.from(100, 100, util.make_scaled_noise(0.01,  7.1))
 
-  pr.log.debug(tree_map:encode())
+  -- pr.log.debug(tree_map:encode())
+
+  --tree_map:export("input.png")
+  --tree_map:export("output.png")
 
   -- load a spritesheet from a PNG file
   sheet = pr.spritesheet.load("sprites.png")
@@ -140,10 +144,10 @@ pr.input.on_key_pressed = function(key)
   elseif key.value == pr.KEY_ESCAPE then
     pr.window.close()
   elseif key.value == pr.KEY_Z then
-    local x, y = window.get_scale()
+    local x, y = pr.window.get_scale()
     pr.window.set_scale(x - 0.1, y - 0.1)
   elseif key.value == pr.KEY_A then
-    local x, y = window.get_scale()
+    local x, y = pr.window.get_scale()
     pr.window.set_scale(x + 0.1, y + 0.1)
   elseif key.value == pr.KEY_F11 then
     fullscreen = not fullscreen -- doesn't need to exist beforehand; Lua treats null values as falsey
