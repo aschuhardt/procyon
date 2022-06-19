@@ -16,11 +16,9 @@ jobs:
     
     strategy:
       matrix:
-        msystem: [MINGW32, MINGW64]
+        msystem: [MINGW64]
         build-type: [Release]
         include:
-          - msystem: MINGW32
-            arch: i686
           - msystem: MINGW64
             arch: x86_64
     defaults:
