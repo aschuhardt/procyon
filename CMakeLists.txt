@@ -8,7 +8,12 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 set(CMAKE_C_FLAGS_DEBUG 
   "${CMAKE_C_FLAGS_DEBUG} -ggdb")
 set(CMAKE_C_FLAGS_RELEASE 
-  "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -flto -Os -fmerge-all-constants -fdata-sections")
+  "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -fmerge-all-constants -fdata-sections")
+
+if(NOT WIN32)
+  # for some reason mingw lto is shifty, so don't use it
+  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type provided; defaulting to Release")
