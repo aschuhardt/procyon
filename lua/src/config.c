@@ -6,10 +6,12 @@
 
 #include "argparse.h"
 
+#ifndef PATH_MAX
 #define PATH_MAX 2048
+#endif
 
 static const char *usage[] = {
-    "procyon [--(log level)] [-e|--entry (file path)]\n"
+    "procyon [--(log level)] [[-e|--entry (file path)] | (file path)]\n"
     "Log levels: error (default), warn, info, debug, trace",
     NULL};
 
@@ -64,7 +66,11 @@ bool parse_config_args(int argc, const char **argv, config_t *cfg) {
                     "Created by Addison Schuhardt (http://schuhardt.net)");
 
   // parse arguments
-  argparse_parse(&argparse, argc, argv);
+  argc = argparse_parse(&argparse, argc, argv);
+
+  if (argc > 0) {
+    entry_path = strdup(argv[0]);
+  }
 
   // set log level
   if ((log_level & LOG_LEVEL_TRACE) == LOG_LEVEL_TRACE) {
