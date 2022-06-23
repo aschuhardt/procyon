@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         msystem: [MINGW64]
-        build-type: [Release]
+        build-type: [Release, Debug]
         include:
           - msystem: MINGW64
             arch: x86_64
@@ -32,8 +32,6 @@ jobs:
           make
           pkg-config
           gcc
-          wget
-          tar
           git
          
     - name: Install Additional Packages
@@ -66,6 +64,7 @@ jobs:
  
     - name: Strip Binaries
       run: strip --strip-unneeded ${{env.OUTPUT_DIR}}/*
+      if: ${{matrix.build-type == "Release"}}
     
     - name: Copy Misc. Files
       run: |
