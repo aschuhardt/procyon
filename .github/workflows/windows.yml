@@ -17,7 +17,7 @@ jobs:
     strategy:
       matrix:
         msystem: [MINGW64]
-        build-type: [Release, Debug]
+        build-type: [Release]
         include:
           - msystem: MINGW64
             arch: x86_64
@@ -60,7 +60,7 @@ jobs:
       run: cmake --build build --target procyon-lua
     
     - name: Clean Up
-      run: rm ${{env.OUTPUT_DIR}}/genhexer ${{env.OUTPUT_DIR}}/*ltrans* ${{env.OUTPUT_DIR}}/*wpa*
+      run: rm -f ${{env.OUTPUT_DIR}}/genhexer ${{env.OUTPUT_DIR}}/*ltrans* ${{env.OUTPUT_DIR}}/*wpa*
  
     - name: Strip Binaries
       run: strip --strip-unneeded ${{env.OUTPUT_DIR}}/*
