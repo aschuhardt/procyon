@@ -7,10 +7,9 @@ The engine is run via the `procyon-lua` executable.
 By default, the engine will attempt to load a file called `script/main.lua`.  This, along with several other settings, can be overridden via command-line options:
 
 ```
-Usage: procyon [--(log level)] [-e|--entry (file path)]
+Usage: procyon [--(log level)] [[-e|--entry (file path)] | (file path)]
 Log levels: error (default), warn, info, debug, trace
 A GPU-accelerated tile-based game engine with scripting via Lua
-
 
 General
     -h, --help            show this help message and exit
