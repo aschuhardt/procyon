@@ -40,7 +40,7 @@ jobs:
       # Build your program with the given configuration
       run: |
         pushd ${{github.workspace}}/build && \
-        gcc -o genhexer util/genhexer.c && \
+        gcc -o ./genhexer ../util/genhexer.c && \
         emmake make -j procyon && \
         emcc -O2 libprocyon.a -o ${{env.OUTPUT_DIR}}/libprocyon.js
    
