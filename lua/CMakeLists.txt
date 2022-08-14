@@ -26,7 +26,11 @@ if (PKG_CONFIG_FOUND)
 endif()
 
 add_executable(procyon-lua ${SU_LUA_SOURCE})
-target_link_libraries(procyon-lua PUBLIC ${SU_LIBRARY} argparse ${LUAJIT_LIBRARIES} m simdcomp base64)
+target_link_libraries(procyon-lua PUBLIC ${SU_LIBRARY} argparse ${LUAJIT_LIBRARIES} m base64)
+
+if (NOT EMSCRIPTEN)
+  target_link_libraries(procyon-lua PUBLIC simdcomp)
+endif()
 
 if(UNIX)
   target_link_libraries(procyon-lua PUBLIC dl)

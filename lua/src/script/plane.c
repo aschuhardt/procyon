@@ -2,9 +2,12 @@
 #include <lauxlib.h>
 #include <log.h>
 #include <lua.h>
+#include <stdlib.h>
+
+#ifndef __EMSCRIPTEN__
 #include <simdbitpacking.h>
 #include <simdcomp.h>
-#include <stdlib.h>
+#endif
 
 #include "luaconf.h"
 
@@ -335,6 +338,10 @@ static int plane_decode(lua_State *L) {
 }
 
 static int plane_encode(lua_State *L) {
+#ifdef __EMSCRIPTEN__
+  LOG_SCRIPT_ERROR("Plane encoding isn't implemented for WASM yet.");
+  return 0;
+#else
   lua_settop(L, 1);
 
   plane_t *plane = get_plane(L, 1);
@@ -396,6 +403,7 @@ static int plane_encode(lua_State *L) {
   free(encoded);
 
   return 1;
+#endif
 }
 
 // plane:blit(x, y, src)

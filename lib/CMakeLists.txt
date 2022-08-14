@@ -1,5 +1,7 @@
-add_subdirectory(glad)
-add_subdirectory(glfw)
+if (NOT EMSCRIPTEN)
+  add_subdirectory(glad)
+  add_subdirectory(glfw)
+endif()
 
 add_subdirectory(argparse)
 set(ARGPARSE_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/argparse" PARENT_SCOPE)
@@ -14,20 +16,18 @@ target_include_directories(log PUBLIC ${LOG_INCLUDE_DIR})
 
 set(STB_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stb" PARENT_SCOPE)
 
-set(SIMDCOMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/simdcomp")
-set(SIMDCOMP_INCLUDE_DIR "${SIMDCOMP_DIR}/include")
-set(SIMDCOMP_INCLUDE_DIR "${SIMDCOMP_DIR}/include" PARENT_SCOPE)
-add_library(simdcomp STATIC
-  ${SIMDCOMP_DIR}/src/simdbitpacking.c
-  ${SIMDCOMP_DIR}/src/simdintegratedbitpacking.c
-  ${SIMDCOMP_DIR}/src/simdpackedselect.c
-  ${SIMDCOMP_DIR}/src/simdcomputil.c)
-  # ${SIMDCOMP_DIR}/src/simdpackedsearch.c
-  # ${SIMDCOMP_DIR}/src/simdfor.c
-  # ${SIMDCOMP_DIR}/src/avxbitpacking.c
-  # ${SIMDCOMP_DIR}/src/avx512bitpacking.c)
-target_include_directories(simdcomp PUBLIC ${SIMDCOMP_INCLUDE_DIR})
-target_compile_options(simdcomp PRIVATE -std=c89)
+if (NOT EMSCRIPTEN)
+  set(SIMDCOMP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/simdcomp")
+  set(SIMDCOMP_INCLUDE_DIR "${SIMDCOMP_DIR}/include")
+  set(SIMDCOMP_INCLUDE_DIR "${SIMDCOMP_DIR}/include" PARENT_SCOPE)
+  add_library(simdcomp STATIC
+    ${SIMDCOMP_DIR}/src/simdbitpacking.c
+    ${SIMDCOMP_DIR}/src/simdintegratedbitpacking.c
+    ${SIMDCOMP_DIR}/src/simdpackedselect.c
+    ${SIMDCOMP_DIR}/src/simdcomputil.c)
+  target_include_directories(simdcomp PUBLIC ${SIMDCOMP_INCLUDE_DIR})
+  target_compile_options(simdcomp PRIVATE -std=c89)
+endif()
 
 set(BASE64_DIR "${CMAKE_CURRENT_SOURCE_DIR}/base64")
 set(BASE64_INCLUDE_DIR ${BASE64_DIR} PARENT_SCOPE)

@@ -1,7 +1,7 @@
 #include "window.h"
 
 // clang-format off
-#include <glad/glad.h>
+#include "opengl.h"
 #include <GLFW/glfw3.h>
 
 #define STB_DS_IMPLEMENTATION
@@ -63,10 +63,12 @@ static void set_gl_hints(void) {
 
 static int setup_gl_context(GLFWwindow *w) {
   glfwMakeContextCurrent(w);
+#ifndef __EMSCRIPTEN__
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     log_error("Failed to initialize OpenGL");
     return false;
   }
+#endif
   return true;
 }
 
@@ -226,6 +228,7 @@ static void log_opengl_info(void) {
 }
 
 static void set_dpi_scale(window_t *window) {
+#ifndef __EMSCRIPTEN__
   GLFWmonitor *monitor = glfwGetWindowMonitor(window->glfw_win);
   if (monitor != NULL) {
     // full-screen mode; use the monitor's DPI
@@ -237,6 +240,7 @@ static void set_dpi_scale(window_t *window) {
   }
 
   log_debug("DPI scale: %0.2fx%0.2f", window->scale.x, window->scale.y);
+#endif
 }
 
 window_t *procy_create_window(int width, int height, const char *title,

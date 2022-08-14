@@ -39,42 +39,60 @@ set(SU_SOURCE
 set(SU_INCLUDE
   "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(SU_LIBRARY procyon)
-set(SU_LIBRARY_STATIC procyon_static)
+
+if (NOT EMSCRIPTEN)
+  set(SU_LIBRARY_STATIC procyon_static)
+endif()
 
 get_directory_property(parentDir PARENT_DIRECTORY)
 if(parentDir)
   set(SU_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include" PARENT_SCOPE)
   set(SU_LIBRARY procyon PARENT_SCOPE)
-  set(SU_LIBRARY_STATIC procyon_static PARENT_SCOPE)
+  if (NOT EMSCRIPTEN)
+    set(SU_LIBRARY_STATIC procyon_static PARENT_SCOPE)
+  endif()
 endif()
 
-add_library(${SU_LIBRARY} SHARED ${SU_SOURCE})
+if (EMSCRIPTEN)
+  add_library(${SU_LIBRARY} ${SU_SOURCE})
+else()
+  add_library(${SU_LIBRARY} SHARED ${SU_SOURCE})
+endif()
 target_include_directories(${SU_LIBRARY}
   PUBLIC
   ${SU_INCLUDE}
   ${LOG_INCLUDE_DIR}
   ${STB_INCLUDE_DIR})
-target_link_libraries(${SU_LIBRARY} PRIVATE glad glfw)
+target_link_libraries(${SU_LIBRARY} PRIVATE glfw)
 target_link_libraries(${SU_LIBRARY} PUBLIC log)
+
+if (NOT EMSCRIPTEN)
+  target_link_libraries(${SU_LIBRARY} PRIVATE glad)
+endif()
+
 target_compile_options(${SU_LIBRARY} PRIVATE -fPIC)
 
-add_library(${SU_LIBRARY_STATIC} STATIC ${SU_SOURCE})
-target_include_directories(${SU_LIBRARY_STATIC}
-  PUBLIC
-  ${SU_INCLUDE}
-  ${LOG_INCLUDE_DIR}
-  ${STB_INCLUDE_DIR})
-target_link_libraries(${SU_LIBRARY_STATIC} PRIVATE glad glfw)
-target_link_libraries(${SU_LIBRARY_STATIC} PUBLIC log)
+if (NOT EMSCRIPTEN)
+  add_library(${SU_LIBRARY_STATIC} STATIC ${SU_SOURCE})
+  target_include_directories(${SU_LIBRARY_STATIC}
+    PUBLIC
+    ${SU_INCLUDE}
+    ${LOG_INCLUDE_DIR}
+    ${STB_INCLUDE_DIR})
+  target_link_libraries(${SU_LIBRARY_STATIC} PRIVATE glfw glad)
+  target_link_libraries(${SU_LIBRARY_STATIC} PUBLIC log)
+endif()
 
 if (MINGW)
   target_link_libraries(${SU_LIBRARY} PUBLIC -static gcc stdc++ winpthread -dynamic)
   target_link_libraries(${SU_LIBRARY_STATIC} PUBLIC -static gcc stdc++ winpthread -dynamic)
 endif()
 
-# Compile a small program that will convert files into
-# C header files
-add_executable(genhexer util/genhexer.c)
+if (NOT EMSCRIPTEN)
+  # Compile a small program that will convert files into
+  # C header files
+  add_executable(genhexer util/genhexer.c)
+endif()
 
 # Here are lists containing the files that we want to embed
 # into C header files...
@@ -128,33 +146,51 @@ list(APPEND EMBED_TARGETS
 # create a directory for generated files to be placed into
 file(MAKE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/gen/")
 
+if (EMSCRIPTEN)
+  add_custom_target(codegen)
+endif()
+
 # Convert each embedded resource into a C header file
 foreach(filename header target IN ZIP_LISTS EMBED_FILES EMBED_HEADERS EMBED_TARGETS)
   set(header "${CMAKE_CURRENT_SOURCE_DIR}/include/gen/${header}")
   set(filename "${CMAKE_CURRENT_SOURCE_DIR}/res/${filename}")
-  add_custom_command(
-    DEPENDS genhexer ${filename}
-    OUTPUT ${header}
-    COMMAND genhexer ${filename} ${header} ${target}
-    USES_TERMINAL)
+  if (EMSCRIPTEN)
+    add_custom_command(
+      OUTPUT ${header}
+      COMMAND ./genhexer ${filename} ${header} ${target}
+      USES_TERMINAL)
+    add_dependencies(codegen ${target})
+  else()
+    add_custom_command(
+      DEPENDS genhexer ${filename}
+      OUTPUT ${header}
+      COMMAND genhexer ${filename} ${header} ${target}
+      USES_TERMINAL)
+  endif()
   set_source_files_properties(${header} PROPERTIES GENERATED 1)
   add_custom_target(${target} DEPENDS ${header})
   add_dependencies(${SU_LIBRARY} ${target})
-  add_dependencies(${SU_LIBRARY_STATIC} ${target})
+  if (NOT EMSCRIPTEN)
+    add_dependencies(${SU_LIBRARY_STATIC} ${target})
+  endif()
 endforeach()
 
 # build an implementation of a Lua wrapper for lib
-add_subdirectory(lua)
+if (NOT EMSCRIPTEN)
+  add_subdirectory(lua)
+  install(
+    TARGETS procyon-lua
+    CONFIGURATIONS Release
+    RUNTIME DESTINATION /usr/local/bin)
+endif()
 
 # add benchmark tools
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/bench")
 
-install(
-  TARGETS ${SU_LIBRARY} ${SU_LIBRARY_STATIC}
-  CONFIGURATIONS Release
-  RUNTIME DESTINATION /usr/local/lib)
+if (NOT EMSCRIPTEN)
+  install(
+    TARGETS ${SU_LIBRARY} ${SU_LIBRARY_STATIC}
+    CONFIGURATIONS Release
+    RUNTIME DESTINATION /usr/local/lib)
+endif()
 
-install(
-  TARGETS procyon-lua
-  CONFIGURATIONS Release
-  RUNTIME DESTINATION /usr/local/bin)

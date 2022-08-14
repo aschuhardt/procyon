@@ -1,7 +1,8 @@
 #include "shader/error.h"
 
-#include <glad/glad.h>
 #include <log.h>
+
+#include "opengl.h"
 
 #ifndef NDEBUG
 

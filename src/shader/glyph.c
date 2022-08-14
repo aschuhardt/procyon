@@ -7,7 +7,7 @@
 #include <stb_image.h>
 
 // clang-format off
-#include <glad/glad.h>
+#include "opengl.h"
 #include <GLFW/glfw3.h>
 // clang-format on
 

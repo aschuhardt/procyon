@@ -1,0 +1,54 @@
+name: WASM
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+  OUTPUT_DIR: ${{github.workspace}}/output
+  
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Install Dependencies
+      run: sudo apt-get install libc6-dev emscripten
+    
+    - name: Create Output Directory
+      run: mkdir ${{env.OUTPUT_DIR}}
+      
+    - name: Checkout Submodules
+      run: git submodule update --init --recursive
+      
+    - name: Configure CMake
+      run: |
+        emcmake cmake -B ${{github.workspace}}/build \
+        -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
+        -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
+        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build
+      # Build your program with the given configuration
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target procyon-lua
+      run: |
+        pushd ${{github.workspace}}/build && \
+        gcc -o genhexer util/genhexer.c && \
+        emmake make -j procyon && \
+        emcc -O2 libprocyon.a -o procyon.js
+   
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v2.2.4
+      with:
+        name: wasm-${{env.BUILD_TYPE}}
+        path: ${{env.OUTPUT_DIR}}
