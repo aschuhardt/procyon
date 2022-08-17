@@ -300,8 +300,8 @@ void procy_draw_glyph_shader(glyph_shader_program_t *shader, window_t *window,
 
     // specify the indices of the vertices in the order they're to be drawn
     unsigned short temp_index_buffer[] = {vert_index,     vert_index + 1,
-                                          vert_index + 2, vert_index + 1,
-                                          vert_index + 3, vert_index + 2};
+                                        vert_index + 2, vert_index + 1,
+                                        vert_index + 3, vert_index + 2};
 
     // copy vertices and indices to the batch buffer
     memcpy(&vertex_batch[vert_index], temp_vertex_buffer,

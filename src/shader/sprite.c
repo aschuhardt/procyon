@@ -123,8 +123,8 @@ static bool load_sprite_texture(sprite_shader_program_t *shader,
 }
 
 static void draw_sprite_batch(shader_program_t *program,
-                              sprite_vertex_t *vertices,
-                              unsigned short *indices, size_t sprite_count) {
+                              sprite_vertex_t *vertices, unsigned short *indices,
+                              size_t sprite_count) {
   int buffer_size;
 
   // copy vertex data to video memory
@@ -189,7 +189,7 @@ sprite_shader_program_t *procy_create_sprite_shader_mem(unsigned char *contents,
 
   // create vertex buffers
   program->vbo_count = 2;
-  program->vbo = malloc(sizeof(unsigned int) * program->vbo_count);
+  program->vbo = malloc(sizeof(unsigned short) * program->vbo_count);
   GL_CHECK(glGenBuffers((int)program->vbo_count, program->vbo));
 
   if (procy_compile_and_link_shader(program, (char *)&embed_sprite_vert[0],
@@ -288,8 +288,8 @@ void procy_draw_sprite_shader(procy_sprite_shader_program_t *shader,
 
     // specify the indices of the vertices in the order they're to be drawn
     unsigned short temp_index_buffer[] = {vert_index,     vert_index + 1,
-                                          vert_index + 2, vert_index + 1,
-                                          vert_index + 3, vert_index + 2};
+                                        vert_index + 2, vert_index + 1,
+                                        vert_index + 3, vert_index + 2};
 
     // copy vertices and indices to the batch buffer
     memcpy(&vertex_batch[vert_index], temp_vertex_buffer,

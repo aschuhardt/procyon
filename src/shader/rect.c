@@ -52,7 +52,7 @@ rect_shader_program_t *procy_create_rect_shader(void) {
   GL_CHECK(glBindVertexArray(program->vao));
 
   program->vbo_count = 2;
-  program->vbo = malloc(sizeof(unsigned int) * program->vbo_count);
+  program->vbo = malloc(sizeof(unsigned short) * program->vbo_count);
   GL_CHECK(glGenBuffers((int)program->vbo_count, program->vbo));
 
   if (procy_compile_and_link_shader(program, (char *)&embed_rect_vert[0],
@@ -122,10 +122,9 @@ static void draw_rect_batch(shader_program_t *program, rect_vertex_t *vertices,
     GL_CHECK(glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, index_buffer_size,
                              indices));
   } else {
-    GL_CHECK(
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                     rect_count * INDICES_PER_RECT * sizeof(unsigned short),
-                     indices, GL_STATIC_DRAW));
+    GL_CHECK(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                          rect_count * INDICES_PER_RECT * sizeof(unsigned short),
+                          indices, GL_STATIC_DRAW));
   }
 
   // make draw call
@@ -174,8 +173,8 @@ void procy_draw_rect_shader(rect_shader_program_t *shader, window_t *window,
     compute_rect_vertices(shader, &op, &temp_vertex_buffer[0]);
 
     unsigned short temp_index_buffer[] = {vert_index,     vert_index + 1,
-                                          vert_index + 2, vert_index + 1,
-                                          vert_index + 3, vert_index + 2};
+                                        vert_index + 2, vert_index + 1,
+                                        vert_index + 3, vert_index + 2};
 
     memcpy(&vertex_batch[vert_index], temp_vertex_buffer,
            sizeof(temp_vertex_buffer));
