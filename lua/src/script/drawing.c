@@ -1,7 +1,6 @@
 #include "drawing.h"
 
 #include <lauxlib.h>
-#include <limits.h>
 #include <log.h>
 #include <lua.h>
 #include <math.h>
@@ -94,14 +93,14 @@ static int draw_string(lua_State *L) {
   lua_settop(L, 5);
 
   size_t length = 0;
-  int x = (int)(lua_tointeger(L, 1) % SHRT_MAX);
-  int y = (int)(lua_tointeger(L, 2) % SHRT_MAX);
+  int x = (int)(lua_tointeger(L, 1));
+  int y = (int)(lua_tointeger(L, 2));
   const char *contents = lua_tolstring(L, 3, &length);
   procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
   procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
-  int z = (int)(lua_tointeger(L, -1) % SHRT_MAX);
+  int z = (int)(lua_tointeger(L, -1));
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
@@ -141,7 +140,7 @@ static int draw_string(lua_State *L) {
 
       // offset the position in order to compensate for the
       // characters that are not being drawn
-      x = (int)((x - (glyph_w * offset)) % SHRT_MAX);
+      x = (int)((x - (glyph_w * offset)));
 
       // skip the modifier char which follows '%'
       i += offset - 1;
@@ -149,9 +148,9 @@ static int draw_string(lua_State *L) {
     }
 
   no_mod:
-    op = procy_create_draw_op_char_colored(
-        (int)((x + i * glyph_w) % SHRT_MAX), y, z, forecolor, backcolor,
-        contents[i], bold);
+    op = procy_create_draw_op_char_colored((int)((x + i * glyph_w)), y, z,
+                                           forecolor, backcolor, contents[i],
+                                           bold);
     procy_append_draw_op_text(window, &op);
   }
 
@@ -172,14 +171,14 @@ static int set_layer(lua_State *L) {
 static int draw_char(lua_State *L) {
   lua_settop(L, 5);
 
-  int x = (int)(lua_tointeger(L, 1) % SHRT_MAX);
-  int y = (int)(lua_tointeger(L, 2) % SHRT_MAX);
+  int x = (int)(lua_tointeger(L, 1));
+  int y = (int)(lua_tointeger(L, 2));
   unsigned char value = lua_tointeger(L, 3) % UCHAR_MAX;
   procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
   procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
-  int z = (int)(lua_tointeger(L, -1) % SHRT_MAX);
+  int z = (int)(lua_tointeger(L, -1));
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
@@ -193,14 +192,14 @@ static int draw_char(lua_State *L) {
 static int draw_rect(lua_State *L) {
   lua_settop(L, 5);
 
-  int x = (int)(lua_tointeger(L, 1) % SHRT_MAX);
-  int y = (int)(lua_tointeger(L, 2) % SHRT_MAX);
-  int w = (int)(lua_tointeger(L, 3) % SHRT_MAX);
-  int h = (int)(lua_tointeger(L, 4) % SHRT_MAX);
+  int x = (int)(lua_tointeger(L, 1));
+  int y = (int)(lua_tointeger(L, 2));
+  int w = (int)(lua_tointeger(L, 3));
+  int h = (int)(lua_tointeger(L, 4));
   procy_color_t color = luaL_opt(L, get_color, 5, WHITE);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
-  int z = (int)(lua_tointeger(L, -1) % SHRT_MAX);
+  int z = (int)(lua_tointeger(L, -1));
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
@@ -214,14 +213,14 @@ static int draw_rect(lua_State *L) {
 static int draw_line(lua_State *L) {
   lua_settop(L, 5);
 
-  int x1 = (int)(lua_tointeger(L, 1) % SHRT_MAX);
-  int y1 = (int)(lua_tointeger(L, 2) % SHRT_MAX);
-  int x2 = (int)(lua_tointeger(L, 3) % SHRT_MAX);
-  int y2 = (int)(lua_tointeger(L, 4) % SHRT_MAX);
+  int x1 = (int)(lua_tointeger(L, 1));
+  int y1 = (int)(lua_tointeger(L, 2));
+  int x2 = (int)(lua_tointeger(L, 3));
+  int y2 = (int)(lua_tointeger(L, 4));
   procy_color_t color = luaL_opt(L, get_color, 5, WHITE);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
-  int z = (int)(lua_tointeger(L, -1) % SHRT_MAX);
+  int z = (int)(lua_tointeger(L, -1));
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
@@ -243,7 +242,7 @@ static int draw_polygon(lua_State *L) {
   procy_color_t color = luaL_opt(L, get_color, 5, WHITE);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
-  int z = (int)(lua_tointeger(L, -1) % SHRT_MAX);
+  int z = (int)(lua_tointeger(L, -1));
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
@@ -257,10 +256,8 @@ static int draw_polygon(lua_State *L) {
     float y2 = sinf(theta - adjust + interval) * radius + (float)y;
 
     procy_draw_op_line_t op = procy_create_draw_op_line(
-        (int)((int)roundf(x1) % SHRT_MAX),
-        (int)((int)roundf(y1) % SHRT_MAX),
-        (int)((int)roundf(x2) % SHRT_MAX),
-        (int)((int)roundf(y2) % SHRT_MAX), z, color);
+        (int)((int)roundf(x1)), (int)((int)roundf(y1)), (int)((int)roundf(x2)),
+        (int)((int)roundf(y2)), z, color);
     procy_append_draw_op_line(window, &op);
   }
 
@@ -284,13 +281,13 @@ static int draw_sprite(lua_State *L) {
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_WINDOW_PTR);
   procy_window_t *window = (procy_window_t *)lua_touserdata(L, -1);
 
-  int x = (int)(luaL_checkinteger(L, 2) % SHRT_MAX);
-  int y = (int)(luaL_checkinteger(L, 3) % SHRT_MAX);
+  int x = (int)(luaL_checkinteger(L, 2));
+  int y = (int)(luaL_checkinteger(L, 3));
   procy_color_t forecolor = luaL_opt(L, get_color, 4, WHITE);
   procy_color_t backcolor = luaL_opt(L, get_color, 5, BLACK);
 
   lua_getfield(L, LUA_REGISTRYINDEX, GLOBAL_LAYER);
-  int z = (int)(lua_tointeger(L, -1) % SHRT_MAX);
+  int z = (int)(lua_tointeger(L, -1));
 
   lua_getfield(L, 1, FIELD_SPRITE_DATA);
   procy_sprite_t *sprite = (procy_sprite_t *)lua_touserdata(L, -1);
@@ -316,10 +313,10 @@ static int create_sprite(lua_State *L) {
   procy_sprite_shader_program_t *shader =
       (procy_sprite_shader_program_t *)lua_touserdata(L, -1);
 
-  int x = (int)(luaL_checkinteger(L, 2) % SHRT_MAX);
-  int y = (int)(luaL_checkinteger(L, 3) % SHRT_MAX);
-  int width = (int)(luaL_checkinteger(L, 4) % SHRT_MAX);
-  int height = (int)(luaL_checkinteger(L, 5) % SHRT_MAX);
+  int x = (int)(luaL_checkinteger(L, 2));
+  int y = (int)(luaL_checkinteger(L, 3));
+  int width = (int)(luaL_checkinteger(L, 4));
+  int height = (int)(luaL_checkinteger(L, 5));
 
   if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
       x + width >= shader->texture_w || y + height >= shader->texture_h) {
