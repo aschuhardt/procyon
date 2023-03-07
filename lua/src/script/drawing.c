@@ -319,10 +319,11 @@ static int create_sprite(lua_State *L) {
   int height = (int)(luaL_checkinteger(L, 5));
 
   if (x < 0 || y < 0 || width <= 0 || height <= 0 ||
-      x + width >= shader->texture_w || y + height >= shader->texture_h) {
+      x + width > shader->texture_w || y + height > shader->texture_h) {
     LOG_SCRIPT_ERROR(L, "Invalid sprite bounds");
     return 0;
   }
+
   lua_newtable(L);
 
   lua_pushinteger(L, x);
