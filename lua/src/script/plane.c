@@ -37,6 +37,8 @@
 #define FUNC_PLANE_BLIT "blit"
 #define FUNC_PLANE_ENCODE "encode"
 #define FUNC_PLANE_DECODE "decode"
+#define FUNC_PLANE_FIND_FIRST "find_first"
+#define FUNC_PLANE_FIND_ALL "find_all"
 #define FUNC_PLANE_GETSIZE "get_size"
 #define FIELD_PLANE_BUFFER "_buffer"
 #define FIELD_PLANE_DATA "_data"
@@ -316,8 +318,6 @@ static int plane_decode(lua_State *L) {
   int height = read_from_offset(buffer, &meta_offset);
   uint32_t maxbit = read_from_offset(buffer, &meta_offset);
 
-  log_info("width: %d height: %d maxbit: %d", width, height, maxbit);
-
   // create a new plane and...
   size_t uncompressed_length = width * height;
   plane_t *plane = push_new_plane(width, height, NULL, L);
@@ -478,6 +478,81 @@ static int plane_from(lua_State *L) {
   return 1;
 }
 
+// result = plane:find_first(function(x, y, value) return value % 2 == 0 end)
+// {{ x, y, value }, { x, y, value }, ...}
+static int plane_find_first(lua_State *L) {
+  lua_settop(L, 2);
+
+  plane_t *plane = get_plane(L, 1);
+  for (size_t i = 0; i < (size_t)(plane->width * plane->height); ++i) {
+    lua_pushvalue(L, 2);
+    lua_pushinteger(L, (int)(i % plane->width));
+    lua_pushinteger(L, (int)(i / plane->width));
+    lua_pushinteger(L, (int)(plane->buffer[i]));
+
+    if (lua_pcall(L, 3, 1, 0) != LUA_OK) {
+      LOG_SCRIPT_ERROR(L, "Failed to find first element matching function");
+      return 0;
+    }
+
+    if (lua_toboolean(L, -1)) {
+      lua_newtable(L);
+      lua_pushinteger(L, (int)(i % plane->width));
+      lua_setfield(L, -2, "x");
+      lua_pushinteger(L, (int)(i / plane->width));
+      lua_setfield(L, -2, "y");
+      lua_pushinteger(L, (int)(plane->buffer[i]));
+      lua_setfield(L, -2, "value");
+
+      return 1;
+    }
+
+    lua_pop(L, 1);
+  }
+
+  return 0;
+}
+
+// result = plane:find_all(function(x, y, value) return value % 2 == 0 end)
+// { x, y, value }
+static int plane_find_all(lua_State *L) {
+  lua_settop(L, 2);
+
+  plane_t *plane = get_plane(L, 1);
+
+  // results will be appended onto this table
+  lua_newtable(L);
+
+  size_t count = 0;
+  for (size_t i = 0; i < (size_t)(plane->width * plane->height); ++i) {
+    lua_pushvalue(L, 2);
+    lua_pushinteger(L, (int)(i % plane->width));
+    lua_pushinteger(L, (int)(i / plane->width));
+    lua_pushinteger(L, (int)(plane->buffer[i]));
+
+    if (lua_pcall(L, 3, 1, 0) != LUA_OK) {
+      LOG_SCRIPT_ERROR(L, "Failed to find first element matching function");
+      return 0;
+    }
+
+    if (lua_toboolean(L, -1)) {
+      lua_newtable(L);
+      lua_pushinteger(L, (int)(i % plane->width));
+      lua_setfield(L, -2, "x");
+      lua_pushinteger(L, (int)(i / plane->width));
+      lua_setfield(L, -2, "y");
+      lua_pushinteger(L, (int)(plane->buffer[i]));
+      lua_setfield(L, -2, "value");
+
+      // the result table will be a list, so keys are 1-based indexes
+      lua_rawseti(L, -3, ++count);
+    }
+
+    lua_pop(L, 1);
+  }
+
+  return 1;
+}
 // plane:export('output.png')
 static int plane_export_image(lua_State *L) {
   lua_settop(L, 2);
@@ -586,7 +661,8 @@ static int plane_from_wfc(lua_State *L) {
                       flip_on_x, flip_on_y, rotations);
   wfc_init(wfc);
   if (!wfc_run(wfc, -1)) {
-    LOG_SCRIPT_ERROR(L, "WFC failed");
+    // don't log failure as it's an expected result
+    lua_pushnil(L);
   } else {
     struct wfc_image *result = wfc_output_image(wfc);
     if (result == NULL) {
@@ -646,6 +722,8 @@ void add_plane(lua_State *L) {
                                 {FUNC_PLANE_EXPORT, plane_export_image},
                                 {FUNC_PLANE_GETSIZE, plane_get_size},
                                 {FUNC_PLANE_BLIT, plane_blit},
+                                {FUNC_PLANE_FIND_FIRST, plane_find_first},
+                                {FUNC_PLANE_FIND_ALL, plane_find_all},
                                 {NULL, NULL}};
     luaL_newlib(L, index_methods);
     lua_setfield(L, -2, "__index");
