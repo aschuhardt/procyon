@@ -130,6 +130,9 @@ A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit 
   - `pr.plane.from_wfc(w, h, (path|tile_plane), [flipx], [flipy], [nrot], [tilew], [tileh])` - Returns a new plane object with dimensions `w` and `h`, with its contents being the result of running [the WafeFunctionCollapse algorithm](https://github.com/mxgmn/WaveFunctionCollapse) to completion based on the provided input plane (either an image on-disk or another plane; for the former see `import`).  The WFC algorithm works by breaking the source plane up into a number of smaller tiles.  The behavior of the algorithm can be customized by specifying whether or not to flip each tile on the X or Y axes (booleans `flipx` and `flipy`), the maximum number of tile rotations to perform (`nrot`), and the dimensions of each tile (`tilew` and `tileh`, default is 3).
 - Reading
   - `plane:at(x, y)` - Returns the value of the element at the index `(X, Y)`.
+  - `plane:foreach(function(x, y, cur))` - An alias for `plane:fill` intended to be passed a function that doesn't return anything.  See `plane:fill` below.
+  - `plane:find_all(function(x, y, cur))` - The function argument is evaluated against each cell in the plane, and may return either a true or false value.  Returns a list of tables in the form { x, y, value } corresponding to the cells for which the filter function returned a true value.
+  - `plane:find_first(function(x, y, cur))` - The function argument is evaluated against each cell in the plane until a true value is returned, and may return either a true or false value.  Returns a table in the form { x, y, value } corresponding to the cell for which the filter function returned a true value.
 - Serialization
   - `plane:export(path)` - Exports the plane to a PNG image.  Only the lower three bytes of each element in the plane are exported, with the highest byte being mapped to the alpha channel and being set to 255.  The pixel format is (A)RGB.
   - `pr.plane.import(path)` - Imports a plane from a PNG image.  See `export`.
@@ -141,7 +144,6 @@ A plane is a 2D bitmap data structure.  Elements in the plane consist of 32-bit 
   - `plane:fill(function(x, y, cur))` - Returns a reference to the plane. Sets the value of each element in the plane to the return value of the provided function, to which is passed the current position as well as the current value of each element in the plane.
   - `plane:copy()` - Returns a copy of the plane.
   - `plane:blit(x, y, src)` - Copies or 'blits' the contents of the plane `src` onto the target plane at position `(X, Y)`. Useful for 'stamping' a pre-defined pattern onto a plane, for example.
-  - `plane:foreach(function(x, y, cur))` - An alias for `plane:fill` intended to be passed a function that doesn't return anything.
 
 ---
 
