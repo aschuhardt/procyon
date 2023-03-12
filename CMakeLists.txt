@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 set(CMAKE_C_FLAGS_DEBUG 
-  "${CMAKE_C_FLAGS_DEBUG} -ggdb")
+  "${CMAKE_C_FLAGS_DEBUG} -ggdb -gdwarf-4")
 set(CMAKE_C_FLAGS_RELEASE 
   "${CMAKE_C_FLAGS_RELEASE} -ffunction-sections -fmerge-all-constants -fdata-sections")
 
