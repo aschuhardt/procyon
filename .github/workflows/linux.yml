@@ -8,8 +8,6 @@ on:
   workflow_dispatch:
 
 env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
   OUTPUT_DIR: ${{github.workspace}}/output
   
 jobs:
@@ -19,6 +17,9 @@ jobs:
     # cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build-type: [Release, Debug]
 
     steps:
     - uses: actions/checkout@v2
@@ -37,11 +38,11 @@ jobs:
         cmake -B ${{github.workspace}}/build \
         -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
         -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${{env.OUTPUT_DIR}} \
-        -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+        -DCMAKE_BUILD_TYPE=${{matrix.build-type}}
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --target procyon-lua
+      run: cmake --build ${{github.workspace}}/build --config ${{matrix.build-type}} --target procyon-lua
     
     - name: Cleanup
       run: rm ${{env.OUTPUT_DIR}}/genhexer
@@ -65,5 +66,5 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: linux-${{env.BUILD_TYPE}}
+        name: linux-${{matrix.build-type}}
         path: ${{env.OUTPUT_DIR}}
