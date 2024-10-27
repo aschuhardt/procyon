@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         msystem: [MINGW64]
-        build-type: [Release]
+        build-type: [Release, Debug]
         include:
           - msystem: MINGW64
             arch: x86_64
