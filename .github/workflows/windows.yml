@@ -78,7 +78,7 @@ jobs:
         cp -r include ${{env.OUTPUT_DIR}}/include
 
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v4
       with:
         name: windows-${{matrix.arch}}-${{matrix.build-type}}
         path: ${{env.OUTPUT_DIR}}
