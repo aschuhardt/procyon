@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -45,7 +46,7 @@ jobs:
         emcc -O2 libprocyon.a -o ${{env.OUTPUT_DIR}}/libprocyon.js
    
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2.2.4
+      uses: actions/upload-artifact@v4
       with:
         name: wasm-${{env.BUILD_TYPE}}
         path: ${{env.OUTPUT_DIR}}
