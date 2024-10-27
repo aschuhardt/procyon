@@ -63,7 +63,7 @@ jobs:
       run: chmod +x ${{env.OUTPUT_DIR}}/procyon-lua
     
     - name: Upload a Build Artifact
-      uses: actions/upload-artifact@latest
+      uses: actions/upload-artifact@v4
       with:
         name: linux-${{env.BUILD_TYPE}}
         path: ${{env.OUTPUT_DIR}}
