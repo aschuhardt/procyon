@@ -84,7 +84,7 @@ static bool load_sprite_texture(sprite_shader_program_t *shader,
   int components;
   unsigned char *bitmap =
       stbi_load_from_memory(contents, (int)length, &shader->texture_w,
-                            &shader->texture_h, &components, 0);
+                            &shader->texture_h, &components, 4);
 
   if (bitmap == NULL || shader->texture_w < 0 || shader->texture_h < 0) {
     const char *msg = stbi_failure_reason();
@@ -104,8 +104,8 @@ static bool load_sprite_texture(sprite_shader_program_t *shader,
     GL_CHECK(glGenTextures(1, &shader->texture));
 
     GL_CHECK(glBindTexture(GL_TEXTURE_2D, shader->texture));
-    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, shader->texture_w,
-                          shader->texture_h, 0, GL_RED, GL_UNSIGNED_BYTE,
+    GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, shader->texture_w,
+                          shader->texture_h, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                           bitmap));
 
     GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
@@ -123,8 +123,8 @@ static bool load_sprite_texture(sprite_shader_program_t *shader,
 }
 
 static void draw_sprite_batch(shader_program_t *program,
-                              sprite_vertex_t *vertices, unsigned short *indices,
-                              size_t sprite_count) {
+                              sprite_vertex_t *vertices,
+                              unsigned short *indices, size_t sprite_count) {
   int buffer_size;
 
   // copy vertex data to video memory
@@ -288,8 +288,8 @@ void procy_draw_sprite_shader(procy_sprite_shader_program_t *shader,
 
     // specify the indices of the vertices in the order they're to be drawn
     unsigned short temp_index_buffer[] = {vert_index,     vert_index + 1,
-                                        vert_index + 2, vert_index + 1,
-                                        vert_index + 3, vert_index + 2};
+                                          vert_index + 2, vert_index + 1,
+                                          vert_index + 3, vert_index + 2};
 
     // copy vertices and indices to the batch buffer
     memcpy(&vertex_batch[vert_index], temp_vertex_buffer,

@@ -17,7 +17,19 @@ void main(void) {
       ((f_BackColor & 0xFF00) >> 8) / 255.0,
       ((f_BackColor & 0xFF)) / 255.0);
 
-  float value = round(texture(u_SpriteTexture, f_TexCoords).r);
-  gl_FragColor = vec4(mix(bg, fg, value), 1.0);
+  vec3 black = vec3(0.0, 0.0, 0.0);
+  vec4 color = texture(u_SpriteTexture, f_TexCoords);
+  if (color.rgb == black) {
+    if (bg != black) {
+      // color is black and we have a background specified
+      gl_FragColor = vec4(bg, color.a);
+    } else {
+      // color is black and there is no background - fully transparent
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+    }
+  } else {
+    gl_FragColor = vec4(color.rgb * fg, color.a);
+  }
+
   gl_FragDepth = f_Depth;
 }
