@@ -1,11 +1,18 @@
 pr.window.on_load = function()
   base_plane = pr.plane.from(64, 64, 20)
 
+  stamp_plane = pr.plane.from(
+    {0,   50, 0},
+    {50,  0,  50},
+    {200, 0,  200})
+
+  --[[
   stamp_plane = pr.plane.from(3, 3, 80)
   stamp_plane:set(1, 0, 50)
   stamp_plane:set(0, 1, 50)
   stamp_plane:set(2, 1, 50)
   stamp_plane:set(1, 2, 50)
+  ]]
 end
 
 pr.window.on_draw = function()

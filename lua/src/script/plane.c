@@ -9,13 +9,10 @@
 #include <simdcomp.h>
 #endif
 
-#include "luaconf.h"
-
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image.h>
 #include <stb_image_write.h>
-
 #define WFC_IMPLEMENTATION
 #include <wfc.h>
 
@@ -306,7 +303,7 @@ static int plane_decode(lua_State *L) {
   }
 
   int buffer_size;
-  uint8_t *buffer = base64_dec_malloc((char *)encoded, &buffer_size);
+  uint8_t *buffer = base64_dec_malloc((char *)encoded);
   if (buffer == NULL) {
     LOG_SCRIPT_ERROR(L, "Failed to decode base64 in plane string");
     return 0;
@@ -449,30 +446,69 @@ static int plane_blit(lua_State *L) {
 //
 // plane.from(w, h, 4)
 // plane.from(w, h, function(x, y) return x + y end)
+// plane.from({0, 2, 1}, {1, 3, 1}, {3, 1, 0})
 static int plane_from(lua_State *L) {
   lua_settop(L, 3);
 
-  // fetch plane dimensions from first two arguments
-  int width = luaL_checkinteger(L, 1);
-  int height = luaL_checkinteger(L, 2);
-
-  size_t buffer_len;
-  plane_t *plane = push_new_plane(width, height, &buffer_len, L);
-  if (plane == NULL) {
-    return 0;
-  }
-
-  if (lua_isnumber(L, 3)) {
-    int value = (int)lua_tointeger(L, 3);
-    for (int i = 0; i < buffer_len; ++i) {
-      plane->buffer[i] = value;
+  if (lua_istable(L, 1)) {
+    // using the list-of-rows signature
+    int rows = lua_gettop(L);
+    int columns = 0;
+    for (int i = 1; i <= rows; ++i) {
+      int len = lua_objlen(L, i);
+      if (len > columns) {
+        columns = len;
+      }
     }
-  } else if (lua_isfunction(L, 3)) {
-    apply_func_to_buffer(L, 3, plane->width, plane->height, plane->buffer);
+
+    if (rows == 0 || columns == 0) {
+      LOG_SCRIPT_ERROR(L, "Invalid plane size; must be at least 1x1");
+      return 0;
+    }
+
+    size_t buffer_len;
+    plane_t *plane = push_new_plane(columns, rows, &buffer_len, L);
+    if (plane == NULL) {
+      return 0;
+    }
+
+    int width = 0;
+    for (int y = 0; y < rows; ++y) {
+      int row_width = lua_objlen(L, y + 1);
+      for (int x = 0; x < row_width; ++x) {
+        lua_rawgeti(L, y + 1, x + 1);
+        plane->buffer[y * row_width + x] = lua_tonumber(L, -1);
+        lua_pop(L, 1);
+      }
+    }
+  } else if (lua_isnumber(L, 1) && lua_isnumber(L, 2)) {
+    // using one of the (w, h, ...) signatures
+
+    // fetch plane dimensions from first two arguments
+    int width = luaL_checkinteger(L, 1);
+    int height = luaL_checkinteger(L, 2);
+
+    size_t buffer_len;
+    plane_t *plane = push_new_plane(width, height, &buffer_len, L);
+    if (plane == NULL) {
+      return 0;
+    }
+
+    if (lua_isnumber(L, 3)) {
+      int value = (int)lua_tointeger(L, 3);
+      for (int i = 0; i < buffer_len; ++i) {
+        plane->buffer[i] = value;
+      }
+    } else if (lua_isfunction(L, 3)) {
+      apply_func_to_buffer(L, 3, plane->width, plane->height, plane->buffer);
+    }
+  } else {
+    LOG_SCRIPT_ERROR(L,
+                     "Invalid call signature; expected (w, h, ...) or "
+                     "or (w, h, function) or ({<row1>}, {<row2>}, ...)");
   }
 
   lua_insert(L, 1);
-
   lua_settop(L, 1);
 
   return 1;
