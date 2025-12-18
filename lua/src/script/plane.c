@@ -303,7 +303,7 @@ static int plane_decode(lua_State *L) {
   }
 
   int buffer_size;
-  uint8_t *buffer = base64_dec_malloc((char *)encoded);
+  uint8_t *buffer = base64_dec_malloc((char *)encoded, &buffer_size);
   if (buffer == NULL) {
     LOG_SCRIPT_ERROR(L, "Failed to decode base64 in plane string");
     return 0;
@@ -314,6 +314,9 @@ static int plane_decode(lua_State *L) {
   int width = read_from_offset(buffer, &meta_offset);
   int height = read_from_offset(buffer, &meta_offset);
   uint32_t maxbit = read_from_offset(buffer, &meta_offset);
+
+  log_debug("Decoded plane width: %d, height: %d, maxbit: %d", width, height,
+            maxbit);
 
   // create a new plane and...
   size_t uncompressed_length = width * height;
